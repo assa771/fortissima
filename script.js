@@ -413,19 +413,80 @@ function extLabel(ext) {
     $('sumDod').textContent = '–'; $('sumZar').textContent = '–';
   }
 
+  // ---- ukážkový režim: GitHub Pages alebo otvorenie zo súboru (bez PHP) ----
+  // Na ostrom webe (fortissima.sk) sa NIKDY nepoužije – cena ide vždy zo servera.
+  const DEMO = location.protocol === 'file:' || /\.github\.io$/i.test(location.hostname);
+  let demoData = null;
+  const loadDemo = () => new Promise((res, rej) => {
+    if (window.FORTISSIMA_DEMO) return res(window.FORTISSIMA_DEMO);
+    const sc = document.createElement('script');
+    sc.src = 'assets/demo-cennik.js';
+    sc.onload = () => window.FORTISSIMA_DEMO ? res(window.FORTISSIMA_DEMO) : rej();
+    sc.onerror = rej;
+    document.head.appendChild(sc);
+  });
+  const num = v => parseFloat(String(v || '0').replace(/[\s€]/g, '').replace(',', '.')) || 0;
+  const best = (rows, crit) => {
+    let b = null, sc = -1;
+    rows.forEach(r => {
+      let s = 0, ok = true;
+      for (const k in crit) {
+        const h = String(r[k] == null ? '*' : r[k]).toLowerCase();
+        if (h === '*' || h === '') continue;
+        if (h !== String(crit[k]).toLowerCase()) { ok = false; break; }
+        s++;
+      }
+      if (ok && s > sc) { b = r; sc = s; }
+    });
+    return b;
+  };
+  const surcharge = (rows, pol, w, h) => rows.reduce((a, r) =>
+    a + ((r.polozka || '').toLowerCase() === pol && ['*', '', w].includes(r.sirka) && ['*', '', h].includes(r.vyska) ? num(r.priplatok_s_dph) : 0), 0);
+  function demoCalc(s, D) {
+    const d = parseInt(s.stena, 10), ks = parseInt(s.ks, 10);
+    if (isNaN(d) || d < 80 || d > 400) return { ok: false, chyba: 'Hrúbka steny musí byť od 80 do 400 mm. Pre iné hrúbky nám pošlite dopyt.' };
+    if (isNaN(ks) || ks < 1 || ks > 50) return { ok: false, chyba: 'Počet kusov musí byť od 1 do 50.' };
+    const z = frameForWall(d)[0], r180 = Math.floor(z.ext / 180), r90 = (z.ext % 180) / 90;
+    const N = +s.sirka * 10, V1 = H[s.vyska], falc = s.prevedenie === 'falc';
+    const crit = { prevedenie: s.prevedenie, farba: s.farba, sirka: s.sirka, vyska: s.vyska };
+    const P = [], add = (nazov, c, m, dd) => P.push({ nazov, mnozstvo: m, cena_ks: c, spolu: c * m, d: dd || 0 });
+    const miss = { ok: false, chyba: 'Pre túto zostavu zatiaľ nemáme cenu v cenníku. Pošlite nám prosím dopyt.' };
+    let r = best(D.kridla, Object.assign({ kolekcia: s.kolekcia }, crit)); if (!r) return miss;
+    add('Krídlo ' + NAMES[s.kolekcia] + ', ' + NAMES[s.prevedenie] + ', ' + NAMES[s.farba] + ', ' + s.sirka + '/' + HTXT[s.vyska] +
+        ' (' + (falc ? (N + 50) + ' × ' + (V1 + 15) : (N + 22) + ' × ' + (V1 + 1)) + ' mm)',
+        num(r.cena_s_dph) + surcharge(D.priplatky, 'kridlo', s.sirka, s.vyska), ks, num(r.dodanie_dni));
+    r = best(D.zarubne, Object.assign({ typ: 'F' + z.F }, crit)); if (!r) return miss;
+    add('Obložková zárubňa F' + z.F + ', ' + (falc ? 'falcová' : 'bezfalcová'),
+        num(r.cena_s_dph) + surcharge(D.priplatky, 'zarubna', s.sirka, s.vyska), ks, num(r.dodanie_dni));
+    if (z.ext) {
+      const k2 = { sirka: s.sirka, vyska: s.vyska }, e90 = best(D.rozsirenia, Object.assign({ typ: 'R90' }, k2)), e180 = best(D.rozsirenia, Object.assign({ typ: 'R180' }, k2));
+      if (r180) { if (e180) add('Rozširovací element R180', num(e180.cena_s_dph), ks * r180, num(e180.dodanie_dni));
+                  else if (e90) add('Rozširovací element R90', num(e90.cena_s_dph), ks * r180 * 2, num(e90.dodanie_dni)); else return miss; }
+      if (r90) { if (!e90) return miss; add('Rozširovací element R90', num(e90.cena_s_dph), ks * r90, num(e90.dodanie_dni)); }
+    }
+    const kov = D.kovanie.find(k => k.kod === s.kovanie);
+    if (kov && num(kov.cena_s_dph) > 0) add('Kovanie: ' + kov.nazov, num(kov.cena_s_dph), ks, num(kov.dodanie_dni));
+    const sl = {}; D.sluzby.forEach(x => { sl[x.kod] = x; });
+    if (s.montaz === '1' && sl.montaz) add(sl.montaz.nazov, num(sl.montaz.cena_s_dph), ks);
+    if (s.doprava === '1' && sl.doprava) add(sl.doprava.nazov, num(sl.doprava.cena_s_dph), 1);
+    const dni = Math.max(0, ...P.map(p => p.d)), e = extLabel(z.ext);
+    return { ok: true, polozky: P, spolu: P.reduce((a, p) => a + p.spolu, 0), zarubna: 'F' + z.F + (e ? ' + ' + e : ''),
+             rozsah_steny: z.min + '–' + z.max + ' mm', dodanie_dni: dni, dodanie: dni === 0 ? 'Skladom' : 'do ' + dni + ' pracovných dní' };
+  }
+  if (DEMO) { const b = $('sumDemo'); if (b) b.hidden = false; }
+
   function calc() {
     const s = state();
     hints(s);
-    if (location.protocol === 'file:') {
-      showError('Cena sa počíta na serveri. Kalkulácia funguje po nahratí webu na hosting s PHP.');
-      return;
-    }
     if (ctrl) ctrl.abort();
     ctrl = new AbortController();
     sum.classList.add('is-loading');
     const q = new URLSearchParams(s); q.delete('smer');
-    fetch(API + '?' + q.toString(), { signal: ctrl.signal, headers: { 'Accept': 'application/json' } })
-      .then(r => r.json().catch(() => ({ ok: false, chyba: 'Server nevrátil platnú odpoveď.' })))
+    const request = DEMO
+      ? loadDemo().then(D => demoCalc(s, D))
+      : fetch(API + '?' + q.toString(), { signal: ctrl.signal, headers: { 'Accept': 'application/json' } })
+          .then(r => r.json().catch(() => ({ ok: false, chyba: 'Server nevrátil platnú odpoveď.' })));
+    request
       .then(j => {
         sum.classList.remove('is-loading');
         if (!j.ok) { last = null; showError(j.chyba || 'Cenu sa nepodarilo vypočítať.'); return; }
@@ -447,9 +508,10 @@ function extLabel(ext) {
   }
   const schedule = () => { clearTimeout(timer); timer = setTimeout(calc, 180); };
 
-  // zoznam kovania zo servera (bez cien)
-  if (location.protocol !== 'file:') {
-    fetch(API + '?moznosti=1').then(r => r.json()).then(j => {
+  // zoznam kovania zo servera (bez cien); v ukážke z ukážkového cenníka
+  {
+    (DEMO ? loadDemo().then(D => ({ ok: true, kovanie: D.kovanie }))
+          : fetch(API + '?moznosti=1').then(r => r.json())).then(j => {
       if (!j.ok) return;
       const sel = form.elements.kovanie, cur = sel.value;
       sel.innerHTML = j.kovanie.map(k => '<option value="' + esc(k.kod) + '">' + esc(k.nazov) + '</option>').join('');
@@ -476,7 +538,7 @@ function extLabel(ext) {
       'Kovanie: ' + form.elements.kovanie.options[form.elements.kovanie.selectedIndex].text,
       'Počet: ' + s.ks + ' ks · montáž: ' + (s.montaz === '1' ? 'áno' : 'nie') + ' · doprava: ' + (s.doprava === '1' ? 'áno' : 'nie')
     ];
-    if (last) lines.push('Orientačná cena: ' + eur.format(last.j.spolu) + ' s DPH');
+    if (last) lines.push('Orientačná cena: ' + eur.format(last.j.spolu) + ' s DPH' + (DEMO ? ' (ukážka, ilustračné ceny)' : ''));
     try { sessionStorage.setItem('fortissimaDopyt', JSON.stringify({ kolekcia: NAMES[s.kolekcia], text: lines.join('\n') })); } catch (e) {}
     location.href = 'kontakt.html#formular';
   });
