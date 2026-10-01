@@ -1,0 +1,27 @@
+<svg viewBox="0 0 520 700" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="doorlight" x1="0%" y1="0%" x2="100%" y2="0%">
+<stop offset="0%" stop-color="#F2C48A" stop-opacity="0"/>
+<stop offset="100%" stop-color="#F2C48A" stop-opacity="0.85"/>
+</linearGradient>
+<radialGradient id="haze" cx="30%" cy="70%" r="65%">
+<stop offset="0%" stop-color="#F2C48A" stop-opacity="0.18"/>
+<stop offset="100%" stop-color="#F2C48A" stop-opacity="0"/>
+</radialGradient>
+</defs>
+<rect x="0" y="0" width="520" height="700" fill="#17140F"/>
+<rect x="0" y="0" width="520" height="700" fill="url(#haze)"/>
+<rect x="90" y="30" width="360" height="620" rx="2" fill="none" stroke="#B08D57" stroke-width="2.5"/>
+<polygon points="250,40 270,40 270,640 98,640" fill="url(#doorlight)"/>
+<rect x="270" y="40" width="170" height="600" fill="#2E2013" stroke="#0F0B07" stroke-width="2"/>
+<line x1="284" y1="190.0" x2="426" y2="190.0" stroke="#0F0B07" stroke-width="1.5"/><line x1="284" y1="340.0" x2="426" y2="340.0" stroke="#0F0B07" stroke-width="1.5"/><line x1="284" y1="490.0" x2="426" y2="490.0" stroke="#0F0B07" stroke-width="1.5"/>
+<rect x="416" y="318.0" width="6" height="44" rx="3" fill="#B08D57"/>
+<ellipse cx="270" cy="668" rx="150" ry="14" fill="#000000" opacity="0.35"/>
+<line x1="40" y1="660" x2="480" y2="660" stroke="#B08D57" stroke-width="1" opacity="0.4"/>
+<circle cx="250.0" cy="40.0" r="3.5" fill="#B08D57"/>
+<text x="238.0" y="44.0" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="15" fill="#D9D2C4">pp</text><circle cx="212.0" cy="190.0" r="3.5" fill="#B08D57"/>
+<text x="200.0" y="194.0" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="15" fill="#D9D2C4">mp</text><circle cx="174.0" cy="340.0" r="3.5" fill="#B08D57"/>
+<text x="162.0" y="344.0" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="15" fill="#D9D2C4">mf</text><circle cx="136.0" cy="490.0" r="3.5" fill="#B08D57"/>
+<text x="124.0" y="494.0" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="15" fill="#D9D2C4">f</text><circle cx="98.0" cy="640.0" r="3.5" fill="#B08D57"/>
+<text x="86.0" y="644.0" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="15" fill="#D9D2C4">ff</text>
+</svg>

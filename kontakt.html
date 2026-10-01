@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kontakt — Fortissima</title>
+<meta name="description" content="Kontaktujte Fortissima — nezáväzná cenová ponuka na interiérové dvere.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,ital@9..144,300..700,0..1&family=Work+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/favicon-192.png">
+</head>
+<body>
+<header id="siteHeader">
+  <div class="wrap nav-inner">
+    <a href="index.html" class="logo"><img src="assets/logo-header.png" alt="Fortissima" class="logo-img"></a>
+    <nav>
+      <ul>
+        <li><a href="kolekcie.html">Kolekcie</a></li>
+        <li><a href="zarubne.html">Zárubne</a></li>
+        <li><a href="rozmery.html">Rozmery</a></li>
+        <li><a href="remeslo.html">Remeslo</a></li>
+        <li><a href="kontakt.html" class="active">Kontakt</a></li>
+      </ul>
+    </nav>
+    <a href="kontakt.html" class="nav-cta">VYŽIADAŤ PONUKU</a>
+  </div>
+</header>
+
+<section class="page-hero" style="border-bottom:none; padding-bottom:0;">
+  <div class="wrap">
+    <div class="breadcrumb mono"><a href="index.html">Domov</a> / Kontakt</div>
+    <h1>Poďme naladiť<br><em>váš priestor.</em></h1>
+    <p class="lead">Napíšte nám o svojom projekte — ozveme sa s návrhom kolekcie a nezáväznou cenovou ponukou.</p>
+  </div>
+</section>
+
+<section class="contact">
+  <div class="wrap contact-grid">
+    <div class="contact-info reveal">
+      <div class="eyebrow">KONTAKT</div>
+      <div class="info-line">
+        <span class="k mono">E-mail</span>
+        <span class="v">info@fortissima.sk</span>
+      </div>
+      <div class="info-line">
+        <span class="k mono">Telefón</span>
+        <span class="v">+421 900 000 000</span>
+      </div>
+      <div class="info-line">
+        <span class="k mono">Showroom</span>
+        <span class="v">Košice, Slovensko — čoskoro</span>
+      </div>
+    </div>
+    <form class="reveal" onsubmit="event.preventDefault(); alert('Toto je náhľad dizajnu — formulár zatiaľ nič neodosiela.');">
+      <div class="field">
+        <label for="name">Meno a priezvisko</label>
+        <input id="name" type="text" placeholder="Vaše meno" required>
+      </div>
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" placeholder="vas@email.sk" required>
+      </div>
+      <div class="field">
+        <label for="collection">Kolekcia (ak viete)</label>
+        <input id="collection" type="text" placeholder="Minimal, Vertikal, Prestige…">
+      </div>
+      <div class="field">
+        <label for="msg">Správa</label>
+        <textarea id="msg" placeholder="Rozmery, počet dverí, štýl interiéru…"></textarea>
+      </div>
+      <button type="submit" class="form-submit">Odoslať dopyt</button>
+    </form>
+  </div>
+</section>
+
+<section class="philosophy" style="padding-top:0;">
+  <div class="wrap">
+    <div class="eyebrow">ČASTÉ OTÁZKY</div>
+    <div class="faq-item reveal">
+      <h4>Ako dlho trvá výroba a montáž?</h4>
+      <p>Bežne 6–10 týždňov od zamerania po montáž, v závislosti od kolekcie a rozsahu zákazky.</p>
+    </div>
+    <div class="faq-item reveal">
+      <h4>Ponúkate aj zameranie a montáž, alebo len výrobu?</h4>
+      <p>Zabezpečujeme kompletný proces — od zamerania cez výrobu až po montáž a doladenie na mieste.</p>
+    </div>
+    <div class="faq-item reveal">
+      <h4>Kedy bude dostupný online e-shop?</h4>
+      <p>Pracujeme na ňom — zatiaľ vybavíme každú objednávku individuálne cez tento kontaktný formulár.</p>
+    </div>
+  </div>
+</section>
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <a href="index.html" class="logo"><img src="assets/logo-header-light.png" alt="Fortissima" class="logo-img"></a>
+      <nav>
+        <ul>
+          <li><a href="kolekcie.html">Kolekcie</a></li>
+          <li><a href="zarubne.html">Zárubne</a></li>
+          <li><a href="rozmery.html">Rozmery</a></li>
+          <li><a href="remeslo.html">Remeslo</a></li>
+          <li><a href="kontakt.html">Kontakt</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Fortissima. Všetky práva vyhradené.</span>
+      <span>fortissima.sk</span>
+    </div>
+  </div>
+</footer>
+<script src="script.js"></script>
+</body>
+</html>
