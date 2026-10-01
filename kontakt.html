@@ -16,16 +16,19 @@
 <header id="siteHeader">
   <div class="wrap nav-inner">
     <a href="index.html" class="logo"><img src="assets/logo-header.png" alt="Fortissima" class="logo-img"></a>
-    <nav>
+    <nav id="siteNav" aria-label="Hlavné menu">
       <ul>
         <li><a href="kolekcie.html">Kolekcie</a></li>
         <li><a href="zarubne.html">Zárubne</a></li>
         <li><a href="rozmery.html">Rozmery</a></li>
+        <li><a href="kalkulacka.html">Kalkulácia</a></li>
         <li><a href="remeslo.html">Remeslo</a></li>
         <li><a href="kontakt.html" class="active">Kontakt</a></li>
+        <li class="nav-mobile-cta"><a href="kontakt.html">Vyžiadať ponuku</a></li>
       </ul>
     </nav>
     <a href="kontakt.html" class="nav-cta">VYŽIADAŤ PONUKU</a>
+    <button type="button" class="nav-toggle" aria-label="Otvoriť menu" aria-expanded="false" aria-controls="siteNav"><span></span><span></span></button>
   </div>
 </header>
 
@@ -54,7 +57,8 @@
         <span class="v">Košice, Slovensko — čoskoro</span>
       </div>
     </div>
-    <form class="reveal" onsubmit="event.preventDefault(); alert('Toto je náhľad dizajnu — formulár zatiaľ nič neodosiela.');">
+    <form class="reveal" id="formular" onsubmit="event.preventDefault(); alert('Toto je náhľad dizajnu — formulár zatiaľ nič neodosiela.');">
+      <p class="prefill-note" id="prefillNote" hidden>Zostavu z&nbsp;kalkulačky sme vložili do správy. Doplňte kontakt a&nbsp;odošlite.</p>
       <div class="field">
         <label for="name">Meno a priezvisko</label>
         <input id="name" type="text" placeholder="Vaše meno" required>
@@ -102,6 +106,7 @@
           <li><a href="kolekcie.html">Kolekcie</a></li>
           <li><a href="zarubne.html">Zárubne</a></li>
           <li><a href="rozmery.html">Rozmery</a></li>
+          <li><a href="kalkulacka.html">Kalkulácia</a></li>
           <li><a href="remeslo.html">Remeslo</a></li>
           <li><a href="kontakt.html">Kontakt</a></li>
         </ul>

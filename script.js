@@ -186,25 +186,50 @@ document.querySelectorAll('.color-picker').forEach(wrap => {
   });
 })();
 
-// ===== ZÁRUBNE: anatómia — prepínač prevedenia a zvýraznenie dielov =====
+// ===== ZÁRUBNE: anatómia — prepínač prevedenia, zvýraznenie dielov, popis pod schémou (mobil) =====
 (function () {
   const list = document.querySelector('.anatomy-list');
   if (!list) return;
   const fig = document.querySelector('.anatomy-figure');
-  const set = (n) => {
+  const info = fig.querySelector('.anat-text');
+  const chips = fig.querySelectorAll('.anat-chips button');
+  const hint = info ? info.innerHTML : '';
+  let selected = null;
+
+  const paint = (n) => {
     list.querySelectorAll('li').forEach(li => li.classList.toggle('is-on', li.dataset.co === n));
     fig.querySelectorAll('.co').forEach(g => g.classList.toggle('is-on', g.dataset.co === n));
     fig.querySelectorAll('[data-part]').forEach(p => p.classList.toggle('is-on', p.dataset.part === n));
   };
-  const bind = (el, n) => {
-    el.addEventListener('mouseenter', () => set(n));
-    el.addEventListener('mouseleave', () => set(null));
-    el.addEventListener('focus', () => set(n));
-    el.addEventListener('blur', () => set(null));
+  const show = (n) => {
+    paint(n);
+    chips.forEach(c => c.setAttribute('aria-pressed', c.dataset.co === selected ? 'true' : 'false'));
+    if (!info) return;
+    const li = n && list.querySelector('li[data-co="' + n + '"]');
+    if (!li) { info.innerHTML = hint; return; }
+    info.innerHTML = '<div class="anat-head"><span class="n">' + n + '</span>' + li.querySelector('h3').outerHTML + '</div>' +
+                     li.querySelector('p').outerHTML;
   };
-  list.querySelectorAll('li').forEach(li => { li.tabIndex = 0; bind(li, li.dataset.co); });
-  fig.querySelectorAll('.co').forEach(g => bind(g, g.dataset.co));
-  fig.querySelectorAll('[data-part]').forEach(p => bind(p, p.dataset.part));
+  const select = (n) => { selected = (selected === n) ? null : n; show(selected); };
+  const hoverIn = (n) => paint(n);
+  const hoverOut = () => paint(selected);
+
+  // myš (počítač)
+  list.querySelectorAll('li').forEach(li => {
+    li.tabIndex = 0;
+    li.addEventListener('mouseenter', () => hoverIn(li.dataset.co));
+    li.addEventListener('mouseleave', hoverOut);
+    li.addEventListener('focus', () => hoverIn(li.dataset.co));
+    li.addEventListener('blur', hoverOut);
+  });
+  fig.querySelectorAll('.co, [data-part]').forEach(el => {
+    const n = el.dataset.co || el.dataset.part;
+    el.addEventListener('mouseenter', () => hoverIn(n));
+    el.addEventListener('mouseleave', hoverOut);
+    el.addEventListener('click', () => select(n));   // ťuknutie (mobil) aj klik
+    el.style.cursor = 'pointer';
+  });
+  chips.forEach(c => c.addEventListener('click', () => select(c.dataset.co)));
 
   const toggle = document.getElementById('anatToggle');
   if (toggle) toggle.addEventListener('click', e => {
@@ -212,6 +237,7 @@ document.querySelectorAll('.color-picker').forEach(wrap => {
     if (!b) return;
     toggle.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
     fig.querySelectorAll('[data-anat]').forEach(v => { v.hidden = v.dataset.anat !== b.dataset.v; });
+    paint(selected);
   });
 })();
 
@@ -291,22 +317,189 @@ function extLabel(ext) {
     });
   });
   const txt = (id, s) => { const el = document.getElementById(id); if (el) el.textContent = s; };
-  const out = k => document.querySelector('[data-out="' + k + '"]');
+  const out = (k, v) => { const el = document.querySelector('[data-out="' + k + '"]'); if (el) el.textContent = v; };
   function render() {
     const rw = tblW.querySelector('tr[data-w="' + state.w + '"]');
     const rh = tblH.querySelector('tr[data-h="' + state.h + '"]');
     if (!rw || !rh) return;
-    const W = rw.dataset, H = rh.dataset;
-    const falc = state.t === 'falc';
-    txt('tS3', 'Š3  ' + W.s3); txt('tS2', 'Š2  ' + W.s2); txt('tS1', 'Š1  ' + W.s1);
-    txt('tV3', 'V3  ' + H.v3); txt('tV2', 'V2  ' + H.v2); txt('tV1', 'V1  ' + H.v1);
-    out('open').textContent = W.s2 + ' × ' + H.v2;
-    out('pass').textContent = W.s1 + ' × ' + H.v1;
-    out('obl').textContent = W.s3 + ' × ' + H.v3;
-    out('leaf').textContent = (falc ? W.s5 : W.s6) + ' × ' + (falc ? H.v5 : H.v6);
-    out('leafcode').textContent = falc ? 'Š5 × V5' : 'Š6 × V6';
+    const W = rw.dataset, H = rh.dataset, falc = state.t === 'falc';
+    ['1', '2', '3', '4'].forEach(i => { txt('tS' + i, 'Š' + i + '  ' + W['s' + i]); txt('tV' + i, 'V' + i + '  ' + H['v' + i]); });
+    txt('tSO', 'otvor  ' + W.o1 + '–' + W.o2);
+    txt('tVO', 'otvor  ' + H.o1 + '–' + H.o2);
+    out('pass', W.s1 + ' × ' + H.v1);
+    out('open', W.o1 + '–' + W.o2 + ' × ' + H.o1 + '–' + H.o2);
+    out('falc', W.s2 + ' × ' + H.v2);
+    out('ost', W.s3 + ' × ' + H.v3);
+    out('obl', W.s4 + ' × ' + H.v4);
+    out('leaf', falc ? W.s5 + ' × ' + H.v5 : W.s7 + ' × ' + H.v7);
+    out('leafcode', falc ? 'Š5 × V5' : 'Š7 × V7');
+    out('leafdsc', falc ? 'Vrátane polodrážky (falcu).' : 'Bezfalcové krídlo nemá polodrážku – celkový rozmer je zároveň jediný.');
+    out('leaffalc', W.s6 + ' × ' + H.v6);
+    document.querySelectorAll('[data-plan]').forEach(v => { v.hidden = v.dataset.plan !== state.t; });
+    out('plancap', falc ? 'falcová zárubňa' : 'bezfalcová zárubňa');
+    document.querySelectorAll('[data-pk]').forEach(el => {
+      const k = el.dataset.pk;
+      el.textContent = k === 'O' ? 'otvor  ' + W.o1 + '–' + W.o2 : 'Š' + k + '  ' + W['s' + k];
+    });
+    document.querySelectorAll('[data-falc-only]').forEach(el => { el.hidden = !falc; });
     tblW.querySelectorAll('tbody tr').forEach(r => r.classList.toggle('is-sel', r === rw));
     tblH.querySelectorAll('tbody tr').forEach(r => r.classList.toggle('is-sel', r === rh));
   }
   render();
+})();
+
+// ===== mobilné menu =====
+(function () {
+  const header = document.getElementById('siteHeader');
+  const btn = header && header.querySelector('.nav-toggle');
+  if (!btn) return;
+  const setOpen = (open) => {
+    header.classList.toggle('nav-open', open);
+    document.body.classList.toggle('nav-lock', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.setAttribute('aria-label', open ? 'Zavrieť menu' : 'Otvoriť menu');
+  };
+  btn.addEventListener('click', () => setOpen(!header.classList.contains('nav-open')));
+  header.querySelectorAll('nav a').forEach(a => a.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+  window.addEventListener('resize', () => { if (window.innerWidth > 980) setOpen(false); });
+})();
+
+// ===== KALKULÁCIA =====
+(function () {
+  const form = document.getElementById('calcForm');
+  if (!form) return;
+  const API = 'api/cena.php';
+  const $ = id => document.getElementById(id);
+  const sum = $('sum'), items = $('sumItems'), total = $('sumTotal'), barTotal = $('sumBarTotal');
+  const errBox = $('sumErr'), btn = $('sumSend');
+  const eur = new Intl.NumberFormat('sk-SK', { style: 'currency', currency: 'EUR' });
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const NAMES = { minimal: 'Minimal', vertikal: 'Vertikal', prestige: 'Prestige', falc: 'falcové', bez: 'bezfalcové',
+                  biela: 'biela', kasmirova: 'kašmírová', lave: 'ľavé', prave: 'pravé' };
+  const H = { '197': 1970, '2055': 2055, '210': 2100 }, HTXT = { '197': '197', '2055': '205,5', '210': '210' };
+  let last = null, ctrl = null, timer = null;
+
+  // predvoľba kolekcie z odkazu (kalkulacka.html?kolekcia=prestige)
+  try {
+    const k = new URLSearchParams(location.search).get('kolekcia');
+    const r = k && form.querySelector('input[name="kolekcia"][value="' + CSS.escape(k) + '"]');
+    if (r) r.checked = true;
+  } catch (e) {}
+
+  const val = n => { const el = form.querySelector('[name="' + n + '"]:checked') || form.elements[n]; return el ? el.value : ''; };
+  const state = () => ({
+    kolekcia: val('kolekcia'), prevedenie: val('prevedenie'), farba: val('farba'), sirka: val('sirka'), vyska: val('vyska'),
+    smer: val('smer'), stena: form.elements.stena.value, kovanie: form.elements.kovanie.value,
+    ks: form.elements.ks.value, montaz: form.elements.montaz.checked ? '1' : '0', doprava: form.elements.doprava.checked ? '1' : '0'
+  });
+
+  function hints(s) {
+    const N = +s.sirka * 10, V1 = H[s.vyska];
+    $('calcDims').innerHTML = 'Priechod <b>' + (N + 6) + ' × ' + V1 + ' mm</b> · stavebný otvor <b>' + (N + 80) + '–' + (N + 110) +
+      ' × ' + (V1 + 40) + '–' + (V1 + 60) + ' mm</b>';
+    const d = parseInt(s.stena, 10);
+    let t = 'Zadajte hrúbku steny od 80 do 400 mm.';
+    if (!isNaN(d) && d >= 80 && d <= 400 && typeof frameForWall === 'function') {
+      const h = frameForWall(d)[0], e = extLabel(h.ext);
+      t = 'Zárubňa <b>F' + h.F + (e ? ' + ' + e : '') + '</b> · rozsah ' + h.min + '–' + h.max + ' mm';
+    }
+    $('stenaOut').innerHTML = t;
+  }
+
+  function showError(msg) {
+    errBox.textContent = msg; errBox.hidden = false;
+    items.innerHTML = ''; total.textContent = '–'; barTotal.textContent = '–';
+    $('sumDod').textContent = '–'; $('sumZar').textContent = '–';
+  }
+
+  function calc() {
+    const s = state();
+    hints(s);
+    if (location.protocol === 'file:') {
+      showError('Cena sa počíta na serveri. Kalkulácia funguje po nahratí webu na hosting s PHP.');
+      return;
+    }
+    if (ctrl) ctrl.abort();
+    ctrl = new AbortController();
+    sum.classList.add('is-loading');
+    const q = new URLSearchParams(s); q.delete('smer');
+    fetch(API + '?' + q.toString(), { signal: ctrl.signal, headers: { 'Accept': 'application/json' } })
+      .then(r => r.json().catch(() => ({ ok: false, chyba: 'Server nevrátil platnú odpoveď.' })))
+      .then(j => {
+        sum.classList.remove('is-loading');
+        if (!j.ok) { last = null; showError(j.chyba || 'Cenu sa nepodarilo vypočítať.'); return; }
+        errBox.hidden = true;
+        last = { s, j };
+        items.innerHTML = j.polozky.map(p =>
+          '<li><span>' + esc(p.nazov) + '</span><span class="p">' + eur.format(p.spolu) + '</span>' +
+          '<span class="q">' + p.mnozstvo + ' × ' + eur.format(p.cena_ks) + '</span></li>').join('');
+        total.textContent = eur.format(j.spolu);
+        barTotal.textContent = eur.format(j.spolu);
+        $('sumDod').textContent = j.dodanie;
+        $('sumZar').textContent = j.zarubna + ' (' + j.rozsah_steny + ')';
+      })
+      .catch(e => {
+        if (e.name === 'AbortError') return;
+        sum.classList.remove('is-loading');
+        showError('Cenu sa nepodarilo načítať. Skúste to prosím znova alebo nám pošlite dopyt.');
+      });
+  }
+  const schedule = () => { clearTimeout(timer); timer = setTimeout(calc, 180); };
+
+  // zoznam kovania zo servera (bez cien)
+  if (location.protocol !== 'file:') {
+    fetch(API + '?moznosti=1').then(r => r.json()).then(j => {
+      if (!j.ok) return;
+      const sel = form.elements.kovanie, cur = sel.value;
+      sel.innerHTML = j.kovanie.map(k => '<option value="' + esc(k.kod) + '">' + esc(k.nazov) + '</option>').join('');
+      if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+      schedule();
+    }).catch(() => {});
+  }
+
+  form.addEventListener('input', schedule);
+  form.addEventListener('change', schedule);
+  form.querySelectorAll('.qty button').forEach(b => b.addEventListener('click', () => {
+    const i = form.elements.ks, v = Math.min(50, Math.max(1, (parseInt(i.value, 10) || 1) + +b.dataset.q));
+    i.value = v; schedule();
+  }));
+
+  // odoslanie dopytu → kontaktný formulár s vyplnenou správou
+  btn.addEventListener('click', () => {
+    const s = state();
+    const lines = [
+      'Dopyt z kalkulačky',
+      'Kolekcia: ' + NAMES[s.kolekcia] + ', ' + NAMES[s.prevedenie] + ', ' + NAMES[s.farba],
+      'Rozmer: ' + s.sirka + '/' + HTXT[s.vyska] + ', ' + NAMES[s.smer],
+      'Hrúbka steny: ' + s.stena + ' mm' + (last ? ' (zárubňa ' + last.j.zarubna + ')' : ''),
+      'Kovanie: ' + form.elements.kovanie.options[form.elements.kovanie.selectedIndex].text,
+      'Počet: ' + s.ks + ' ks · montáž: ' + (s.montaz === '1' ? 'áno' : 'nie') + ' · doprava: ' + (s.doprava === '1' ? 'áno' : 'nie')
+    ];
+    if (last) lines.push('Orientačná cena: ' + eur.format(last.j.spolu) + ' s DPH');
+    try { sessionStorage.setItem('fortissimaDopyt', JSON.stringify({ kolekcia: NAMES[s.kolekcia], text: lines.join('\n') })); } catch (e) {}
+    location.href = 'kontakt.html#formular';
+  });
+
+  // mobil: spodná lišta s cenou sa skryje, keď je súhrn na obrazovke
+  const bar = $('sumBar');
+  if (bar && 'IntersectionObserver' in window) {
+    new IntersectionObserver(es => es.forEach(e => bar.classList.toggle('is-hidden', e.isIntersecting))).observe(sum);
+  }
+  calc();
+})();
+
+// ===== KONTAKT: predvyplnenie z kalkulačky =====
+(function () {
+  const msg = document.getElementById('msg');
+  if (!msg) return;
+  let d = null;
+  try { d = JSON.parse(sessionStorage.getItem('fortissimaDopyt') || 'null'); sessionStorage.removeItem('fortissimaDopyt'); } catch (e) {}
+  if (!d) return;
+  msg.value = d.text + '\n\n';
+  msg.rows = 9;
+  const col = document.getElementById('collection');
+  if (col && d.kolekcia) col.value = d.kolekcia;
+  const note = document.getElementById('prefillNote');
+  if (note) note.hidden = false;
 })();

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulácia ceny — Fortissima</title>
+<meta name="description" content="Orientačná cena interiérových dverí Fortissima vrátane zárubne, kovania, montáže a dopravy.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,ital@9..144,300..700,0..1&amp;family=Work+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/favicon-192.png">
+</head>
+<body>
+<header id="siteHeader">
+  <div class="wrap nav-inner">
+    <a href="index.html" class="logo"><img src="assets/logo-header.png" alt="Fortissima" class="logo-img"></a>
+    <nav id="siteNav" aria-label="Hlavné menu">
+      <ul>
+        <li><a href="kolekcie.html">Kolekcie</a></li>
+        <li><a href="zarubne.html">Zárubne</a></li>
+        <li><a href="rozmery.html">Rozmery</a></li>
+        <li><a href="kalkulacka.html" class="active">Kalkulácia</a></li>
+        <li><a href="remeslo.html">Remeslo</a></li>
+        <li><a href="kontakt.html">Kontakt</a></li>
+        <li class="nav-mobile-cta"><a href="kontakt.html">Vyžiadať ponuku</a></li>
+      </ul>
+    </nav>
+    <a href="kontakt.html" class="nav-cta">VYŽIADAŤ PONUKU</a>
+    <button type="button" class="nav-toggle" aria-label="Otvoriť menu" aria-expanded="false" aria-controls="siteNav"><span></span><span></span></button>
+  </div>
+</header>
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="breadcrumb mono"><a href="index.html">Domov</a> / Kalkulácia</div>
+    <h1>Orientačná cena<br><em>za pár kliknutí.</em></h1>
+    <p class="lead">Vyberte kolekciu, rozmer a&nbsp;hrúbku steny. Cenu spočítame vrátane zárubne, kovania aj montáže.</p>
+  </div>
+</section>
+
+<section class="calc-sec">
+  <div class="wrap calc-grid">
+    <form class="cfg" id="calcForm" novalidate>
+      <fieldset class="step">
+        <legend class="step-h"><span class="mono">01</span>Kolekcia</legend>
+        <div class="picks"><label class="pick"><input type="radio" name="kolekcia" value="minimal" checked><span class="pick-img"><img src="assets/scenes/AK-1.webp" alt="" loading="lazy"></span><span class="pick-t">Minimal<small>AK-1</small></span></label><label class="pick"><input type="radio" name="kolekcia" value="vertikal"><span class="pick-img"><img src="assets/scenes/XK-1.webp" alt="" loading="lazy"></span><span class="pick-t">Vertikal<small>XK-1</small></span></label><label class="pick"><input type="radio" name="kolekcia" value="prestige"><span class="pick-img"><img src="assets/scenes/QK-1.webp" alt="" loading="lazy"></span><span class="pick-t">Prestige<small>QK-1</small></span></label></div>
+      </fieldset>
+
+      <fieldset class="step">
+        <legend class="step-h"><span class="mono">02</span>Prevedenie a&nbsp;farba</legend>
+        <div class="row2">
+          <div><div class="k">Prevedenie</div><div class="seg seg-radio"><label><input type="radio" name="prevedenie" value="falc" checked><span>Falcové</span></label><label><input type="radio" name="prevedenie" value="bez"><span>Bezfalcové</span></label></div>
+            <a href="zarubne.html" class="hint-link">Aký je rozdiel?</a></div>
+          <div><div class="k">Farba</div><div class="sw-radio">
+            <label><input type="radio" name="farba" value="biela" checked><span class="sw" style="background:#FBFAF6;border-color:#D9D2C2"></span><span class="sw-t">Biela</span></label>
+            <label><input type="radio" name="farba" value="kasmirova"><span class="sw" style="background:#D9CBB0;border-color:#B5A488"></span><span class="sw-t">Kašmírová</span></label>
+          </div></div>
+        </div>
+      </fieldset>
+
+      <fieldset class="step">
+        <legend class="step-h"><span class="mono">03</span>Rozmer a&nbsp;smer otvárania</legend>
+        <div class="k">Menovitá šírka</div>
+        <div class="seg seg-radio"><label><input type="radio" name="sirka" value="60"><span>60</span></label><label><input type="radio" name="sirka" value="65"><span>65</span></label><label><input type="radio" name="sirka" value="70"><span>70</span></label><label><input type="radio" name="sirka" value="80" checked><span>80</span></label><label><input type="radio" name="sirka" value="90"><span>90</span></label></div>
+        <div class="k">Výška</div>
+        <div class="seg seg-radio"><label><input type="radio" name="vyska" value="197" checked><span>STN 197</span></label><label><input type="radio" name="vyska" value="2055"><span>HU 205,5</span></label><label><input type="radio" name="vyska" value="210"><span>DIN 210</span></label></div>
+        <div class="k">Smer otvárania</div>
+        <div class="seg seg-radio"><label><input type="radio" name="smer" value="lave" checked><span>Ľavé</span></label><label><input type="radio" name="smer" value="prave"><span>Pravé</span></label></div>
+        <a href="rozmery.html#smer" class="hint-link">Ako určiť ľavé a&nbsp;pravé dvere?</a>
+        <p class="calc-dims" id="calcDims"></p>
+      </fieldset>
+
+      <fieldset class="step">
+        <legend class="step-h"><span class="mono">04</span>Hrúbka steny</legend>
+        <div class="wall-in">
+          <input type="number" name="stena" id="stena" inputmode="numeric" min="80" max="400" step="1" value="120" aria-describedby="stenaOut"><span>mm</span>
+        </div>
+        <p class="calc-dims" id="stenaOut"></p>
+        <a href="zarubne.html#rozsahy" class="hint-link">Ako sa určuje typ zárubne?</a>
+      </fieldset>
+
+      <fieldset class="step">
+        <legend class="step-h"><span class="mono">05</span>Kovanie</legend>
+        <select name="kovanie" id="kovanie" class="sel"><option value="bez">Bez kovania</option></select>
+      </fieldset>
+
+      <fieldset class="step">
+        <legend class="step-h"><span class="mono">06</span>Počet a&nbsp;služby</legend>
+        <div class="qty">
+          <button type="button" data-q="-1" aria-label="Menej">−</button>
+          <input type="number" name="ks" id="ks" min="1" max="50" value="1" inputmode="numeric" aria-label="Počet kusov"><span>ks</span>
+          <button type="button" data-q="1" aria-label="Viac">+</button>
+        </div>
+        <label class="chk"><input type="checkbox" name="montaz" value="1" checked><span>Montáž</span></label>
+        <label class="chk"><input type="checkbox" name="doprava" value="1" checked><span>Doprava</span></label>
+      </fieldset>
+    </form>
+
+    <aside class="sum" id="sum" aria-live="polite">
+      <div class="eyebrow">VAŠA ZOSTAVA</div>
+      <ul class="sum-items" id="sumItems"><li class="sum-wait">Počítam…</li></ul>
+      <div class="sum-total"><span>Spolu s&nbsp;DPH</span><strong id="sumTotal">–</strong></div>
+      <div class="sum-meta"><span>Dodanie</span><span id="sumDod">–</span></div>
+      <div class="sum-meta"><span>Zárubňa</span><span id="sumZar">–</span></div>
+      <p class="sum-err" id="sumErr" hidden></p>
+      <button type="button" class="sum-btn" id="sumSend">Odoslať dopyt s&nbsp;touto zostavou</button>
+      <p class="sum-note">Orientačná cena vrátane DPH. Presnú ponuku pripravíme po zameraní.</p>
+    </aside>
+  </div>
+</section>
+<a href="#sum" class="sum-bar" id="sumBar"><span>Orientačná cena</span><strong id="sumBarTotal">–</strong></a>
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <a href="index.html" class="logo"><img src="assets/logo-header-light.png" alt="Fortissima" class="logo-img"></a>
+      <nav>
+        <ul>
+          <li><a href="kolekcie.html">Kolekcie</a></li>
+          <li><a href="zarubne.html">Zárubne</a></li>
+          <li><a href="rozmery.html">Rozmery</a></li>
+          <li><a href="kalkulacka.html">Kalkulácia</a></li>
+          <li><a href="remeslo.html">Remeslo</a></li>
+          <li><a href="kontakt.html">Kontakt</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Fortissima. Všetky práva vyhradené.</span>
+      <span>fortissima.sk</span>
+    </div>
+  </div>
+</footer>
+<script src="script.js"></script>
+</body>
+</html>

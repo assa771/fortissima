@@ -16,16 +16,19 @@
 <header id="siteHeader">
   <div class="wrap nav-inner">
     <a href="index.html" class="logo"><img src="assets/logo-header.png" alt="Fortissima" class="logo-img"></a>
-    <nav>
+    <nav id="siteNav" aria-label="Hlavné menu">
       <ul>
         <li><a href="kolekcie.html">Kolekcie</a></li>
         <li><a href="zarubne.html" class="active">Zárubne</a></li>
         <li><a href="rozmery.html">Rozmery</a></li>
+        <li><a href="kalkulacka.html">Kalkulácia</a></li>
         <li><a href="remeslo.html">Remeslo</a></li>
         <li><a href="kontakt.html">Kontakt</a></li>
+        <li class="nav-mobile-cta"><a href="kontakt.html">Vyžiadať ponuku</a></li>
       </ul>
     </nav>
     <a href="kontakt.html" class="nav-cta">VYŽIADAŤ PONUKU</a>
+    <button type="button" class="nav-toggle" aria-label="Otvoriť menu" aria-expanded="false" aria-controls="siteNav"><span></span><span></span></button>
   </div>
 </header>
 
@@ -246,6 +249,7 @@
 <g class="co" data-co="4"><line x1="190" y1="624" x2="300" y2="860"/><circle cx="190" cy="624" r="9" class="co-dot"/><circle cx="300" cy="860" r="40"/><text x="300" y="875" text-anchor="middle">4</text></g>
 <g class="co" data-co="5"><line x1="925.5" y1="690" x2="760" y2="960"/><circle cx="925.5" cy="690" r="9" class="co-dot"/><circle cx="760" cy="960" r="40"/><text x="760" y="975" text-anchor="middle">5</text></g>
 <g class="co" data-co="6"><line x1="1018" y1="950" x2="1290" y2="1010"/><circle cx="1018" cy="950" r="9" class="co-dot"/><circle cx="1290" cy="1010" r="40"/><text x="1290" y="1025" text-anchor="middle">6</text></g>
+<g class="co" data-co="7"><line x1="560" y1="512" x2="720" y2="370"/><circle cx="560" cy="512" r="9" class="co-dot"/><circle cx="720" cy="370" r="40"/><text x="720" y="385" text-anchor="middle">7</text></g>
 </svg></div>
       <div data-anat="bez" hidden><svg viewBox="1754.7 -70 1660 1200" class="rez rez2 rez-bez" role="img" aria-label="Pôdorysný rez bezfalcovou zárubňou">
 <rect x="2119.62" y="5.6" width="831.1400000000003" height="440.03" class="wall"/>
@@ -338,7 +342,14 @@
 <g class="co" data-co="4"><line x1="2174.74" y1="624" x2="2284.74" y2="860"/><circle cx="2174.74" cy="624" r="9" class="co-dot"/><circle cx="2284.74" cy="860" r="40"/><text x="2284.74" y="875" text-anchor="middle">4</text></g>
 <g class="co" data-co="5"><line x1="2806.0" y1="690" x2="2744.74" y2="960"/><circle cx="2806.0" cy="690" r="9" class="co-dot"/><circle cx="2744.74" cy="960" r="40"/><text x="2744.74" y="975" text-anchor="middle">5</text></g>
 <g class="co" data-co="6"><line x1="2957" y1="950" x2="3274.74" y2="1010"/><circle cx="2957" cy="950" r="9" class="co-dot"/><circle cx="3274.74" cy="1010" r="40"/><text x="3274.74" y="1025" text-anchor="middle">6</text></g>
+<g class="co" data-co="7"><line x1="2544.74" y1="512" x2="2704.74" y2="370"/><circle cx="2544.74" cy="512" r="9" class="co-dot"/><circle cx="2704.74" cy="370" r="40"/><text x="2704.74" y="385" text-anchor="middle">7</text></g>
 </svg></div>
+      <div class="anat-info">
+        <div class="anat-chips" role="group" aria-label="Diely zárubne">
+          <button type="button" data-co="1" aria-label="Ostenie">1</button><button type="button" data-co="2" aria-label="Závesová obložka">2</button><button type="button" data-co="3" aria-label="Slepá obložka">3</button><button type="button" data-co="4" aria-label="Pero a drážka">4</button><button type="button" data-co="5" aria-label="Tesnenie">5</button><button type="button" data-co="6" aria-label="Krídlo">6</button><button type="button" data-co="7" aria-label="Montážna medzera">7</button>
+        </div>
+        <div class="anat-text" aria-live="polite"><p class="anat-hint">Ťuknite na diel v&nbsp;nákrese alebo na číslo.</p></div>
+      </div>
       <figcaption>PÔDORYSNÝ REZ ZÁRUBŇOU</figcaption>
     </figure>
     <div class="reveal">
@@ -352,6 +363,7 @@
         <li data-co="4"><span class="n">4</span><div><h3>Pero a&nbsp;drážka</h3><p>Obe obložky sú do ostenia zasunuté perom. Pero slepej obložky sa v&nbsp;drážke posúva, a&nbsp;tak vyrovná hrúbku steny v&nbsp;rámci regulačného rozsahu – pri F80 od 80 do 100&nbsp;mm.</p></div></li>
         <li data-co="5"><span class="n">5</span><div><h3>Tesnenie</h3><p>Vo výreze ostenia. Tlmí dovretie krídla a&nbsp;utesní škáru medzi krídlom a&nbsp;zárubňou.</p></div></li>
         <li data-co="6"><span class="n">6</span><div><h3>Krídlo</h3><p>Falcové krídlo prekryje polodrážkou hranu obložky, bezfalcové s&nbsp;obložkou lícuje v&nbsp;jednej rovine.</p></div></li>
+        <li data-co="7"><span class="n">7</span><div><h3>Montážna medzera <small>· pena</small></h3><p>Priestor medzi stenou a&nbsp;ostením. Pri montáži sa vyplní montážnou penou, ktorá zárubňu v&nbsp;otvore pevne ukotví a&nbsp;vyrovná nerovnosti muriva.</p></div></li>
       </ol>
     </div>
   </div>
@@ -438,6 +450,7 @@
           <li><a href="kolekcie.html">Kolekcie</a></li>
           <li><a href="zarubne.html">Zárubne</a></li>
           <li><a href="rozmery.html">Rozmery</a></li>
+          <li><a href="kalkulacka.html">Kalkulácia</a></li>
           <li><a href="remeslo.html">Remeslo</a></li>
           <li><a href="kontakt.html">Kontakt</a></li>
         </ul>
