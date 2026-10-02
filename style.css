@@ -1826,3 +1826,22 @@ dialog.rz::backdrop{ background:rgba(23,20,15,.6); }
 .rz-close{ background:var(--ink); color:var(--paper); border:none; padding:10px 22px; font:inherit; font-size:.88rem; cursor:pointer; }
 @media (max-width:600px){ .rz-head, .rz-body, .rz-foot{ padding-left:16px; padding-right:16px; } .rz-line{ padding:10px; } }
 @media print{ dialog.rz{ display:none !important; } }
+
+/* ===== zväčšený nákres ===== */
+#doorPrev, .qi-img{ cursor:zoom-in; position:relative; }
+#doorPrev::after, .qi-img::after{ content:'⤢'; position:absolute; right:8px; top:6px; width:28px; height:28px; display:grid; place-items:center;
+  border-radius:50%; background:rgba(31,27,22,.6); color:#fff; font-size:15px; line-height:1; opacity:.75; pointer-events:none; transition:opacity .2s; }
+.qi-img::after{ width:22px; height:22px; font-size:12px; right:4px; top:4px; }
+#doorPrev:hover::after, .qi-img:hover::after{ opacity:1; }
+dialog.lb{ max-width:none; max-height:none; width:100vw; height:100vh; margin:0; padding:0; border:none; background:rgba(23,20,15,.88);
+  cursor:zoom-out; }
+dialog.lb[open]{ display:flex; align-items:center; justify-content:center; }
+dialog.lb::backdrop{ background:transparent; }
+.lb-fig{ margin:0; display:flex; flex-direction:column; align-items:center; gap:14px; max-height:100%; padding:64px 16px 24px; }
+.lb-img{ height:min(82vh, 1100px); aspect-ratio:1120/2300; max-width:92vw; background:#ECE8E1; border-radius:4px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.45); }
+.lb-img svg{ width:100%; height:100%; display:block; }
+.lb-fig figcaption{ color:var(--paper); font-size:.95rem; text-align:center; max-width:60ch; }
+.lb-x{ position:fixed; top:14px; right:18px; width:56px; height:56px; border-radius:50%; border:2px solid rgba(246,244,238,.7);
+  background:rgba(23,20,15,.6); color:#fff; font-size:2.4rem; line-height:1; cursor:pointer; display:grid; place-items:center; }
+.lb-x:hover{ background:var(--oxblood); border-color:var(--oxblood); }
+@media print{ dialog.lb{ display:none !important; } #doorPrev::after, .qi-img::after{ display:none; } }

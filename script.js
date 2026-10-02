@@ -758,9 +758,24 @@ const Ponuka = (function () {
     if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
   }
 
+  /* ---------- zväčšený nákres (klik na obrázok) – zavrie sa krížikom, klikom kamkoľvek alebo Esc ---------- */
+  let lb = null;
+  function zvacsi(p, popisok) {
+    if (!lb) {
+      lb = document.createElement('dialog');
+      lb.className = 'lb';
+      lb.innerHTML = '<button type="button" class="lb-x" aria-label="Zavrieť">×</button><figure class="lb-fig"><div class="lb-img"></div><figcaption></figcaption></figure>';
+      document.body.appendChild(lb);
+      lb.addEventListener('click', () => lb.close());           // akýkoľvek klik/dotyk zavrie
+    }
+    lb.querySelector('.lb-img').innerHTML = obrazok(p);
+    lb.querySelector('figcaption').textContent = popisok || popis(p);
+    if (typeof lb.showModal === 'function') lb.showModal(); else lb.setAttribute('open', '');
+  }
+
   badge();
   window.addEventListener('storage', e => { if (e.key === KEY) badge(); });
-  return { rozpis, jeSlepa, jeRamove, MRIEZKA, moznosti, obrazok, load, save, novaPonuka, uid, ocen, kovanie, popis, badge, pocetKusov, DEMO, NAMES, H, HTXT, eur, esc };
+  return { zvacsi, rozpis, jeSlepa, jeRamove, MRIEZKA, moznosti, obrazok, load, save, novaPonuka, uid, ocen, kovanie, popis, badge, pocetKusov, DEMO, NAMES, H, HTXT, eur, esc };
 })();
 
 
@@ -885,6 +900,13 @@ const Ponuka = (function () {
     const n = P.pocetKusov(P.load()), a = $('sumView');
     if (a) { a.hidden = n === 0; a.textContent = 'Zobraziť ponuku (' + n + ' ks) →'; }
   }
+  const prevEl = $('doorPrev');
+  if (prevEl) {
+    prevEl.setAttribute('role', 'button'); prevEl.tabIndex = 0; prevEl.title = 'Zväčšiť nákres';
+    const otvor = () => { const p = polozka(); P.zvacsi(p, (p.nazov ? p.nazov + ' – ' : '') + P.popis(p)); };
+    prevEl.addEventListener('click', otvor);
+    prevEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); otvor(); } });
+  }
   const whyBtn = $('sumWhy');
   if (whyBtn) whyBtn.addEventListener('click', () => {
     if (!last) return;
@@ -964,7 +986,7 @@ const Ponuka = (function () {
       const lines = r && r.ok ? r.riadky.map(x => '<tr><td class="qk">' + P.esc(x.kod) + '</td><td>' + P.esc(x.nazov) + '</td><td class="n">' + x.mnozstvo +
         '</td><td class="n">' + P.eur.format(x.cena_ks) + '</td><td class="n">' + P.eur.format(x.spolu) + '</td></tr>').join('') : '';
       return '<article class="qi" data-uid="' + p.uid + '">' +
-        '<div class="qi-img">' + P.obrazok(p, { rozmer: false }) + '</div><div class="qi-main">' +
+        '<div class="qi-img" data-a="zvacsi" role="button" tabindex="0" title="Zväčšiť nákres">' + P.obrazok(p, { rozmer: false }) + '</div><div class="qi-main">' +
         '<div class="qi-head"><span class="qi-n mono">' + String(i + 1).padStart(2, '0') + '</span>' +
         '<div class="qi-t"><h3>' + P.esc(p.nazov || (P.jeSlepa(p) ? 'Slepá zárubňa' : P.NAMES[p.kolekcia])) + '</h3><p>' +
           P.esc(P.jeSlepa(p) ? (p.nazov ? 'Slepá zárubňa · ' : '') + 'tunelová, bez závesov a protiplechu' : (p.nazov ? P.NAMES[p.kolekcia] + ' · ' : '') + P.NAMES[p.prevedenie] + ' dvere') + '</p></div>' +
@@ -1008,6 +1030,7 @@ const Ponuka = (function () {
     const a = b.dataset.a;
     const nadpisPol = p => (p.nazov ? p.nazov + ' – ' : '') + P.popis(p) + ', ' + p.ks + ' ks';
     const resPol = p => (res && res.polozky || []).find(x => x.uid === p.uid);
+    if (a === 'zvacsi') return P.zvacsi(p, (p.nazov ? p.nazov + ' – ' : '') + P.popis(p) + ', ' + p.ks + ' ks');
     if (a === 'rozpis') { const r = resPol(p); return P.rozpis({ nadpis: nadpisPol(p), polozky: [{ nadpis: nadpisPol(p), r }], spolu: r && r.ok ? r.spolu : null }); }
     if (a === 'plus' || a === 'minus') p.ks = Math.min(50, Math.max(1, p.ks + (a === 'plus' ? 1 : -1)));
     if (a === 'dup') o.polozky.splice(i + 1, 0, Object.assign({}, p, { uid: P.uid() }));
