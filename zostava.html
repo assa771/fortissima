@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cenová ponuka — Fortissima</title>
+<meta name="description" content="Vaša orientačná cenová ponuka interiérových dverí Fortissima.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,ital@9..144,300..700,0..1&amp;family=Work+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/favicon-192.png">
+</head>
+<body>
+<header id="siteHeader">
+  <div class="wrap nav-inner">
+    <a href="index.html" class="logo"><img src="assets/logo-header.png" alt="Fortissima" class="logo-img"></a>
+    <nav id="siteNav" aria-label="Hlavné menu">
+      <ul>
+        <li><a href="kolekcie.html">Kolekcie</a></li>
+        <li><a href="zarubne.html">Zárubne</a></li>
+        <li><a href="rozmery.html">Rozmery</a></li>
+        <li><a href="kalkulacka.html">Kalkulácia</a></li>
+        <li><a href="remeslo.html">Remeslo</a></li>
+        <li><a href="kontakt.html">Kontakt</a></li>
+        <li class="nav-mobile-cta"><a href="kontakt.html">Vyžiadať ponuku</a></li>
+      </ul>
+    </nav>
+    <a href="zostava.html" class="nav-quote" aria-label="Cenová ponuka" title="Cenová ponuka"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h7.5l4 4v13h-11.5z"/><path d="M14 3.5v4h4"/><path d="M9.5 11.5h5.5M9.5 14.5h5.5M9.5 17.5h3.5"/></svg><span class="nav-quote-n" hidden>0</span></a>
+    <a href="kontakt.html" class="nav-cta">VYŽIADAŤ PONUKU</a>
+    <button type="button" class="nav-toggle" aria-label="Otvoriť menu" aria-expanded="false" aria-controls="siteNav"><span></span><span></span></button>
+  </div>
+</header>
+
+<section class="page-hero q-hero">
+  <div class="wrap">
+    <div class="breadcrumb mono"><a href="index.html">Domov</a> / <a href="kalkulacka.html">Kalkulácia</a> / Cenová ponuka</div>
+    <div class="q-print-head"><img src="assets/logo-header.png" alt="Fortissima"><span>fortissima.sk · info@fortissima.sk</span></div>
+    <h1>Cenová<br><em>ponuka.</em></h1>
+    <p class="q-meta mono">Č. <span id="qId">–</span> · <span id="qDate">–</span> <span class="sum-demo" id="qDemo" hidden>Ukážka – ilustračné ceny</span></p>
+  </div>
+</section>
+
+<section class="q-sec" id="quote">
+  <div class="wrap">
+    <div class="q-empty" id="qEmpty" hidden>
+      <p>Vaša cenová ponuka je zatiaľ prázdna.</p>
+      <a href="kalkulacka.html" class="btn-primary">Pridať prvú položku</a>
+    </div>
+    <div class="q-grid" id="qBody" hidden>
+      <div>
+        <div class="q-list" id="qList"></div>
+        <a href="kalkulacka.html" class="q-add">+ Pridať ďalšiu položku</a>
+      </div>
+      <aside class="sum q-sum">
+        <div class="eyebrow">SÚHRN</div>
+        <div class="sum-meta"><span>Počet dverí</span><span id="qKs">–</span></div>
+        <div class="sum-meta"><span>Položky spolu</span><span id="qMedz">–</span></div>
+        <div class="q-opts">
+          <label class="chk chk-dark"><input type="checkbox" id="qMontaz"><span>Montáž</span></label>
+          <label class="chk chk-dark"><input type="checkbox" id="qDoprava"><span>Doprava</span></label>
+        </div>
+        <ul class="q-sluzby" id="qSluzby"></ul>
+        <div class="sum-total"><span>Spolu s&nbsp;DPH</span><strong id="qTotal">–</strong></div>
+        <div class="sum-meta"><span>Dodanie</span><span id="qDod">–</span></div>
+        <p class="sum-err" id="qWarn" hidden></p>
+        <p class="sum-err" id="qErr" hidden></p>
+        <button type="button" class="sum-btn" id="qSend">Odoslať ako dopyt</button>
+        <button type="button" class="sum-btn sum-btn-ghost" id="qPrint">Vytlačiť / uložiť PDF</button>
+        <div class="q-tools">
+          <button type="button" id="qCsv">Export CSV</button><button type="button" id="qJson">Export JSON</button><button type="button" id="qClear">Vymazať ponuku</button>
+        </div>
+        <p class="sum-note">Orientačná cena vrátane DPH. Presnú ponuku pripravíme po zameraní.</p>
+      </aside>
+    </div>
+    <p class="q-print-foot">Orientačná cenová ponuka vrátane DPH, vytvorená na fortissima.sk. Presnú ponuku pripravíme po zameraní na mieste.</p>
+  </div>
+</section>
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <a href="index.html" class="logo"><img src="assets/logo-header-light.png" alt="Fortissima" class="logo-img"></a>
+      <nav>
+        <ul>
+          <li><a href="kolekcie.html">Kolekcie</a></li>
+          <li><a href="zarubne.html">Zárubne</a></li>
+          <li><a href="rozmery.html">Rozmery</a></li>
+          <li><a href="kalkulacka.html">Kalkulácia</a></li>
+          <li><a href="remeslo.html">Remeslo</a></li>
+          <li><a href="kontakt.html">Kontakt</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Fortissima. Všetky práva vyhradené.</span>
+      <span>fortissima.sk</span>
+    </div>
+  </div>
+</footer>
+<script src="script.js"></script>
+</body>
+</html>

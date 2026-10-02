@@ -27,6 +27,7 @@
         <li class="nav-mobile-cta"><a href="kontakt.html">Vyžiadať ponuku</a></li>
       </ul>
     </nav>
+    <a href="zostava.html" class="nav-quote" aria-label="Cenová ponuka" title="Cenová ponuka"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h7.5l4 4v13h-11.5z"/><path d="M14 3.5v4h4"/><path d="M9.5 11.5h5.5M9.5 14.5h5.5M9.5 17.5h3.5"/></svg><span class="nav-quote-n" hidden>0</span></a>
     <a href="kontakt.html" class="nav-cta">VYŽIADAŤ PONUKU</a>
     <button type="button" class="nav-toggle" aria-label="Otvoriť menu" aria-expanded="false" aria-controls="siteNav"><span></span><span></span></button>
   </div>
@@ -58,7 +59,7 @@
       </div>
     </div>
     <form class="reveal" id="formular" onsubmit="event.preventDefault(); alert('Toto je náhľad dizajnu — formulár zatiaľ nič neodosiela.');">
-      <p class="prefill-note" id="prefillNote" hidden>Zostavu z&nbsp;kalkulačky sme vložili do správy. Doplňte kontakt a&nbsp;odošlite.</p>
+      <p class="prefill-note" id="prefillNote" hidden>Vašu cenovú ponuku sme vložili do správy. Doplňte kontakt a&nbsp;odošlite.</p>
       <div class="field">
         <label for="name">Meno a priezvisko</label>
         <input id="name" type="text" placeholder="Vaše meno" required>
@@ -75,6 +76,7 @@
         <label for="msg">Správa</label>
         <textarea id="msg" placeholder="Rozmery, počet dverí, štýl interiéru…"></textarea>
       </div>
+      <textarea id="ponukaJson" name="ponuka_json" hidden aria-hidden="true"></textarea>
       <button type="submit" class="form-submit">Odoslať dopyt</button>
     </form>
   </div>

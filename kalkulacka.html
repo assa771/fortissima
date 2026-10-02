@@ -27,6 +27,7 @@
         <li class="nav-mobile-cta"><a href="kontakt.html">Vyžiadať ponuku</a></li>
       </ul>
     </nav>
+    <a href="zostava.html" class="nav-quote" aria-label="Cenová ponuka" title="Cenová ponuka"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h7.5l4 4v13h-11.5z"/><path d="M14 3.5v4h4"/><path d="M9.5 11.5h5.5M9.5 14.5h5.5M9.5 17.5h3.5"/></svg><span class="nav-quote-n" hidden>0</span></a>
     <a href="kontakt.html" class="nav-cta">VYŽIADAŤ PONUKU</a>
     <button type="button" class="nav-toggle" aria-label="Otvoriť menu" aria-expanded="false" aria-controls="siteNav"><span></span><span></span></button>
   </div>
@@ -36,7 +37,7 @@
   <div class="wrap">
     <div class="breadcrumb mono"><a href="index.html">Domov</a> / Kalkulácia</div>
     <h1>Orientačná cena<br><em>za pár kliknutí.</em></h1>
-    <p class="lead">Vyberte kolekciu, rozmer a&nbsp;hrúbku steny. Cenu spočítame vrátane zárubne, kovania aj montáže.</p>
+    <p class="lead">Nastavte dvere, pridajte ich do cenovej ponuky a&nbsp;pokračujte ďalšou položkou. Každá môže mať inú kolekciu, rozmer aj farbu.</p>
   </div>
 </section>
 
@@ -53,11 +54,19 @@
         <div class="row2">
           <div><div class="k">Prevedenie</div><div class="seg seg-radio"><label><input type="radio" name="prevedenie" value="falc" checked><span>Falcové</span></label><label><input type="radio" name="prevedenie" value="bez"><span>Bezfalcové</span></label></div>
             <a href="zarubne.html" class="hint-link">Aký je rozdiel?</a></div>
-          <div><div class="k">Farba</div><div class="sw-radio">
+          <div></div>
+        </div>
+        <div class="row2">
+          <div><div class="k">Farba krídla</div><div class="sw-radio">
             <label><input type="radio" name="farba" value="biela" checked><span class="sw" style="background:#FBFAF6;border-color:#D9D2C2"></span><span class="sw-t">Biela</span></label>
             <label><input type="radio" name="farba" value="kasmirova"><span class="sw" style="background:#D9CBB0;border-color:#B5A488"></span><span class="sw-t">Kašmírová</span></label>
           </div></div>
+          <div><div class="k">Farba zárubne</div><div class="sw-radio">
+            <label><input type="radio" name="farba_zarubne" value="biela" checked><span class="sw" style="background:#FBFAF6;border-color:#D9D2C2"></span><span class="sw-t">Biela</span></label>
+            <label><input type="radio" name="farba_zarubne" value="kasmirova"><span class="sw" style="background:#D9CBB0;border-color:#B5A488"></span><span class="sw-t">Kašmírová</span></label>
+          </div></div>
         </div>
+        <p class="calc-dims">Zárubňa môže mať inú farbu ako krídlo – každú položku si zvolíte zvlášť.</p>
       </fieldset>
 
       <fieldset class="step">
@@ -87,31 +96,38 @@
       </fieldset>
 
       <fieldset class="step">
-        <legend class="step-h"><span class="mono">06</span>Počet a&nbsp;služby</legend>
-        <div class="qty">
-          <button type="button" data-q="-1" aria-label="Menej">−</button>
-          <input type="number" name="ks" id="ks" min="1" max="50" value="1" inputmode="numeric" aria-label="Počet kusov"><span>ks</span>
-          <button type="button" data-q="1" aria-label="Viac">+</button>
+        <legend class="step-h"><span class="mono">06</span>Počet a&nbsp;označenie</legend>
+        <div class="row2">
+          <div><div class="k">Počet kusov</div>
+            <div class="qty">
+              <button type="button" data-q="-1" aria-label="Menej">−</button>
+              <input type="number" name="ks" id="ks" min="1" max="50" value="1" inputmode="numeric" aria-label="Počet kusov"><span>ks</span>
+              <button type="button" data-q="1" aria-label="Viac">+</button>
+            </div></div>
+          <div><div class="k"><label for="nazov">Označenie (nepovinné)</label></div>
+            <input type="text" name="nazov" id="nazov" class="txt" maxlength="40" placeholder="napr. Spálňa, Kúpeľňa"></div>
         </div>
-        <label class="chk"><input type="checkbox" name="montaz" value="1" checked><span>Montáž</span></label>
-        <label class="chk"><input type="checkbox" name="doprava" value="1" checked><span>Doprava</span></label>
+        <p class="calc-dims">Montáž a&nbsp;dopravu zvolíte v&nbsp;cenovej ponuke pre celú zákazku.</p>
       </fieldset>
     </form>
 
     <aside class="sum" id="sum" aria-live="polite">
-      <div class="eyebrow">VAŠA ZOSTAVA</div>
+      <div class="eyebrow">TÁTO POLOŽKA</div>
       <p class="sum-demo" id="sumDemo" hidden>Ukážka – ilustračné ceny</p>
+      <p class="sum-edit" id="calcEditNote" hidden>Upravujete položku z&nbsp;ponuky.</p>
       <ul class="sum-items" id="sumItems"><li class="sum-wait">Počítam…</li></ul>
-      <div class="sum-total"><span>Spolu s&nbsp;DPH</span><strong id="sumTotal">–</strong></div>
+      <div class="sum-total"><span>Cena položky s&nbsp;DPH</span><strong id="sumTotal">–</strong></div>
       <div class="sum-meta"><span>Dodanie</span><span id="sumDod">–</span></div>
       <div class="sum-meta"><span>Zárubňa</span><span id="sumZar">–</span></div>
       <p class="sum-err" id="sumErr" hidden></p>
-      <button type="button" class="sum-btn" id="sumSend">Odoslať dopyt s&nbsp;touto zostavou</button>
+      <button type="button" class="sum-btn" id="sumAdd">Pridať do cenovej ponuky</button>
+      <p class="sum-toast" id="calcToast" hidden></p>
+      <a href="zostava.html" class="sum-view" id="sumView" hidden>Zobraziť ponuku →</a>
       <p class="sum-note">Orientačná cena vrátane DPH. Presnú ponuku pripravíme po zameraní.</p>
     </aside>
   </div>
 </section>
-<a href="#sum" class="sum-bar" id="sumBar"><span>Orientačná cena</span><strong id="sumBarTotal">–</strong></a>
+<a href="#sum" class="sum-bar" id="sumBar"><span>Cena položky</span><strong id="sumBarTotal">–</strong></a>
 <footer>
   <div class="wrap">
     <div class="footer-top">
