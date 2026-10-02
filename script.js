@@ -439,6 +439,12 @@ const Ponuka = (function () {
   const surcharge = (rows, pol, w, h) => rows.reduce((a, r) =>
     a + ((r.polozka || '').toLowerCase() === pol && ['*', '', w].includes(r.sirka) && ['*', '', h].includes(r.vyska) ? num(r.priplatok_s_dph) : 0), 0);
   const r2 = x => Math.round(x * 100) / 100;
+  // rozpis ceny: zložka = { zlozka, cena, zdroj } (zhodné s api/cena.php)
+  const zl = (zlozka, cena, zdroj) => ({ zlozka, cena: r2(cena), zdroj });
+  const zdr = (subor, r, keys) => subor + ': ' + keys.map(k => (r[k] == null || r[k] === '') ? '*' : r[k]).join(';');
+  const surList = (rows, pol, w, h, pref) => rows.filter(r => (r.polozka || '').toLowerCase() === pol && ['*', '', w].includes(r.sirka) && ['*', '', h].includes(r.vyska))
+    .map(r => zl((pref || 'Príplatok') + (r.popis && (!pref || pref.indexOf('Príplatok') === 0 || !['*', ''].includes(r.sirka) || !['*', ''].includes(r.vyska)) ? ': ' + r.popis : ''), num(r.priplatok_s_dph), 'priplatky.csv: ' + pol + ';' + (r.sirka || '*') + ';' + (r.vyska || '*')));
+  const sumRoz = L => L.reduce((a, x) => a + x.cena, 0);
 
   function demoPolozka(p, D) {
     const err = m => ({ uid: p.uid, ok: false, chyba: m });
@@ -452,12 +458,12 @@ const Ponuka = (function () {
     if (isNaN(ks) || ks < 1 || ks > 50) return err('Počet kusov musí byť od 1 do 50.');
     const z = soZar ? frameForWall(d)[0] : { F: 0, ext: 0, min: 0, max: 0 }, r180 = Math.floor(z.ext / 180), r90 = (z.ext % 180) / 90;
     const N = +p.sirka * 10, V1 = H[p.vyska], falc = prev === 'falc', rozm = p.sirka + '-' + p.vyska;
-    const R = [], add = (typ, kod, nazov, c, m, dd, x) => R.push(Object.assign({ typ, kod, nazov, mnozstvo: m, cena_ks: r2(c), spolu: r2(c * m), d: dd || 0 }, x || {}));
+    const R = [], add = (typ, kod, nazov, roz, m, dd, x) => { const c = sumRoz(roz); R.push(Object.assign({ typ, kod, nazov, mnozstvo: m, cena_ks: r2(c), spolu: r2(c * m), rozpis: roz, d: dd || 0 }, x || {})); };
     const miss = err('Pre túto zostavu zatiaľ nemáme cenu v cenníku. Pošlite nám prosím dopyt.');
     // rohový spoj obložky: pokos (základ) / tupo (príplatok)
     const spoj = String(p.spoj || 'pokos').toLowerCase();
     if (!['pokos', 'tupo'].includes(spoj)) return err('Neplatný rohový spoj zárubne.');
-    const cSpoj = soZar && spoj === 'tupo' ? surcharge(D.priplatky, 'spoj-tupo', p.sirka, p.vyska) : 0, spojTxt = spoj === 'tupo' ? 'spoj na tupo' : 'spoj na pokos';
+    const rSpoj = soZar && spoj === 'tupo' ? surList(D.priplatky, 'spoj-tupo', p.sirka, p.vyska, 'Rohový spoj na tupo') : [], spojTxt = spoj === 'tupo' ? 'spoj na tupo' : 'spoj na pokos';
     // závesy sú súčasťou zárubne; slepá zárubňa závesy ani protiplech nemá
     let zav = null;
     if (soZar && !slepa) {
@@ -470,8 +476,8 @@ const Ponuka = (function () {
     if (!kov) return err('Neplatný zámok.');
     r = best(D.kridla, { kolekcia: p.kolekcia, prevedenie: p.prevedenie, farba: p.farba, sirka: p.sirka, vyska: p.vyska });
     if (!r) return miss;
-    const prah = !!p.prah, cPrah = prah ? surcharge(D.priplatky, 'prah', p.sirka, p.vyska) : 0;
-    if (prah && cPrah <= 0) return miss;
+    const prah = !!p.prah, rPrah = prah ? surList(D.priplatky, 'prah', p.sirka, p.vyska, 'Výsuvný prah') : [];
+    if (prah && sumRoz(rPrah) <= 0) return miss;
     // vetracia mriežka (všetky kolekcie; pri rámových dverách v spodnom vlysu)
     const mrKod = String(p.mriezka || 'bez').toLowerCase();
     let mr = null;
@@ -479,7 +485,9 @@ const Ponuka = (function () {
     add('KRIDLO', KODY[p.kolekcia] + '-' + KODY[p.prevedenie] + '-' + KODY[p.farba] + '-' + rozm + '-' + KODY[p.smer],
         'Krídlo ' + NAMES[p.kolekcia] + ', ' + NAMES[p.prevedenie] + ', ' + NAMES[p.farba] + ', ' + p.sirka + '/' + HTXT[p.vyska] + ', ' + NAMES[p.smer] +
         ' (' + (falc ? (N + 50) + ' × ' + (V1 + 15) : (N + 22) + ' × ' + (V1 + 1)) + ' mm), ' + kov.nazov + (prah ? ', výsuvný prah' : '') + (mr ? ', ' + mr.nazov.charAt(0).toLowerCase() + mr.nazov.slice(1) : ''),
-        num(r.cena_s_dph) + surcharge(D.priplatky, 'kridlo', p.sirka, p.vyska) + num(kov.cena_s_dph) + cPrah + (mr ? num(mr.cena_s_dph) : 0), ks,
+        [zl('Krídlo – základná cena', num(r.cena_s_dph), zdr('kridla.csv', r, ['kolekcia', 'prevedenie', 'farba', 'sirka', 'vyska']))]
+          .concat(surList(D.priplatky, 'kridlo', p.sirka, p.vyska, 'Príplatok krídla'), [zl('Zámok: ' + kov.nazov, num(kov.cena_s_dph), 'kovanie.csv: ' + kov.kod)],
+                  rPrah, mr ? [zl(mr.nazov, num(mr.cena_s_dph), 'mriezky.csv: ' + mr.kod)] : []), ks,
         Math.max(num(r.dodanie_dni), num(kov.dodanie_dni), mr ? num(mr.dodanie_dni) : 0), { prah, mriezka: mr ? mrKod : 'bez' });
     }
     if (soZar) {
@@ -489,17 +497,19 @@ const Ponuka = (function () {
     add('ZARUBNA', 'F' + z.F + '-' + kPrev + '-' + KODY[p.farba_zarubne] + '-' + rozm + '-' + kSmer,
         slepa ? 'Slepá (tunelová) zárubňa F' + z.F + ', ' + NAMES[p.farba_zarubne] + ', ' + p.sirka + '/' + HTXT[p.vyska] + ', ' + spojTxt + ' – bez závesov a protiplechu'
               : 'Obložková zárubňa F' + z.F + ', ' + (falc ? 'falcová' : 'bezfalcová') + ', ' + NAMES[p.farba_zarubne] + ', ' + zn + ', ' + spojTxt,
-        num(r.cena_s_dph) + surcharge(D.priplatky, 'zarubna', p.sirka, p.vyska) + (zav ? num(zav.cena_s_dph) : 0) + cSpoj, ks,
+        [zl((slepa ? 'Slepá zárubňa F' : 'Zárubňa F') + z.F + ' – základná cena', num(r.cena_s_dph), zdr('zarubne.csv', r, ['typ', 'prevedenie', 'farba', 'sirka', 'vyska']))]
+          .concat(surList(D.priplatky, 'zarubna', p.sirka, p.vyska, 'Príplatok zárubne'), zav ? [zl(zav.nazov, num(zav.cena_s_dph), 'zavesy.csv: ' + zav.kod)] : [], rSpoj), ks,
         Math.max(num(r.dodanie_dni), zav ? num(zav.dodanie_dni) : 0), { zavesy: zav ? zav.kod.toLowerCase() : '', spoj });
     if (z.ext) {
       const k2 = { farba: p.farba_zarubne, sirka: p.sirka, vyska: p.vyska }, fz = KODY[p.farba_zarubne];
       const e90 = best(D.rozsirenia, Object.assign({ typ: 'R90' }, k2)), e180 = best(D.rozsirenia, Object.assign({ typ: 'R180' }, k2));
       if (r180) {
-        if (e180) add('ROZSIRENIE', 'R180-' + fz + '-' + rozm, 'Rozširovací element R180', num(e180.cena_s_dph), ks * r180, num(e180.dodanie_dni));
-        else if (e90) add('ROZSIRENIE', 'R90-' + fz + '-' + rozm, 'Rozširovací element R90', num(e90.cena_s_dph), ks * r180 * 2, num(e90.dodanie_dni));
+        const RK = ['typ', 'farba', 'sirka', 'vyska'];
+        if (e180) add('ROZSIRENIE', 'R180-' + fz + '-' + rozm, 'Rozširovací element R180', [zl('Element R180', num(e180.cena_s_dph), zdr('rozsirenia.csv', e180, RK))], ks * r180, num(e180.dodanie_dni));
+        else if (e90) add('ROZSIRENIE', 'R90-' + fz + '-' + rozm, 'Rozširovací element R90', [zl('Element R90 (R180 nemá cenu → 2 × R90)', num(e90.cena_s_dph), zdr('rozsirenia.csv', e90, RK))], ks * r180 * 2, num(e90.dodanie_dni));
         else return miss;
       }
-      if (r90) { if (!e90) return miss; add('ROZSIRENIE', 'R90-' + fz + '-' + rozm, 'Rozširovací element R90', num(e90.cena_s_dph), ks * r90, num(e90.dodanie_dni)); }
+      if (r90) { if (!e90) return miss; add('ROZSIRENIE', 'R90-' + fz + '-' + rozm, 'Rozširovací element R90', [zl('Element R90', num(e90.cena_s_dph), zdr('rozsirenia.csv', e90, ['typ', 'farba', 'sirka', 'vyska']))], ks * r90, num(e90.dodanie_dni)); }
     }
     }
     const e = extLabel(z.ext);
@@ -512,7 +522,7 @@ const Ponuka = (function () {
     const medz = r2(okP.reduce((a, p) => a + p.spolu, 0)), dni = Math.max(0, ...okP.map(p => p.dodanie_dni));
     const sl = {}; D.sluzby.forEach(x => { sl[x.kod.toLowerCase()] = x; });
     const sluzby = [], upozornenia = [];
-    const sluzba = (kod, nazov, c, mn, jedn) => sluzby.push({ typ: 'SLUZBA', kod, nazov, mnozstvo: mn, jednotka: jedn, cena_ks: r2(c), spolu: r2(c * mn) });
+    const sluzba = (kod, nazov, c, mn, jedn, zdroj) => sluzby.push({ typ: 'SLUZBA', kod, nazov, mnozstvo: mn, jednotka: jedn, cena_ks: r2(c), spolu: r2(c * mn), zdroj: zdroj || '' });
     if (o.montaz && kusov) {
       // montuje sa len zárubňa – samostatné krídla (bez zárubne) sa nemontujú
       const podla = {}; let bezM = 0;
@@ -521,14 +531,14 @@ const Ponuka = (function () {
       Object.keys(podla).forEach(t => {
         const r = sl['montaz-' + t] || sl.montaz;
         if (!r) { upozornenia.push('V cenníku chýba cena montáže pre typ „' + t + '“.'); return; }
-        sluzba('SL-MONTAZ-' + t.toUpperCase(), r.nazov, num(r.cena_s_dph), podla[t], 'ks');
+        sluzba('SL-MONTAZ-' + t.toUpperCase(), r.nazov, num(r.cena_s_dph), podla[t], 'ks', 'sluzby.csv: ' + r.kod);
       });
-      if (Object.keys(podla).length && sl.zameranie) sluzba('SL-ZAMERANIE', sl.zameranie.nazov, num(sl.zameranie.cena_s_dph), 1, 'zákazka');
+      if (Object.keys(podla).length && sl.zameranie) sluzba('SL-ZAMERANIE', sl.zameranie.nazov, num(sl.zameranie.cena_s_dph), 1, 'zákazka', 'sluzby.csv: zameranie');
     }
     if (o.doprava && kusov && sl.doprava) {
       const km = parseFloat(String(o.doprava_km || '').replace(',', '.'));
       if (!(km > 0 && km <= 2000)) upozornenia.push('Pre výpočet dopravy zadajte vzdialenosť v kilometroch.');
-      else { const k = Math.round(km); sluzba('SL-DOPRAVA', sl.doprava.nazov + ' (' + k + ' km × 2)', num(sl.doprava.cena_s_dph), k * 2, 'km'); }
+      else { const k = Math.round(km); sluzba('SL-DOPRAVA', sl.doprava.nazov + ' (' + k + ' km × 2)', num(sl.doprava.cena_s_dph), k * 2, 'km', 'sluzby.csv: doprava'); }
     }
     return { ok: true, polozky: pol, sluzby, upozornenia, medzisucet: medz, spolu: r2(medz + sluzby.reduce((a, s) => a + s.spolu, 0)), kusov,
              chyby: pol.length - okP.length, dodanie_dni: dni, dodanie: dni === 0 ? 'Skladom' : 'do ' + dni + ' pracovných dní' };
@@ -687,9 +697,70 @@ const Ponuka = (function () {
     return o.join('');
   }
 
+  /* ---------- rozpis ceny (okno): z čoho sa skladá cena – aj na kontrolu cenotvorby ---------- */
+  const ZKEY = 'fortissima.rozpis.zdroj';
+  let dlg = null;
+  function rozpis(data) {
+    // data = { nadpis, polozky: [{ nadpis, r }], sluzby, spolu, medzisucet }
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.className = 'rz';
+      dlg.innerHTML = '<div class="rz-head"><div><div class="eyebrow">ROZPIS CENY</div><h2 class="rz-t"></h2></div>' +
+        '<button type="button" class="rz-x" aria-label="Zavrieť">×</button></div><div class="rz-body"></div>' +
+        '<div class="rz-foot"><label class="rz-src"><input type="checkbox"> Zobraziť zdroj v cenníku</label>' +
+        '<button type="button" class="rz-close">Zavrieť</button></div>';
+      document.body.appendChild(dlg);
+      const zavri = () => dlg.close();
+      dlg.querySelector('.rz-x').addEventListener('click', zavri);
+      dlg.querySelector('.rz-close').addEventListener('click', zavri);
+      dlg.addEventListener('click', e => { if (e.target === dlg) zavri(); });
+      const cb = dlg.querySelector('.rz-src input');
+      try { cb.checked = localStorage.getItem(ZKEY) === '1'; } catch (e) {}
+      const apply = () => dlg.classList.toggle('show-src', cb.checked);
+      cb.addEventListener('change', () => { apply(); try { localStorage.setItem(ZKEY, cb.checked ? '1' : '0'); } catch (e) {} });
+      apply();
+    }
+    const f = v => eur.format(v), ok = (a, b) => Math.abs(a - b) < 0.011;
+    const chk = (a, b) => ok(a, b) ? '<span class="rz-ok" title="Súčet sedí">✓</span>' : '<span class="rz-bad" title="Súčet nesedí – skontrolujte cenník">✗ ' + f(a) + '</span>';
+    let html = '', sumPol = 0;
+    (data.polozky || []).forEach((P, i) => {
+      const r = P.r;
+      html += '<section class="rz-pol"><h3><span class="mono">' + String(i + 1).padStart(2, '0') + '</span>' + esc(P.nadpis) + '</h3>';
+      if (!r || !r.ok) { html += '<p class="rz-err">' + esc(r && r.chyba || 'Bez ceny') + '</p></section>'; return; }
+      let sumR = 0;
+      r.riadky.forEach(x => {
+        const roz = x.rozpis || [], sKs = roz.reduce((a, z) => a + z.cena, 0);
+        html += '<div class="rz-line"><div class="rz-lh"><b>' + esc(x.nazov) + '</b><span class="rz-kod mono">' + esc(x.kod) + '</span></div><table>' +
+          roz.map(z => '<tr><td>' + esc(z.zlozka) + '<span class="rz-z mono">' + esc(z.zdroj || '') + '</span></td><td class="n">' +
+                      (z.cena > 0 ? '+ ' : '') + f(z.cena) + '</td></tr>').join('') +
+          '<tr class="rz-sub"><td>Cena za kus ' + chk(sKs, x.cena_ks) + '</td><td class="n">' + f(x.cena_ks) + '</td></tr>' +
+          '<tr class="rz-sub"><td>× ' + x.mnozstvo + ' ks</td><td class="n"><b>' + f(x.spolu) + '</b></td></tr></table></div>';
+        sumR += x.spolu;
+      });
+      sumPol += r.spolu;
+      html += '<div class="rz-ptot"><span>Položka spolu ' + chk(sumR, r.spolu) + '</span><b>' + f(r.spolu) + '</b></div></section>';
+    });
+    const sl = data.sluzby || [];
+    let sumSl = 0;
+    if (sl.length) {
+      html += '<section class="rz-pol"><h3><span class="mono">+</span>Služby</h3><table>' + sl.map(x => {
+        sumSl += x.spolu;
+        return '<tr><td>' + esc(x.nazov) + '<span class="rz-z mono">' + esc(x.zdroj || '') + '</span><small>' + x.mnozstvo + ' ' + esc(x.jednotka || 'ks') + ' × ' + f(x.cena_ks) +
+               '</small></td><td class="n">' + f(x.spolu) + '</td></tr>';
+      }).join('') + '</table></section>';
+    }
+    if (data.spolu != null) {
+      html += '<div class="rz-total"><span>Spolu s DPH ' + chk(sumPol + sumSl, data.spolu) + '</span><strong>' + f(data.spolu) + '</strong></div>';
+    }
+    html += '<p class="rz-note">Ceny sú s DPH. Kľučky nie sú súčasťou cenovej ponuky.</p>';
+    dlg.querySelector('.rz-t').textContent = data.nadpis || 'Rozpis ceny';
+    dlg.querySelector('.rz-body').innerHTML = html;
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+  }
+
   badge();
   window.addEventListener('storage', e => { if (e.key === KEY) badge(); });
-  return { jeSlepa, jeRamove, MRIEZKA, moznosti, obrazok, load, save, novaPonuka, uid, ocen, kovanie, popis, badge, pocetKusov, DEMO, NAMES, H, HTXT, eur, esc };
+  return { rozpis, jeSlepa, jeRamove, MRIEZKA, moznosti, obrazok, load, save, novaPonuka, uid, ocen, kovanie, popis, badge, pocetKusov, DEMO, NAMES, H, HTXT, eur, esc };
 })();
 
 
@@ -814,6 +885,12 @@ const Ponuka = (function () {
     const n = P.pocetKusov(P.load()), a = $('sumView');
     if (a) { a.hidden = n === 0; a.textContent = 'Zobraziť ponuku (' + n + ' ks) →'; }
   }
+  const whyBtn = $('sumWhy');
+  if (whyBtn) whyBtn.addEventListener('click', () => {
+    if (!last) return;
+    const p = polozka();
+    P.rozpis({ nadpis: (p.nazov ? p.nazov + ' – ' : '') + P.popis(p), polozky: [{ nadpis: P.popis(p) + ', ' + p.ks + ' ks', r: last }], spolu: last.spolu });
+  });
   addBtn.addEventListener('click', () => {
     if (!last) { errBox.textContent = errBox.textContent || 'Najprv opravte zadanie položky.'; errBox.hidden = false; return; }
     const o = P.load(), p = polozka();
@@ -898,6 +975,7 @@ const Ponuka = (function () {
         '<div class="qi-actions">' +
           '<div class="qty qty-sm"><button type="button" data-a="minus" aria-label="Menej">−</button><input type="number" min="1" max="50" value="' + p.ks + '" aria-label="Počet kusov" data-a="ks"><span>ks</span><button type="button" data-a="plus" aria-label="Viac">+</button></div>' +
           '<a href="kalkulacka.html?upravit=' + encodeURIComponent(p.uid) + '" class="qi-btn">Upraviť</a>' +
+          '<button type="button" class="qi-btn" data-a="rozpis">Rozpis ceny</button>' +
           '<button type="button" class="qi-btn" data-a="dup">Duplikovať</button>' +
           '<button type="button" class="qi-btn qi-del" data-a="del">Odstrániť</button>' +
         '</div></div></article>';
@@ -928,6 +1006,9 @@ const Ponuka = (function () {
     const art = b.closest('.qi'), i = o.polozky.findIndex(x => x.uid === art.dataset.uid), p = o.polozky[i];
     if (!p) return;
     const a = b.dataset.a;
+    const nadpisPol = p => (p.nazov ? p.nazov + ' – ' : '') + P.popis(p) + ', ' + p.ks + ' ks';
+    const resPol = p => (res && res.polozky || []).find(x => x.uid === p.uid);
+    if (a === 'rozpis') { const r = resPol(p); return P.rozpis({ nadpis: nadpisPol(p), polozky: [{ nadpis: nadpisPol(p), r }], spolu: r && r.ok ? r.spolu : null }); }
     if (a === 'plus' || a === 'minus') p.ks = Math.min(50, Math.max(1, p.ks + (a === 'plus' ? 1 : -1)));
     if (a === 'dup') o.polozky.splice(i + 1, 0, Object.assign({}, p, { uid: P.uid() }));
     if (a === 'del') o.polozky.splice(i, 1);
@@ -937,6 +1018,12 @@ const Ponuka = (function () {
     if (e.target.dataset.a !== 'ks') return;
     const p = o.polozky.find(x => x.uid === e.target.closest('.qi').dataset.uid);
     if (p) { p.ks = Math.min(50, Math.max(1, parseInt(e.target.value, 10) || 1)); change(); }
+  });
+  $('qRozpis').addEventListener('click', () => {
+    if (!res || !res.ok) return;
+    P.rozpis({ nadpis: 'Cenová ponuka ' + o.id,
+      polozky: o.polozky.map(p => ({ nadpis: (p.nazov ? p.nazov + ' – ' : '') + P.popis(p) + ', ' + p.ks + ' ks', r: res.polozky.find(x => x.uid === p.uid) })),
+      sluzby: res.sluzby, spolu: res.spolu });
   });
   $('qMontaz').addEventListener('change', e => { o.montaz = e.target.checked; change(); });
   $('qDoprava').addEventListener('change', e => { o.doprava = e.target.checked; $('qKmWrap').hidden = !o.doprava; change(); if (o.doprava) $('qKm').focus(); });
