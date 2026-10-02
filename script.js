@@ -993,7 +993,7 @@ const Ponuka = (function () {
         '<div class="qi-price">' + (r ? (r.ok ? P.eur.format(r.spolu) : '<span class="qi-err">bez ceny</span>') : '…') + '</div></div>' +
         detail(p, r) +
         (r && !r.ok ? '<p class="qi-msg">' + P.esc(r.chyba) + '</p>' : '') +
-        (lines ? '<details class="qi-lines"><summary>Rozpis položky</summary><table><thead><tr><th>Kód</th><th>Položka</th><th class="n">Ks</th><th class="n">Cena/ks</th><th class="n">Spolu</th></tr></thead><tbody>' + lines + '</tbody></table></details>' : '') +
+        (lines ? '<details class="qi-lines"><summary>Rozpis položky</summary><table><thead><tr><th>Kód</th><th>Položka</th><th class="n q-ks">Ks</th><th class="n">Cena/ks</th><th class="n">Spolu</th></tr></thead><tbody>' + lines + '</tbody></table></details>' : '') +
         '<div class="qi-actions">' +
           '<div class="qty qty-sm"><button type="button" data-a="minus" aria-label="Menej">−</button><input type="number" min="1" max="50" value="' + p.ks + '" aria-label="Počet kusov" data-a="ks"><span>ks</span><button type="button" data-a="plus" aria-label="Viac">+</button></div>' +
           '<a href="kalkulacka.html?upravit=' + encodeURIComponent(p.uid) + '" class="qi-btn">Upraviť</a>' +

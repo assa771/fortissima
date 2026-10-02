@@ -1882,3 +1882,11 @@ dialog.lb::backdrop{ background:transparent; }
 .smer-pick:has(input:checked) .smer-t b{ font-style:italic; color:var(--oxblood); }
 .smer-t small{ font-family:'JetBrains Mono', monospace; font-size:.6rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); }
 .smer-hint{ font-size:.78rem; color:var(--ink-faint); margin:10px 0 4px; }
+
+/* rozpis položky (počítač): oddelenie stĺpcov Ks / Cena/ks / Spolu */
+.qi-lines th.n, .qi-lines td.n{ padding-left:22px; }
+.qi-lines td.q-ks, .qi-lines th.q-ks{ text-align:center; padding-left:18px; padding-right:4px; color:var(--ink-soft); }
+.qi-lines td.q-ks::after{ content:' ks'; font-size:.72rem; color:var(--ink-faint); }
+.qi-lines td.q-c{ color:var(--ink-soft); }
+.qi-lines td.q-s{ font-weight:600; padding-right:0; }
+@media (max-width: 760px){ .qi-lines td.n{ padding:0; } }
