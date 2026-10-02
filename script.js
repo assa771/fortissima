@@ -983,8 +983,8 @@ const Ponuka = (function () {
     const byUid = {}; (res && res.polozky || []).forEach(r => { byUid[r.uid] = r; });
     $('qList').innerHTML = o.polozky.map((p, i) => {
       const r = byUid[p.uid];
-      const lines = r && r.ok ? r.riadky.map(x => '<tr><td class="qk">' + P.esc(x.kod) + '</td><td>' + P.esc(x.nazov) + '</td><td class="n">' + x.mnozstvo +
-        '</td><td class="n">' + P.eur.format(x.cena_ks) + '</td><td class="n">' + P.eur.format(x.spolu) + '</td></tr>').join('') : '';
+      const lines = r && r.ok ? r.riadky.map(x => '<tr><td class="qk">' + P.esc(x.kod) + '</td><td class="qn">' + P.esc(x.nazov) + '<span class="qk-m">' + P.esc(x.kod) + '</span></td>' +
+        '<td class="n q-ks">' + x.mnozstvo + '</td><td class="n q-c"><span class="qx">' + x.mnozstvo + ' ks × </span>' + P.eur.format(x.cena_ks) + '</td><td class="n q-s">' + P.eur.format(x.spolu) + '</td></tr>').join('') : '';
       return '<article class="qi" data-uid="' + p.uid + '">' +
         '<div class="qi-img" data-a="zvacsi" role="button" tabindex="0" title="Zväčšiť nákres">' + P.obrazok(p, { rozmer: false }) + '</div><div class="qi-main">' +
         '<div class="qi-head"><span class="qi-n mono">' + String(i + 1).padStart(2, '0') + '</span>' +
