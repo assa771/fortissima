@@ -302,84 +302,84 @@ window.FORTISSIMA_DEMO = {
    "vyska": "197",
    "max_mm": "100",
    "max_mm_mriezka": "25",
-   "poznamka": ""
+   "poznamka": "krídlo"
   },
   {
    "kolekcia": "minimal",
    "vyska": "2055",
    "max_mm": "85",
    "max_mm_mriezka": "25",
-   "poznamka": ""
+   "poznamka": "krídlo"
   },
   {
    "kolekcia": "minimal",
    "vyska": "210",
    "max_mm": "45",
    "max_mm_mriezka": "25",
-   "poznamka": ""
+   "poznamka": "krídlo"
   },
   {
    "kolekcia": "vertikal",
    "vyska": "197",
    "max_mm": "100",
    "max_mm_mriezka": "25",
-   "poznamka": "doplniť skutočné hodnoty"
+   "poznamka": "krídlo – doplniť skutočné hodnoty"
   },
   {
    "kolekcia": "vertikal",
    "vyska": "2055",
    "max_mm": "85",
    "max_mm_mriezka": "25",
-   "poznamka": "doplniť skutočné hodnoty"
+   "poznamka": "krídlo – doplniť skutočné hodnoty"
   },
   {
    "kolekcia": "vertikal",
    "vyska": "210",
    "max_mm": "45",
    "max_mm_mriezka": "25",
-   "poznamka": "doplniť skutočné hodnoty"
+   "poznamka": "krídlo – doplniť skutočné hodnoty"
   },
   {
    "kolekcia": "prestige",
    "vyska": "197",
    "max_mm": "100",
    "max_mm_mriezka": "25",
-   "poznamka": "doplniť skutočné hodnoty"
+   "poznamka": "krídlo – doplniť skutočné hodnoty"
   },
   {
    "kolekcia": "prestige",
    "vyska": "2055",
    "max_mm": "85",
    "max_mm_mriezka": "25",
-   "poznamka": "doplniť skutočné hodnoty"
+   "poznamka": "krídlo – doplniť skutočné hodnoty"
   },
   {
    "kolekcia": "prestige",
    "vyska": "210",
    "max_mm": "45",
    "max_mm_mriezka": "25",
-   "poznamka": "doplniť skutočné hodnoty"
+   "poznamka": "krídlo – doplniť skutočné hodnoty"
   },
   {
-   "kolekcia": "slepa",
+   "kolekcia": "zarubna",
    "vyska": "197",
    "max_mm": "100",
-   "max_mm_mriezka": "100",
-   "poznamka": "slepá zárubňa – doplniť"
+   "max_mm_mriezka": "",
+   "poznamka": "zárubňa (aj slepá) – doplniť skutočné hodnoty"
   },
   {
-   "kolekcia": "slepa",
+   "kolekcia": "zarubna",
    "vyska": "2055",
    "max_mm": "85",
-   "max_mm_mriezka": "85",
-   "poznamka": "slepá zárubňa – doplniť"
+   "max_mm_mriezka": "",
+   "poznamka": "zárubňa (aj slepá) – doplniť skutočné hodnoty"
   },
   {
-   "kolekcia": "slepa",
+   "kolekcia": "zarubna",
    "vyska": "210",
    "max_mm": "45",
-   "max_mm_mriezka": "45",
-   "poznamka": "slepá zárubňa – doplniť"
+   "max_mm_mriezka": "",
+   "poznamka": "zárubňa (aj slepá) – doplniť skutočné hodnoty"
   }
  ],
  "sluzby": [

@@ -40,7 +40,9 @@ BEZPEČNOSŤ: tento priečinok je zablokovaný súborom .htaccess. Ešte bezpeč
 presunúť ho mimo verejný priečinok webu (napr. vedľa public_html) a cestu nastaviť
 v súbore api/config.php.
 
-skratenie.csv   kolekcia (minimal | vertikal | prestige | slepa), vyska (197 | 2055 | 210),
+skratenie.csv   kolekcia (minimal | vertikal | prestige = krídlo; zarubna = zárubňa vrátane slepej), vyska (197 | 2055 | 210),
                 max_mm = o koľko mm sa dajú dvere najviac skrátiť (prirezanie zo spodu),
-                max_mm_mriezka = limit, ak má krídlo vetraciu mriežku, poznamka
+                max_mm_mriezka = limit, ak má krídlo vetraciu mriežku (pri zárubni sa nepoužíva), poznamka
+                Krídlo a zárubňa sa skracujú nezávisle (zárubňa môže byť skrátená inak alebo vôbec);
+                krídlo osadené v zárubni musí byť skrátené aspoň o toľko ako zárubňa.
                 Cena skrátenia je v priplatky.csv: skratenie-kridlo (ku krídlu) a skratenie-zarubna (k zárubni).

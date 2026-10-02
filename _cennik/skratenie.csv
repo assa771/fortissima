@@ -1,13 +1,13 @@
 ﻿kolekcia;vyska;max_mm;max_mm_mriezka;poznamka
-minimal;197;100;25;
-minimal;2055;85;25;
-minimal;210;45;25;
-vertikal;197;100;25;doplniť skutočné hodnoty
-vertikal;2055;85;25;doplniť skutočné hodnoty
-vertikal;210;45;25;doplniť skutočné hodnoty
-prestige;197;100;25;doplniť skutočné hodnoty
-prestige;2055;85;25;doplniť skutočné hodnoty
-prestige;210;45;25;doplniť skutočné hodnoty
-slepa;197;100;100;slepá zárubňa – doplniť
-slepa;2055;85;85;slepá zárubňa – doplniť
-slepa;210;45;45;slepá zárubňa – doplniť
+minimal;197;100;25;krídlo
+minimal;2055;85;25;krídlo
+minimal;210;45;25;krídlo
+vertikal;197;100;25;krídlo – doplniť skutočné hodnoty
+vertikal;2055;85;25;krídlo – doplniť skutočné hodnoty
+vertikal;210;45;25;krídlo – doplniť skutočné hodnoty
+prestige;197;100;25;krídlo – doplniť skutočné hodnoty
+prestige;2055;85;25;krídlo – doplniť skutočné hodnoty
+prestige;210;45;25;krídlo – doplniť skutočné hodnoty
+zarubna;197;100;;zárubňa (aj slepá) – doplniť skutočné hodnoty
+zarubna;2055;85;;zárubňa (aj slepá) – doplniť skutočné hodnoty
+zarubna;210;45;;zárubňa (aj slepá) – doplniť skutočné hodnoty

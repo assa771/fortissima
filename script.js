@@ -464,17 +464,24 @@ const Ponuka = (function () {
     const spoj = String(p.spoj || 'pokos').toLowerCase();
     if (!['pokos', 'tupo'].includes(spoj)) return err('Neplatný rohový spoj zárubne.');
     const rSpoj = soZar && spoj === 'tupo' ? surList(D.priplatky, 'spoj-tupo', p.sirka, p.vyska, 'Rohový spoj na tupo') : [], spojTxt = spoj === 'tupo' ? 'spoj na tupo' : 'spoj na pokos';
-    // skrátenie (prirezanie zo spodu)
-    const sk = p.skratenie == null || p.skratenie === '' ? 0 : Number(p.skratenie);
-    if (!Number.isInteger(sk) || sk < 0) return err('Neplatné skrátenie.');
+    // skrátenie (prirezanie zo spodu) – krídlo a zárubňa nezávisle
+    const limSk = (kol, sMr) => { const l = best(D.skratenie || [], { kolekcia: kol, vyska: p.vyska });
+      return l ? num(sMr && l.max_mm_mriezka !== '' && l.max_mm_mriezka != null ? l.max_mm_mriezka : l.max_mm) : 0; };
+    const toInt = v => v == null || v === '' ? 0 : Number(v);
+    const sk = slepa ? 0 : toInt(p.skratenie), skz = soZar ? toInt(p.skratenie_zar) : 0;
+    if (!Number.isInteger(sk) || sk < 0 || !Number.isInteger(skz) || skz < 0) return err('Neplatné skrátenie.');
     if (sk > 0) {
-      const lim = best(D.skratenie || [], { kolekcia: slepa ? 'slepa' : p.kolekcia, vyska: p.vyska });
-      const sMr = !slepa && String(p.mriezka || 'bez').toLowerCase() !== 'bez';
-      const max = lim ? num(sMr ? (lim.max_mm_mriezka !== '' && lim.max_mm_mriezka != null ? lim.max_mm_mriezka : lim.max_mm) : lim.max_mm) : 0;
-      if (max <= 0) return err('Pre túto zostavu skrátenie neponúkame. Pošlite nám prosím dopyt.');
-      if (sk > max) return err('Pri tejto výške sa dvere dajú skrátiť najviac o ' + max + ' mm' + (sMr ? ' (s vetracou mriežkou)' : '') + '.');
+      const sMr = String(p.mriezka || 'bez').toLowerCase() !== 'bez', max = limSk(p.kolekcia, sMr);
+      if (max <= 0) return err('Pre toto krídlo skrátenie neponúkame. Pošlite nám prosím dopyt.');
+      if (sk > max) return err('Krídlo sa pri tejto výške dá skrátiť najviac o ' + max + ' mm' + (sMr ? ' (s vetracou mriežkou)' : '') + '.');
     }
-    const skTxt = sk ? (slepa ? 'skrátená o ' : 'skrátené o ') + sk + ' mm' : '';
+    if (skz > 0) {
+      const max = limSk('zarubna', false);
+      if (max <= 0) return err('Pre túto zárubňu skrátenie neponúkame. Pošlite nám prosím dopyt.');
+      if (skz > max) return err('Zárubňa sa pri tejto výške dá skrátiť najviac o ' + max + ' mm.');
+    }
+    if (!slepa && soZar && sk < skz) return err('Krídlo musí byť skrátené aspoň o toľko ako zárubňa (inak sa do nej nezmestí).');
+    const skTxt = sk ? 'skrátené o ' + sk + ' mm' : '';
     // závesy sú súčasťou zárubne; slepá zárubňa závesy ani protiplech nemá
     let zav = null;
     if (soZar && !slepa) {
@@ -507,12 +514,12 @@ const Ponuka = (function () {
     r = best(D.zarubne, Object.assign({ typ: 'F' + z.F }, kz)); if (!r) return miss;
     const zn = zav ? zav.nazov.charAt(0).toLowerCase() + zav.nazov.slice(1) : '';
     add('ZARUBNA', 'F' + z.F + '-' + kPrev + '-' + KODY[p.farba_zarubne] + '-' + rozm + '-' + kSmer,
-        slepa ? 'Slepá (tunelová) zárubňa F' + z.F + ', ' + NAMES[p.farba_zarubne] + ', ' + p.sirka + '/' + HTXT[p.vyska] + ', ' + spojTxt + (sk ? ', ' + skTxt : '') + ' – bez závesov a protiplechu'
-              : 'Obložková zárubňa F' + z.F + ', ' + (falc ? 'falcová' : 'bezfalcová') + ', ' + NAMES[p.farba_zarubne] + ', ' + zn + ', ' + spojTxt + (sk ? ', skrátená o ' + sk + ' mm' : ''),
+        slepa ? 'Slepá (tunelová) zárubňa F' + z.F + ', ' + NAMES[p.farba_zarubne] + ', ' + p.sirka + '/' + HTXT[p.vyska] + ', ' + spojTxt + (skz ? ', skrátená o ' + skz + ' mm' : '') + ' – bez závesov a protiplechu'
+              : 'Obložková zárubňa F' + z.F + ', ' + (falc ? 'falcová' : 'bezfalcová') + ', ' + NAMES[p.farba_zarubne] + ', ' + zn + ', ' + spojTxt + (skz ? ', skrátená o ' + skz + ' mm' : ''),
         [zl((slepa ? 'Slepá zárubňa F' : 'Zárubňa F') + z.F + ' – základná cena', num(r.cena_s_dph), zdr('zarubne.csv', r, ['typ', 'prevedenie', 'farba', 'sirka', 'vyska']))]
           .concat(surList(D.priplatky, 'zarubna', p.sirka, p.vyska, 'Príplatok zárubne'), zav ? [zl(zav.nazov, num(zav.cena_s_dph), 'zavesy.csv: ' + zav.kod)] : [], rSpoj,
-                  sk ? surList(D.priplatky, 'skratenie-zarubna', p.sirka, p.vyska, 'Skrátenie zárubne o ' + sk + ' mm') : []), ks,
-        Math.max(num(r.dodanie_dni), zav ? num(zav.dodanie_dni) : 0), { zavesy: zav ? zav.kod.toLowerCase() : '', spoj, skratenie: sk });
+                  skz ? surList(D.priplatky, 'skratenie-zarubna', p.sirka, p.vyska, 'Skrátenie zárubne o ' + skz + ' mm') : []), ks,
+        Math.max(num(r.dodanie_dni), zav ? num(zav.dodanie_dni) : 0), { zavesy: zav ? zav.kod.toLowerCase() : '', spoj, skratenie: skz });
     if (z.ext) {
       const k2 = { farba: p.farba_zarubne, sirka: p.sirka, vyska: p.vyska }, fz = KODY[p.farba_zarubne];
       const e90 = best(D.rozsirenia, Object.assign({ typ: 'R90' }, k2)), e180 = best(D.rozsirenia, Object.assign({ typ: 'R180' }, k2));
@@ -527,7 +534,7 @@ const Ponuka = (function () {
     }
     const e = extLabel(z.ext);
     return { uid: p.uid, ok: true, riadky: R.map(({ d, ...x }) => x), spolu: r2(R.reduce((a, x) => a + x.spolu, 0)), ks,
-             druh, so_zarubnou: soZar, prevedenie: prev, zavesy: zav ? zav.kod.toLowerCase() : '', skratenie: sk, zarubna: soZar ? 'F' + z.F + (e ? ' + ' + e : '') : 'bez zárubne', rozsah_steny: soZar ? z.min + '–' + z.max + ' mm' : '', dodanie_dni: Math.max(0, ...R.map(x => x.d)) };
+             druh, so_zarubnou: soZar, prevedenie: prev, zavesy: zav ? zav.kod.toLowerCase() : '', skratenie: sk, skratenie_zar: skz, zarubna: soZar ? 'F' + z.F + (e ? ' + ' + e : '') : 'bez zárubne', rozsah_steny: soZar ? z.min + '–' + z.max + ' mm' : '', dodanie_dni: Math.max(0, ...R.map(x => x.d)) };
   }
   function demoPonuka(o, D) {
     const pol = o.polozky.map(p => demoPolozka(p, D));
@@ -580,8 +587,9 @@ const Ponuka = (function () {
 
   /** Ľudsky čitateľný popis položky (bez cien). */
   function popis(p) {
-    const skr = p.skratenie > 0 ? ' (−' + p.skratenie + ' mm)' : '';
-    if (jeSlepa(p)) return 'Slepá zárubňa · ' + p.sirka + '/' + HTXT[p.vyska] + skr + ' · ' + NAMES[p.farba_zarubne];
+    const k = +p.skratenie || 0, z = p.so_zarubnou === false ? 0 : (+p.skratenie_zar || 0);
+    if (jeSlepa(p)) return 'Slepá zárubňa · ' + p.sirka + '/' + HTXT[p.vyska] + (z ? ' (−' + z + ' mm)' : '') + ' · ' + NAMES[p.farba_zarubne];
+    const skr = k || z ? ' (' + (k === z ? '−' + k + ' mm' : [k ? 'krídlo −' + k : '', z ? 'zárubňa −' + z : ''].filter(Boolean).join(', ') + ' mm') + ')' : '';
     return NAMES[p.kolekcia] + ' · ' + NAMES[p.prevedenie] + ' · ' + p.sirka + '/' + HTXT[p.vyska] + skr + ' · ' + NAMES[p.smer];
   }
 
@@ -592,14 +600,18 @@ const Ponuka = (function () {
   };
   function obrazok(p, opt) {
     opt = opt || {};
-    const sk = Math.max(0, +p.skratenie || 0);
-    const N = +p.sirka * 10, V1 = (H[p.vyska] || 1970) - sk, falc = p.prevedenie !== 'bez', slepa = jeSlepa(p);
+    const slepa = jeSlepa(p);
+    const sk = slepa ? 0 : Math.max(0, +p.skratenie || 0), skz = p.so_zarubnou === false ? 0 : Math.max(0, +p.skratenie_zar || 0);
+    // zárubňa podľa vlastného skrátenia; krídlo visí na závesoch – horná hrana ostáva, skracuje sa zo spodu
+    const N = +p.sirka * 10, V1 = (H[p.vyska] || 1970) - (p.so_zarubnou === false || slepa ? (slepa ? skz : sk) : skz), falc = p.prevedenie !== 'bez';
+    const kratsie = slepa || p.so_zarubnou === false ? 0 : Math.max(0, sk - skz);
     const L = FARBY[p.farba] || FARBY.biela, Z = FARBY[p.farba_zarubne] || FARBY.biela;
     const VW = 1400, VH = 2330, floor = 2250, cx = VW / 2;           // spoločná mierka pre všetky veľkosti
     const S4 = N + 170, V4 = V1 + 82, S2 = N + 30, V2 = V1 + 12;       // obložky, rozmer vo falci
-    const lw = falc ? N + 50 : N + 22, lh = falc ? V1 + 15 : V1 + 1;   // krídlo
+    const lw = falc ? N + 50 : N + 22, lhN = falc ? V1 + 15 : V1 + 1;  // krídlo (menovitá výška pre túto zárubňu)
     const ox = cx - S4 / 2, oy = floor - V4, ix = cx - S2 / 2, iy = floor - V2;
-    const lx = cx - lw / 2, ly = floor - 8 - lh;
+    const lx = cx - lw / 2, ly = floor - 8 - lhN;
+    const lh = lhN - kratsie;                                           // skutočná výška krídla (skrátené viac ako zárubňa)
     const hingeLeft = p.smer === 'lave';                                 // pri pohľade zo strany závesov
     const lockX = hingeLeft ? lx + lw : lx;                              // hrana na strane zámku
     const dir = hingeLeft ? -1 : 1;                                      // smer do stredu krídla od zámku
@@ -635,7 +647,7 @@ const Ponuka = (function () {
       o.push('<rect x="' + (px0 + S1 - 60) + '" y="' + py0 + '" width="60" height="' + V1 + '" fill="' + Z.leaf + '" opacity=".3"/>');
       spojCiary(px0, py0, S1);
       if (opt.rozmer !== false) o.push('<text x="' + cx + '" y="' + (VH - 34) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="54" fill="#7D756B">' +
-        esc(p.sirka + '/' + HTXT[p.vyska] + (sk ? ' −' + sk : '') + ' · slepá') + '</text>');
+        esc(p.sirka + '/' + HTXT[p.vyska] + (skz ? ' −' + skz : '') + ' · slepá') + '</text>');
       o.push('</svg>');
       return o.join('');
     }
@@ -809,14 +821,15 @@ const Ponuka = (function () {
   const val = n => { const el = form.querySelector('[name="' + n + '"]:checked') || form.elements[n]; return el ? el.value : ''; };
   const setRadio = (n, v) => { const r = form.querySelector('input[name="' + n + '"][value="' + v + '"]'); if (r) r.checked = true; };
   const skr = () => form.elements.skr_on.checked ? Math.max(0, parseInt(form.elements.skratenie.value, 10) || 0) : 0;
+  const skrZ = () => form.elements.skrz_on.checked ? Math.max(0, parseInt(form.elements.skratenie_zar.value, 10) || 0) : 0;
   let SKR = [];   // limity skrátenia z cenníka
   const polozka = () => val('druh') === 'zarubna' ? ({
     uid: editUid || 'n', druh: 'zarubna', prevedenie: 'slepa', smer: 'slepa', farba_zarubne: val('farba_zarubne'), spoj: val('spoj') || 'pokos',
-    sirka: val('sirka'), vyska: val('vyska'), so_zarubnou: true, stena: parseInt(form.elements.stena.value, 10) || 0, skratenie: skr(),
+    sirka: val('sirka'), vyska: val('vyska'), so_zarubnou: true, stena: parseInt(form.elements.stena.value, 10) || 0, skratenie: 0, skratenie_zar: skrZ(),
     ks: Math.min(50, Math.max(1, parseInt(form.elements.ks.value, 10) || 1)), nazov: form.elements.nazov.value.trim().slice(0, 40)
   }) : ({
     uid: editUid || 'n', druh: 'dvere', kolekcia: val('kolekcia'), prevedenie: val('prevedenie'), farba: val('farba'), farba_zarubne: val('farba_zarubne'),
-    sirka: val('sirka'), vyska: val('vyska'), smer: val('smer'), skratenie: skr(), so_zarubnou: form.elements.so_zarubnou.checked, zavesy: val('zavesy') || 'nikel', spoj: val('spoj') || 'pokos',
+    sirka: val('sirka'), vyska: val('vyska'), smer: val('smer'), skratenie: skr(), skratenie_zar: form.elements.so_zarubnou.checked ? skrZ() : 0, so_zarubnou: form.elements.so_zarubnou.checked, zavesy: val('zavesy') || 'nikel', spoj: val('spoj') || 'pokos',
     stena: parseInt(form.elements.stena.value, 10) || 0,
     kovanie: form.elements.kovanie.value, prah: form.elements.prah.checked,
     mriezka: form.elements.mriezka.value || 'bez', ks: Math.min(50, Math.max(1, parseInt(form.elements.ks.value, 10) || 1)),
@@ -836,6 +849,7 @@ const Ponuka = (function () {
       form.elements.so_zarubnou.checked = p.so_zarubnou !== false;
       form.elements.prah.checked = !!p.prah;
       form.elements.skr_on.checked = p.skratenie > 0; if (p.skratenie > 0) form.elements.skratenie.value = p.skratenie;
+      form.elements.skrz_on.checked = p.skratenie_zar > 0; if (p.skratenie_zar > 0) form.elements.skratenie_zar.value = p.skratenie_zar;
       form.dataset.mriezka = p.mriezka || 'bez';
       form.elements.stena.value = p.stena; form.elements.ks.value = p.ks; form.elements.nazov.value = p.nazov || '';
       form.dataset.kovanie = p.kovanie;
@@ -849,16 +863,26 @@ const Ponuka = (function () {
   form.querySelectorAll('input[name="farba_zarubne"]').forEach(r => r.addEventListener('change', () => { zarDotknuta = true; }));
 
   function hints(p) {
-    const sk = p.skratenie || 0, N = +p.sirka * 10, V1 = P.H[p.vyska] - sk, slepa = P.jeSlepa(p);
-    // skrátenie: limit podľa kolekcie a výšky (s mriežkou menší)
-    const kolS = slepa ? 'slepa' : p.kolekcia;
-    const lim = SKR.find(r => r.kolekcia === kolS && String(r.vyska) === p.vyska) || SKR.find(r => r.kolekcia === kolS && r.vyska === '*');
-    const sMr = !slepa && p.mriezka && p.mriezka !== 'bez', max = lim ? (sMr ? lim.max_mm_mriezka : lim.max_mm) : 0;
+    const slepa = P.jeSlepa(p), sk = p.skratenie || 0, skz = p.skratenie_zar || 0, N = +p.sirka * 10;
+    const V1 = P.H[p.vyska] - (p.so_zarubnou ? skz : sk);            // priechod podľa zárubne (bez zárubne podľa krídla)
+    // limity skrátenia (krídlo podľa kolekcie, s mriežkou menší; zárubňa spoločný riadok "zarubna")
+    const limit = kol => SKR.find(r => r.kolekcia === kol && String(r.vyska) === p.vyska);
+    const lk = slepa ? null : limit(p.kolekcia), lz = limit('zarubna');
+    const sMr = !slepa && p.mriezka && p.mriezka !== 'bez', maxK = lk ? (sMr ? lk.max_mm_mriezka : lk.max_mm) : 0, maxZ = lz ? lz.max_mm : 0;
     $('skrIn').hidden = !form.elements.skr_on.checked;
-    form.elements.skratenie.max = max || '';
-    $('skrOut').innerHTML = !lim ? 'Skrátenie pri tejto zostave zatiaľ neponúkame.' :
-      'Pri výške ' + P.HTXT[p.vyska] + ' najviac o <b>' + max + ' mm</b>' + (sMr ? ' (s vetracou mriežkou)' : (lim.max_mm_mriezka < lim.max_mm ? ' · s vetracou mriežkou najviac ' + lim.max_mm_mriezka + ' mm' : '')) +
-      (sk ? ' · výsledná výška priechodu <b>' + V1 + ' mm</b>' : '') + '. Dvere aj zárubňu skrátime vo výrobe zo spodu (príplatok).';
+    $('skrZIn').hidden = !form.elements.skrz_on.checked;
+    $('skrZWrap').hidden = !p.so_zarubnou;
+    form.elements.skratenie.max = maxK || ''; form.elements.skratenie_zar.max = maxZ || '';
+    $('skrOut').innerHTML = !lk ? 'Skrátenie krídla pri tejto zostave neponúkame.' : 'Najviac o <b>' + maxK + ' mm</b>' +
+      (sMr ? ' (s vetracou mriežkou)' : (lk.max_mm_mriezka < lk.max_mm ? ' · s vetracou mriežkou najviac ' + lk.max_mm_mriezka + ' mm' : '')) + '.';
+    $('skrZOut').innerHTML = !lz ? 'Skrátenie zárubne pri tejto zostave neponúkame.' : 'Najviac o <b>' + maxZ + ' mm</b>.';
+    const note = $('skrNote');
+    let n = '';
+    if (!slepa && p.so_zarubnou && sk > skz) n = 'Krídlo je skrátené o ' + (sk - skz) + ' mm viac ako zárubňa – pod krídlom bude o toľko väčšia medzera nad podlahou.';
+    if (!slepa && p.so_zarubnou && skz > sk) n = 'Zárubňa je skrátená viac ako krídlo – krídlo sa do nej nezmestí. Skráťte krídlo aspoň o ' + skz + ' mm.';
+    if ((sk || skz) && !n) n = 'Výsledná výška priechodu ' + V1 + ' mm.';
+    else if (sk || skz) n += ' Výška priechodu ' + V1 + ' mm.';
+    note.textContent = n; note.hidden = !n;
     form.querySelectorAll('[data-dvere]').forEach(el => { el.hidden = slepa; });
     $('zavesyWrap').hidden = slepa || !p.so_zarubnou;
     $('spojWrap').hidden = !p.so_zarubnou;
@@ -936,6 +960,10 @@ const Ponuka = (function () {
     prevEl.addEventListener('click', otvor);
     prevEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); otvor(); } });
   }
+  const same = $('skrSame');
+  if (same) same.addEventListener('click', () => {
+    form.elements.skrz_on.checked = true; form.elements.skratenie_zar.value = skr() || form.elements.skratenie.value; schedule();
+  });
   const whyBtn = $('sumWhy');
   if (whyBtn) whyBtn.addEventListener('click', () => {
     if (!last) return;
@@ -990,13 +1018,15 @@ const Ponuka = (function () {
     const bez = p.so_zarubnou === false;
     const z = r && r.ok ? r.zarubna + (r.rozsah_steny ? ' (' + r.rozsah_steny + ')' : '') : '–';
     if (P.jeSlepa(p)) return '<dl class="qi-dl">' +
-      '<div><dt>Rozmer</dt><dd>' + p.sirka + '/' + P.HTXT[p.vyska] + ', slepá' + (p.skratenie > 0 ? ', skrátená o ' + p.skratenie + ' mm' : '') + '</dd></div>' +
+      '<div><dt>Rozmer</dt><dd>' + p.sirka + '/' + P.HTXT[p.vyska] + ', slepá' + (p.skratenie_zar > 0 ? ', skrátená o ' + p.skratenie_zar + ' mm' : '') + '</dd></div>' +
       '<div><dt>Farba zárubne</dt><dd>' + P.NAMES[p.farba_zarubne] + '</dd></div>' +
       '<div><dt>Závesy</dt><dd>bez závesov a protiplechu</dd></div>' +
       '<div><dt>Rohový spoj</dt><dd>' + (p.spoj === 'tupo' ? 'na tupo 90°' : 'na pokos 45°') + '</dd></div>' +
       '<div><dt>Zárubňa</dt><dd>' + p.stena + ' mm → ' + P.esc(z) + '</dd></div></dl>';
     return '<dl class="qi-dl">' +
-      '<div><dt>Rozmer</dt><dd>' + p.sirka + '/' + P.HTXT[p.vyska] + ', ' + P.NAMES[p.smer] + (p.skratenie > 0 ? ', skrátené o ' + p.skratenie + ' mm' : '') + '</dd></div>' +
+      '<div><dt>Rozmer</dt><dd>' + p.sirka + '/' + P.HTXT[p.vyska] + ', ' + P.NAMES[p.smer] + '</dd></div>' +
+      ((p.skratenie > 0 || (!bez && p.skratenie_zar > 0)) ? '<div><dt>Skrátenie</dt><dd>krídlo ' + (p.skratenie > 0 ? 'o ' + p.skratenie + ' mm' : 'nie') +
+        (bez ? '' : ', zárubňa ' + (p.skratenie_zar > 0 ? 'o ' + p.skratenie_zar + ' mm' : 'nie')) + '</dd></div>' : '') +
       '<div><dt>Farba krídla</dt><dd>' + P.NAMES[p.farba] + '</dd></div>' +
       '<div><dt>Farba zárubne</dt><dd>' + (bez ? '–' : P.NAMES[p.farba_zarubne]) + '</dd></div>' +
       '<div><dt>Závesy</dt><dd>' + (bez ? '–' : P.NAMES[p.zavesy || 'nikel']) + '</dd></div>' +
@@ -1147,7 +1177,7 @@ const Ponuka = (function () {
           zavesy: typ === 'ZARUBNA' ? (slepa ? 'bez' : ZAVESY[x.zavesy || p.zavesy || 'nikel']) : '',
           rohovy_spoj: typ === 'ZARUBNA' ? ((x.spoj || p.spoj) === 'tupo' ? 'tupo' : 'pokos') : '', rozsirenie: typ === 'ROZSIRENIE' ? casti[0] : '',
           hrubka_steny_mm: typ === 'ZARUBNA' && soZar ? p.stena : '',
-          skratenie_mm: (kr || typ === 'ZARUBNA') ? (p.skratenie || 0) : '',
+          skratenie_mm: kr ? (p.skratenie || 0) : typ === 'ZARUBNA' ? (p.skratenie_zar || 0) : '',
           mnozstvo: x.mnozstvo, jednotka: 'ks', cena_ks_s_dph: n(x.cena_ks), spolu_s_dph: n(x.spolu), nazov: x.nazov
         };
         rows.push(COLS.map(c => q(r[c])).join(';'));

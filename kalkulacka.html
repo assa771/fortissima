@@ -7,7 +7,7 @@
 <meta name="description" content="Orientačná cena interiérových dverí Fortissima vrátane zárubne, zámku, montáže a dopravy. Kľučka nie je súčasťou ponuky.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,ital@9..144,300..700,0..1&amp;family=Work+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=97db1ccf">
+<link rel="stylesheet" href="style.css?v=0f52d284">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
 <link rel="apple-touch-icon" href="assets/favicon-192.png">
@@ -82,11 +82,21 @@
         <div class="k">Výška</div>
         <div class="seg seg-radio"><label><input type="radio" name="vyska" value="197" checked><span>STN 197</span></label><label><input type="radio" name="vyska" value="2055"><span>HU 205,5</span></label><label><input type="radio" name="vyska" value="210"><span>DIN 210</span></label></div>
         <div class="skr" id="skrWrap">
-          <label class="chk"><input type="checkbox" name="skr_on" id="skrOn"><span>Skrátiť na mieru (prirezanie vo výrobe)</span></label>
-          <div class="wall-in skr-in" id="skrIn" hidden>
-            <span class="skr-pre">o</span><input type="number" name="skratenie" id="skratenie" inputmode="numeric" min="1" step="1" value="20" aria-describedby="skrOut"><span>mm</span>
+          <div class="k">Skrátenie na mieru <span class="k-note">prirezanie vo výrobe zo spodu · príplatok</span></div>
+          <div class="skr-row" data-dvere>
+            <label class="chk"><input type="checkbox" name="skr_on" id="skrOn"><span>Skrátiť krídlo</span></label>
+            <div class="wall-in skr-in" id="skrIn" hidden><span class="skr-pre">o</span><input type="number" name="skratenie" id="skratenie" inputmode="numeric" min="1" step="1" value="20" aria-describedby="skrOut"><span>mm</span></div>
+            <p class="calc-dims" id="skrOut"></p>
           </div>
-          <p class="calc-dims" id="skrOut"></p>
+          <div class="skr-row" id="skrZWrap">
+            <label class="chk"><input type="checkbox" name="skrz_on" id="skrZOn"><span>Skrátiť zárubňu</span></label>
+            <div class="skr-zline" id="skrZIn" hidden>
+              <div class="wall-in skr-in"><span class="skr-pre">o</span><input type="number" name="skratenie_zar" id="skratenieZar" inputmode="numeric" min="1" step="1" value="20" aria-describedby="skrZOut"><span>mm</span></div>
+              <button type="button" class="skr-same" id="skrSame" data-dvere>= ako krídlo</button>
+            </div>
+            <p class="calc-dims" id="skrZOut"></p>
+          </div>
+          <p class="calc-dims skr-note" id="skrNote" hidden></p>
         </div>
         <div data-dvere class="smer-wrap"><div class="k">Smer otvárania</div>
         <div class="smer-picks">
@@ -196,6 +206,6 @@
     </div>
   </div>
 </footer>
-<script src="script.js?v=ed0ada69"></script>
+<script src="script.js?v=7e30746e"></script>
 </body>
 </html>

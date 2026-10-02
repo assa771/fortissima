@@ -1900,3 +1900,12 @@ dialog.lb::backdrop{ background:transparent; }
 .skr .calc-dims{ margin-top:8px; margin-bottom:0; }
 #skrIn[hidden]{ display:none !important; }
 .skr .chk{ margin-top:0; }
+.skr .k{ margin-top:0 !important; }
+.k-note{ text-transform:none; letter-spacing:0; font-family:'Work Sans', sans-serif; font-size:.74rem; color:var(--ink-faint); margin-left:6px; }
+.skr-row + .skr-row{ margin-top:14px; padding-top:14px; border-top:1px dashed var(--line); }
+.skr-zline{ display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; }
+.skr-zline[hidden]{ display:none !important; }
+.skr-same{ background:none; border:1px solid var(--line); padding:6px 12px; font-family:'JetBrains Mono', monospace; font-size:.72rem; color:var(--wood); cursor:pointer; }
+.skr-same:hover{ border-color:var(--wood); }
+.skr-note{ color:var(--wood) !important; margin-top:12px !important; }
+.skr-note[hidden]{ display:none; }
