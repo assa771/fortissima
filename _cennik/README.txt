@@ -15,14 +15,16 @@ len pre bielu farbu alebo len pre šírku 90.
 kridla.csv      kolekcia (minimal | vertikal | prestige), prevedenie (falc | bez),
                 farba (biela | kasmirova), sirka (60 | 65 | 70 | 80 | 90),
                 vyska (197 | 2055 | 210), cena_s_dph, dodanie_dni (0 = skladom)
-zarubne.csv     typ (F80 | F100 | F130 | F160), prevedenie, farba, sirka, vyska, cena_s_dph, dodanie_dni
+zarubne.csv     typ (F80 | F100 | F130 | F160), prevedenie, farba (= farba ZÁRUBNE, môže byť iná ako krídla),
+                sirka, vyska, cena_s_dph, dodanie_dni
 rozsirenia.csv  typ (R90 | R180), sirka, vyska, cena_s_dph, dodanie_dni
+                (voliteľne aj stĺpec farba = farba zárubne)
                 (ak R180 nemá cenu, počíta sa ako 2 × R90)
 priplatky.csv   polozka (kridlo | zarubna), sirka, vyska, priplatok_s_dph, popis
                 – príplatky sa k základnej cene PRIČÍTAVAJÚ (všetky, ktoré sedia)
 kovanie.csv     kod (bez medzier, nemeniť pri existujúcich), nazov (zobrazí sa zákazníkovi),
                 cena_s_dph, dodanie_dni – poradie riadkov = poradie v ponuke
-sluzby.csv      montaz (cena za kus), doprava (cena za objednávku)
+sluzby.csv      montaz (cena za kus dverí v celej ponuke), doprava (cena za celú ponuku)
 
 BEZPEČNOSŤ: tento priečinok je zablokovaný súborom .htaccess. Ešte bezpečnejšie je
 presunúť ho mimo verejný priečinok webu (napr. vedľa public_html) a cestu nastaviť

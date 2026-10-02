@@ -151,38 +151,44 @@ window.FORTISSIMA_DEMO = {
  "kovanie": [
   {
    "kod": "bez",
-   "nazov": "Bez kovania",
+   "nazov": "Bez spodného otvoru",
    "cena_s_dph": "0",
    "dodanie_dni": "0"
   },
   {
-   "kod": "bb-nerez",
-   "nazov": "Kľučka na rozete, nerez – zámok na kľúč (BB)",
-   "cena_s_dph": "45",
+   "kod": "bb-nikel",
+   "nazov": "NIKEL zámok na kľúč (BB)",
+   "cena_s_dph": "0",
    "dodanie_dni": "0"
   },
   {
    "kod": "bb-cierna",
-   "nazov": "Kľučka na rozete, čierna matná – zámok na kľúč (BB)",
-   "cena_s_dph": "52",
+   "nazov": "ČIERNY zámok na kľúč (BB)",
+   "cena_s_dph": "10",
    "dodanie_dni": "0"
   },
   {
-   "kod": "pz-nerez",
-   "nazov": "Kľučka na rozete, nerez – zámok na vložku (PZ)",
-   "cena_s_dph": "59",
+   "kod": "pz-nikel",
+   "nazov": "NIKEL zámok na vložku (PZ)",
+   "cena_s_dph": "0",
    "dodanie_dni": "0"
   },
   {
-   "kod": "wc-nerez",
-   "nazov": "Kľučka na rozete, nerez – WC zámok",
-   "cena_s_dph": "65",
+   "kod": "pz-cierna",
+   "nazov": "ČIERNY zámok na vložku (PZ)",
+   "cena_s_dph": "10",
    "dodanie_dni": "0"
+  },
+  {
+   "kod": "wc-nikel",
+   "nazov": "NIKEL WC zámok",
+   "cena_s_dph": "5",
+   "dodanie_dni": "3"
   },
   {
    "kod": "wc-cierna",
-   "nazov": "Kľučka na rozete, čierna matná – WC zámok",
-   "cena_s_dph": "72",
+   "nazov": "ČIERNA WC zámok",
+   "cena_s_dph": "10",
    "dodanie_dni": "3"
   }
  ],

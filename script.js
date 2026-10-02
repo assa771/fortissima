@@ -471,7 +471,7 @@ const Ponuka = (function () {
     }
     const kov = D.kovanie.find(k => k.kod.toLowerCase() === String(p.kovanie || 'bez').toLowerCase());
     if (!kov) return err('Neplatné kovanie.');
-    if (num(kov.cena_s_dph) > 0) add('KO-' + kov.kod.toUpperCase(), 'Kovanie: ' + kov.nazov, num(kov.cena_s_dph), ks, num(kov.dodanie_dni));
+    add('KO-' + kov.kod.toUpperCase(), 'Kovanie: ' + kov.nazov, num(kov.cena_s_dph), ks, num(kov.dodanie_dni));
     const e = extLabel(z.ext);
     return { uid: p.uid, ok: true, riadky: R.map(({ d, ...x }) => x), spolu: r2(R.reduce((a, x) => a + x.spolu, 0)), ks,
              zarubna: 'F' + z.F + (e ? ' + ' + e : ''), rozsah_steny: z.min + '–' + z.max + ' mm', dodanie_dni: Math.max(0, ...R.map(x => x.d)) };
