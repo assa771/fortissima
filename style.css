@@ -1863,3 +1863,28 @@ dialog.lb::backdrop{ background:transparent; }
   .qx{ display:inline; }
   .qi-lines td.q-s{ font-weight:600; }
 }
+
+/* ===== smer otvárania – obrázkové voľby ===== */
+.smer-picks{ display:grid; grid-template-columns:repeat(2, minmax(0, 220px)); gap:12px; }
+.smer-pick{ position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 10px 10px; border:1px solid var(--line);
+  background:var(--paper); cursor:pointer; transition:border-color .2s, box-shadow .2s; }
+.smer-pick input{ position:absolute; opacity:0; pointer-events:none; }
+.smer-pick:hover{ border-color:var(--ink-faint); }
+.smer-pick:has(input:checked){ border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
+.smer-pick:has(input:focus-visible){ outline:2px solid var(--brass); outline-offset:2px; }
+.smer-ico{ width:100%; max-width:170px; height:auto; display:block; }
+.smer-t{ display:flex; flex-direction:column; align-items:center; line-height:1.2; }
+.smer-t b{ font-family:'JetBrains Mono', monospace; font-size:.82rem; font-weight:500; }
+.smer-t small{ font-size:.74rem; color:var(--ink-faint); }
+.smer-hint{ font-size:.78rem; color:var(--ink-faint); margin:8px 0 4px; }
+.si-f{ fill:#E6E1D8; stroke:#B7AEA2; stroke-width:1.5; }
+.si-d{ fill:#F7F5F0; stroke:#B7AEA2; stroke-width:1.2; }
+.si-h{ fill:var(--oxblood); }
+.si-k{ fill:#55504A; }
+.si-w{ fill:var(--ink); }
+.si-l{ stroke:var(--ink); stroke-width:3; stroke-linecap:round; }
+.si-a{ fill:none; stroke:var(--ink-faint); stroke-width:1.2; stroke-dasharray:3 3; }
+.si-hp{ fill:var(--oxblood); }
+.si-e{ fill:none; stroke:var(--ink-soft); stroke-width:1.3; }
+.si-ed{ fill:var(--ink-soft); }
+.smer-pick:has(input:checked) .si-d{ fill:#fff; }
