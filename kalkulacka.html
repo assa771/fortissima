@@ -61,7 +61,7 @@
             <label><input type="radio" name="farba" value="biela" checked><span class="sw" style="background:#FBFAF6;border-color:#D9D2C2"></span><span class="sw-t">Biela</span></label>
             <label><input type="radio" name="farba" value="kasmirova"><span class="sw" style="background:#D9CBB0;border-color:#B5A488"></span><span class="sw-t">Kašmírová</span></label>
           </div></div>
-          <div><div class="k">Farba zárubne</div><div class="sw-radio">
+          <div data-zar><div class="k">Farba zárubne</div><div class="sw-radio">
             <label><input type="radio" name="farba_zarubne" value="biela" checked><span class="sw" style="background:#FBFAF6;border-color:#D9D2C2"></span><span class="sw-t">Biela</span></label>
             <label><input type="radio" name="farba_zarubne" value="kasmirova"><span class="sw" style="background:#D9CBB0;border-color:#B5A488"></span><span class="sw-t">Kašmírová</span></label>
           </div></div>
@@ -82,12 +82,16 @@
       </fieldset>
 
       <fieldset class="step">
-        <legend class="step-h"><span class="mono">04</span>Hrúbka steny</legend>
-        <div class="wall-in">
-          <input type="number" name="stena" id="stena" inputmode="numeric" min="80" max="400" step="1" value="120" aria-describedby="stenaOut"><span>mm</span>
+        <legend class="step-h"><span class="mono">04</span>Zárubňa</legend>
+        <label class="chk chk-big"><input type="checkbox" name="so_zarubnou" id="soZarubnou" checked><span>Objednávam aj zárubňu</span></label>
+        <div id="stenaWrap">
+          <div class="k"><label for="stena">Hrúbka steny</label></div>
+          <div class="wall-in">
+            <input type="number" name="stena" id="stena" inputmode="numeric" min="80" max="400" step="1" value="120" aria-describedby="stenaOut"><span>mm</span>
+          </div>
+          <a href="zarubne.html#rozsahy" class="hint-link">Ako sa určuje typ zárubne?</a>
         </div>
         <p class="calc-dims" id="stenaOut"></p>
-        <a href="zarubne.html#rozsahy" class="hint-link">Ako sa určuje typ zárubne?</a>
       </fieldset>
 
       <fieldset class="step">

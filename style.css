@@ -1747,3 +1747,8 @@ header.nav-open .nav-toggle span:nth-child(2){ top:21px; transform:rotate(-45deg
   .qi{ grid-template-columns:70px 1fr; }
   .door-prev{ display:none; }
 }
+.chk-big{ font-size:1rem; margin:0 0 6px; }
+.chk-big input{ width:20px; height:20px; }
+#stenaWrap[hidden]{ display:none; }
+[data-zar]{ transition:opacity .25s ease; }
+[data-zar].is-off{ opacity:.35; pointer-events:none; }
