@@ -196,6 +196,20 @@ window.FORTISSIMA_DEMO = {
    "vyska": "*",
    "priplatok_s_dph": "15",
    "popis": "rohový spoj zárubne na tupo (90°)"
+  },
+  {
+   "polozka": "skratenie-kridlo",
+   "sirka": "*",
+   "vyska": "*",
+   "priplatok_s_dph": "10",
+   "popis": "skrátenie krídla na mieru"
+  },
+  {
+   "polozka": "skratenie-zarubna",
+   "sirka": "*",
+   "vyska": "*",
+   "priplatok_s_dph": "5",
+   "popis": "skrátenie zárubne na mieru"
   }
  ],
  "kovanie": [
@@ -280,6 +294,92 @@ window.FORTISSIMA_DEMO = {
    "nazov": "Vetracia mriežka čierna",
    "cena_s_dph": "24",
    "dodanie_dni": "3"
+  }
+ ],
+ "skratenie": [
+  {
+   "kolekcia": "minimal",
+   "vyska": "197",
+   "max_mm": "100",
+   "max_mm_mriezka": "25",
+   "poznamka": ""
+  },
+  {
+   "kolekcia": "minimal",
+   "vyska": "2055",
+   "max_mm": "85",
+   "max_mm_mriezka": "25",
+   "poznamka": ""
+  },
+  {
+   "kolekcia": "minimal",
+   "vyska": "210",
+   "max_mm": "45",
+   "max_mm_mriezka": "25",
+   "poznamka": ""
+  },
+  {
+   "kolekcia": "vertikal",
+   "vyska": "197",
+   "max_mm": "100",
+   "max_mm_mriezka": "25",
+   "poznamka": "doplniť skutočné hodnoty"
+  },
+  {
+   "kolekcia": "vertikal",
+   "vyska": "2055",
+   "max_mm": "85",
+   "max_mm_mriezka": "25",
+   "poznamka": "doplniť skutočné hodnoty"
+  },
+  {
+   "kolekcia": "vertikal",
+   "vyska": "210",
+   "max_mm": "45",
+   "max_mm_mriezka": "25",
+   "poznamka": "doplniť skutočné hodnoty"
+  },
+  {
+   "kolekcia": "prestige",
+   "vyska": "197",
+   "max_mm": "100",
+   "max_mm_mriezka": "25",
+   "poznamka": "doplniť skutočné hodnoty"
+  },
+  {
+   "kolekcia": "prestige",
+   "vyska": "2055",
+   "max_mm": "85",
+   "max_mm_mriezka": "25",
+   "poznamka": "doplniť skutočné hodnoty"
+  },
+  {
+   "kolekcia": "prestige",
+   "vyska": "210",
+   "max_mm": "45",
+   "max_mm_mriezka": "25",
+   "poznamka": "doplniť skutočné hodnoty"
+  },
+  {
+   "kolekcia": "slepa",
+   "vyska": "197",
+   "max_mm": "100",
+   "max_mm_mriezka": "100",
+   "poznamka": "slepá zárubňa – doplniť"
+  },
+  {
+   "kolekcia": "slepa",
+   "vyska": "2055",
+   "max_mm": "85",
+   "max_mm_mriezka": "85",
+   "poznamka": "slepá zárubňa – doplniť"
+  },
+  {
+   "kolekcia": "slepa",
+   "vyska": "210",
+   "max_mm": "45",
+   "max_mm_mriezka": "45",
+   "poznamka": "slepá zárubňa – doplniť"
   }
  ],
  "sluzby": [

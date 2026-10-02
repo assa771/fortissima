@@ -21,7 +21,7 @@ zarubne.csv     typ (F80 | F100 | F130 | F160), prevedenie (falc | bez | slepa =
 rozsirenia.csv  typ (R90 | R180), sirka, vyska, cena_s_dph, dodanie_dni
                 (voliteľne aj stĺpec farba = farba zárubne)
                 (ak R180 nemá cenu, počíta sa ako 2 × R90)
-priplatky.csv   polozka (kridlo | zarubna | prah | spoj-tupo), sirka, vyska, priplatok_s_dph, popis
+priplatky.csv   polozka (kridlo | zarubna | prah | spoj-tupo | skratenie-kridlo | skratenie-zarubna), sirka, vyska, priplatok_s_dph, popis
                 prah = výsuvný (padací) prah v spodku krídla; účtuje sa len keď ho zákazník zvolí (môže mať inú cenu podľa šírky)
                 spoj-tupo = príplatok k zárubni za rohový spoj na tupo (90°); spoj na pokos (45°) je základ
                 – príplatky sa k základnej cene PRIČÍTAVAJÚ (všetky, ktoré sedia)
@@ -39,3 +39,8 @@ sluzby.csv      montaz-falc / montaz-bez / montaz-posuvne / montaz-slepa – mon
 BEZPEČNOSŤ: tento priečinok je zablokovaný súborom .htaccess. Ešte bezpečnejšie je
 presunúť ho mimo verejný priečinok webu (napr. vedľa public_html) a cestu nastaviť
 v súbore api/config.php.
+
+skratenie.csv   kolekcia (minimal | vertikal | prestige | slepa), vyska (197 | 2055 | 210),
+                max_mm = o koľko mm sa dajú dvere najviac skrátiť (prirezanie zo spodu),
+                max_mm_mriezka = limit, ak má krídlo vetraciu mriežku, poznamka
+                Cena skrátenia je v priplatky.csv: skratenie-kridlo (ku krídlu) a skratenie-zarubna (k zárubni).

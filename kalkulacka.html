@@ -7,7 +7,7 @@
 <meta name="description" content="Orientačná cena interiérových dverí Fortissima vrátane zárubne, zámku, montáže a dopravy. Kľučka nie je súčasťou ponuky.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,ital@9..144,300..700,0..1&amp;family=Work+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=b5c577e7">
+<link rel="stylesheet" href="style.css?v=97db1ccf">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
 <link rel="apple-touch-icon" href="assets/favicon-192.png">
@@ -81,6 +81,13 @@
         <div class="seg seg-radio"><label><input type="radio" name="sirka" value="60"><span>60</span></label><label><input type="radio" name="sirka" value="65"><span>65</span></label><label><input type="radio" name="sirka" value="70"><span>70</span></label><label><input type="radio" name="sirka" value="80" checked><span>80</span></label><label><input type="radio" name="sirka" value="90"><span>90</span></label></div>
         <div class="k">Výška</div>
         <div class="seg seg-radio"><label><input type="radio" name="vyska" value="197" checked><span>STN 197</span></label><label><input type="radio" name="vyska" value="2055"><span>HU 205,5</span></label><label><input type="radio" name="vyska" value="210"><span>DIN 210</span></label></div>
+        <div class="skr" id="skrWrap">
+          <label class="chk"><input type="checkbox" name="skr_on" id="skrOn"><span>Skrátiť na mieru (prirezanie vo výrobe)</span></label>
+          <div class="wall-in skr-in" id="skrIn" hidden>
+            <span class="skr-pre">o</span><input type="number" name="skratenie" id="skratenie" inputmode="numeric" min="1" step="1" value="20" aria-describedby="skrOut"><span>mm</span>
+          </div>
+          <p class="calc-dims" id="skrOut"></p>
+        </div>
         <div data-dvere class="smer-wrap"><div class="k">Smer otvárania</div>
         <div class="smer-picks">
           <label class="smer-pick"><input type="radio" name="smer" value="lave" checked><svg viewBox="0 0 200 132" width="200" height="132" class="smer-ico" aria-hidden="true"><rect x="16" y="14" width="50" height="92" fill="none" stroke="#B9B0A3" stroke-width="1"/><rect x="20" y="18" width="42" height="88" fill="#FBFAF7" stroke="#3A332B" stroke-width="1"/><rect x="18.8" y="24" width="2.8" height="9" rx="1.4" fill="#B08D57"/><rect x="18.8" y="56" width="2.8" height="9" rx="1.4" fill="#B08D57"/><rect x="18.8" y="88" width="2.8" height="9" rx="1.4" fill="#B08D57"/><circle cx="55" cy="62" r="2.6" fill="none" stroke="#3A332B" stroke-width="1"/><line x1="55" y1="62" x2="46" y2="62" stroke="#3A332B" stroke-width="1.6" stroke-linecap="round"/><line x1="8" y1="106" x2="74" y2="106" stroke="#B9B0A3" stroke-width="1"/><rect x="90" y="27" width="14" height="6" fill="#D8D1C5"/><rect x="182" y="27" width="14" height="6" fill="#D8D1C5"/><path d="M104 30 L182 30 A78 78 0 0 1 104 108 Z" fill="#B08D57" fill-opacity=".10"/><path d="M182 30 A78 78 0 0 1 104 108" fill="none" stroke="#B08D57" stroke-width="1" stroke-dasharray="2.5 2.5"/><line x1="104" y1="30" x2="104" y2="108" stroke="#3A332B" stroke-width="2.2" stroke-linecap="round"/><circle cx="104" cy="30" r="3" fill="#fff" stroke="#B08D57" stroke-width="1.6"/><path d="M139.0 120 L143.0 115 L147.0 120" fill="none" stroke="#8B8172" stroke-width="1"/><text x="143.0" y="129" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="7" letter-spacing="1.2" fill="#8B8172">VY</text></svg><span class="smer-t"><b>Ľavé</b><small>závesy vľavo</small></span></label>
@@ -189,6 +196,6 @@
     </div>
   </div>
 </footer>
-<script src="script.js?v=91d75f7d"></script>
+<script src="script.js?v=ed0ada69"></script>
 </body>
 </html>

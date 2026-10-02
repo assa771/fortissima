@@ -6,3 +6,5 @@ zarubna;90;*;10;šírka 90
 zarubna;*;210;10;výška DIN 210
 prah;*;*;49;výsuvný (padací) prah – príplatok ku krídlu
 spoj-tupo;*;*;15;rohový spoj zárubne na tupo (90°)
+skratenie-kridlo;*;*;10;skrátenie krídla na mieru
+skratenie-zarubna;*;*;5;skrátenie zárubne na mieru

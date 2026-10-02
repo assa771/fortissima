@@ -1890,3 +1890,13 @@ dialog.lb::backdrop{ background:transparent; }
 .qi-lines td.q-c{ color:var(--ink-soft); }
 .qi-lines td.q-s{ font-weight:600; padding-right:0; }
 @media (max-width: 760px){ .qi-lines td.n{ padding:0; } }
+
+/* ===== skrátenie na mieru ===== */
+.skr{ margin-top:18px; padding:14px 16px; border:1px dashed var(--line); }
+.skr .chk{ font-size:.95rem; }
+.skr-in{ margin-top:10px; max-width:220px; align-items:baseline; }
+.skr-in input{ font-size:1.6rem !important; }
+.skr-pre{ font-family:'Fraunces', serif; font-style:italic; color:var(--ink-faint); margin-right:8px; }
+.skr .calc-dims{ margin-top:8px; margin-bottom:0; }
+#skrIn[hidden]{ display:none !important; }
+.skr .chk{ margin-top:0; }
