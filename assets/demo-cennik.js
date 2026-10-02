@@ -189,6 +189,13 @@ window.FORTISSIMA_DEMO = {
    "vyska": "*",
    "priplatok_s_dph": "49",
    "popis": "výsuvný (padací) prah – príplatok ku krídlu"
+  },
+  {
+   "polozka": "spoj-tupo",
+   "sirka": "*",
+   "vyska": "*",
+   "priplatok_s_dph": "15",
+   "popis": "rohový spoj zárubne na tupo (90°)"
   }
  ],
  "kovanie": [

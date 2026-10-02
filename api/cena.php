@@ -183,6 +183,12 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
         $dni = max($dni, $d);
     };
 
+    // rohový spoj obložky zárubne: pokos (45°, základ) alebo tupo (90°, príplatok)
+    $spoj = strtolower((string)($p['spoj'] ?? 'pokos'));
+    if (!in_array($spoj, ['pokos', 'tupo'], true)) throw new ChybaPolozky('Neplatný rohový spoj zárubne.');
+    $cenaSpoj = ($soZar && $spoj === 'tupo') ? priplatky($prip, 'spoj-tupo', $in['sirka'], $in['vyska']) : 0.0;
+    $spojTxt = $spoj === 'tupo' ? 'spoj na tupo' : 'spoj na pokos';
+
     // závesy sú súčasťou zárubne (nie samostatná položka); slepá zárubňa závesy ani protiplech nemá
     $zav = null;
     if ($soZar && !$slepa) {
@@ -230,14 +236,14 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
         if (!$r) throw new ChybaPolozky($nemame);
         $farbaZ = $POV['farba_zarubne'][$in['farba_zarubne']][0];
         if ($slepa) {
-            $nazovZ = sprintf('Slepá (tunelová) zárubňa F%d, %s, %s/%s – bez závesov a protiplechu', $z['F'], $farbaZ, $in['sirka'], $vyskaTxt);
+            $nazovZ = sprintf('Slepá (tunelová) zárubňa F%d, %s, %s/%s, %s – bez závesov a protiplechu', $z['F'], $farbaZ, $in['sirka'], $vyskaTxt, $spojTxt);
         } else {
-            $nazovZ = sprintf('Obložková zárubňa F%d, %s, %s, %s', $z['F'], $falc ? 'falcová' : 'bezfalcová', $farbaZ, lcfirst($zav['nazov']));
+            $nazovZ = sprintf('Obložková zárubňa F%d, %s, %s, %s, %s', $z['F'], $falc ? 'falcová' : 'bezfalcová', $farbaZ, lcfirst($zav['nazov']), $spojTxt);
         }
         $pridaj('ZARUBNA', "F{$z['F']}-$kodPrev-{$c('farba_zarubne')}-$rozm-$kodSmer", $nazovZ,
-            cislo($r['cena_s_dph']) + priplatky($prip, 'zarubna', $in['sirka'], $in['vyska']) + ($zav ? cislo($zav['cena_s_dph']) : 0), $ks,
+            cislo($r['cena_s_dph']) + priplatky($prip, 'zarubna', $in['sirka'], $in['vyska']) + ($zav ? cislo($zav['cena_s_dph']) : 0) + $cenaSpoj, $ks,
             max((int)cislo($r['dodanie_dni'] ?? 0), $zav ? (int)cislo($zav['dodanie_dni'] ?? 0) : 0),
-            ['zavesy' => $zav ? strtolower($zav['kod']) : '']);
+            ['zavesy' => $zav ? strtolower($zav['kod']) : '', 'spoj' => $spoj]);
 
         // rozširovacie elementy (vo farbe zárubne)
         if ($z['ext'] > 0) {

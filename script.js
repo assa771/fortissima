@@ -454,6 +454,10 @@ const Ponuka = (function () {
     const N = +p.sirka * 10, V1 = H[p.vyska], falc = prev === 'falc', rozm = p.sirka + '-' + p.vyska;
     const R = [], add = (typ, kod, nazov, c, m, dd, x) => R.push(Object.assign({ typ, kod, nazov, mnozstvo: m, cena_ks: r2(c), spolu: r2(c * m), d: dd || 0 }, x || {}));
     const miss = err('Pre túto zostavu zatiaľ nemáme cenu v cenníku. Pošlite nám prosím dopyt.');
+    // rohový spoj obložky: pokos (základ) / tupo (príplatok)
+    const spoj = String(p.spoj || 'pokos').toLowerCase();
+    if (!['pokos', 'tupo'].includes(spoj)) return err('Neplatný rohový spoj zárubne.');
+    const cSpoj = soZar && spoj === 'tupo' ? surcharge(D.priplatky, 'spoj-tupo', p.sirka, p.vyska) : 0, spojTxt = spoj === 'tupo' ? 'spoj na tupo' : 'spoj na pokos';
     // závesy sú súčasťou zárubne; slepá zárubňa závesy ani protiplech nemá
     let zav = null;
     if (soZar && !slepa) {
@@ -483,10 +487,10 @@ const Ponuka = (function () {
     r = best(D.zarubne, Object.assign({ typ: 'F' + z.F }, kz)); if (!r) return miss;
     const zn = zav ? zav.nazov.charAt(0).toLowerCase() + zav.nazov.slice(1) : '';
     add('ZARUBNA', 'F' + z.F + '-' + kPrev + '-' + KODY[p.farba_zarubne] + '-' + rozm + '-' + kSmer,
-        slepa ? 'Slepá (tunelová) zárubňa F' + z.F + ', ' + NAMES[p.farba_zarubne] + ', ' + p.sirka + '/' + HTXT[p.vyska] + ' – bez závesov a protiplechu'
-              : 'Obložková zárubňa F' + z.F + ', ' + (falc ? 'falcová' : 'bezfalcová') + ', ' + NAMES[p.farba_zarubne] + ', ' + zn,
-        num(r.cena_s_dph) + surcharge(D.priplatky, 'zarubna', p.sirka, p.vyska) + (zav ? num(zav.cena_s_dph) : 0), ks,
-        Math.max(num(r.dodanie_dni), zav ? num(zav.dodanie_dni) : 0), { zavesy: zav ? zav.kod.toLowerCase() : '' });
+        slepa ? 'Slepá (tunelová) zárubňa F' + z.F + ', ' + NAMES[p.farba_zarubne] + ', ' + p.sirka + '/' + HTXT[p.vyska] + ', ' + spojTxt + ' – bez závesov a protiplechu'
+              : 'Obložková zárubňa F' + z.F + ', ' + (falc ? 'falcová' : 'bezfalcová') + ', ' + NAMES[p.farba_zarubne] + ', ' + zn + ', ' + spojTxt,
+        num(r.cena_s_dph) + surcharge(D.priplatky, 'zarubna', p.sirka, p.vyska) + (zav ? num(zav.cena_s_dph) : 0) + cSpoj, ks,
+        Math.max(num(r.dodanie_dni), zav ? num(zav.dodanie_dni) : 0), { zavesy: zav ? zav.kod.toLowerCase() : '', spoj });
     if (z.ext) {
       const k2 = { farba: p.farba_zarubne, sirka: p.sirka, vyska: p.vyska }, fz = KODY[p.farba_zarubne];
       const e90 = best(D.rozsirenia, Object.assign({ typ: 'R90' }, k2)), e180 = best(D.rozsirenia, Object.assign({ typ: 'R180' }, k2));
@@ -588,6 +592,13 @@ const Ponuka = (function () {
     o.push('<rect x="' + ox + '" y="' + oy + '" width="' + S4 + '" height="' + V4 + '" fill="' + Z.frame + '" stroke="' + Z.edge + '" stroke-width="5"/>');
     if (!slepa) o.push('<rect x="' + ix + '" y="' + iy + '" width="' + S2 + '" height="' + V2 + '" fill="' + (falc ? Z.frame : '#5E5850') + '" stroke="' + Z.edge + '" stroke-width="4"/>');
     }
+    // rohový spoj obložky: pokos = šikmá čiara z vonkajšieho do vnútorného rohu, tupo = zvislý diel ide až hore
+    const spojCiary = (jx, jy, jw) => {
+      const c = 'stroke="rgba(70,55,40,.55)" stroke-width="5" stroke-linecap="round"';
+      if (p.spoj === 'tupo') o.push('<line x1="' + jx + '" y1="' + oy + '" x2="' + jx + '" y2="' + jy + '" ' + c + '/><line x1="' + (jx + jw) + '" y1="' + oy + '" x2="' + (jx + jw) + '" y2="' + jy + '" ' + c + '/>');
+      else o.push('<line x1="' + ox + '" y1="' + oy + '" x2="' + jx + '" y2="' + jy + '" ' + c + '/><line x1="' + (ox + S4) + '" y1="' + oy + '" x2="' + (jx + jw) + '" y2="' + jy + '" ' + c + '/>');
+    };
+    if (p.so_zarubnou !== false && !slepa) spojCiary(ix, iy, S2);
     if (slepa) {
       // slepá (tunelová) zárubňa: len čistý priechod – bez krídla, závesov a protiplechu
       const S1 = N + 6, px0 = cx - S1 / 2, py0 = floor - V1;
@@ -596,6 +607,7 @@ const Ponuka = (function () {
       o.push('<polygon points="' + px0 + ',' + py0 + ' ' + (px0 + 60) + ',' + (py0 + 60) + ' ' + (px0 + S1 - 60) + ',' + (py0 + 60) + ' ' + (px0 + S1) + ',' + py0 + '" fill="' + Z.leaf + '" opacity=".55"/>');
       o.push('<rect x="' + px0 + '" y="' + py0 + '" width="60" height="' + V1 + '" fill="' + Z.leaf + '" opacity=".45"/>');
       o.push('<rect x="' + (px0 + S1 - 60) + '" y="' + py0 + '" width="60" height="' + V1 + '" fill="' + Z.leaf + '" opacity=".3"/>');
+      spojCiary(px0, py0, S1);
       if (opt.rozmer !== false) o.push('<text x="' + cx + '" y="' + (VH - 34) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="54" fill="#7D756B">' +
         esc(p.sirka + '/' + HTXT[p.vyska] + ' · slepá') + '</text>');
       o.push('</svg>');
@@ -645,12 +657,27 @@ const Ponuka = (function () {
     const hy = floor - 1050, rx = lockX + dir * 70;
     o.push('<rect x="' + (rx - 26) + '" y="' + (hy - 26) + '" width="52" height="52" rx="6" fill="' + kc + '" stroke="' + kcs + '" stroke-width="2"/>');
     o.push('<rect x="' + Math.min(rx, rx + dir * 150) + '" y="' + (hy - 9) + '" width="150" height="18" rx="9" fill="' + kc + '" stroke="' + kcs + '" stroke-width="2"/>');
-    if (kov && kov !== 'bez') {
-      const ky = hy + 90;
-      o.push('<rect x="' + (rx - 22) + '" y="' + (ky - 22) + '" width="44" height="44" rx="6" fill="' + kc + '" stroke="' + kcs + '" stroke-width="2"/>');
-      if (/^wc/.test(kov)) o.push('<circle cx="' + rx + '" cy="' + ky + '" r="11" fill="none" stroke="' + kcs + '" stroke-width="5"/>');
-      else if (/^pz/.test(kov)) o.push('<circle cx="' + rx + '" cy="' + (ky - 5) + '" r="8" fill="' + kcs + '"/><rect x="' + (rx - 4) + '" y="' + (ky - 2) + '" width="8" height="14" fill="' + kcs + '"/>');
-      else o.push('<rect x="' + (rx - 4) + '" y="' + (ky - 12) + '" width="8" height="24" rx="3" fill="' + kcs + '"/>');
+    // spodná rozeta – zreteľne odlíšená: BB = otvor pre obyčajný kľúč, PZ = cylindrická vložka, WC = otočný gombík s indikátorom
+    const typZ = (kov.match(/^(bb|pz|wc)/) || [])[1];
+    if (typZ) {
+      const ky = hy + 110, R0 = 34, cierna = /cierna/.test(kov), sym = cierna ? '#EDE9E2' : '#26221F';
+      o.push('<rect x="' + (rx - R0 - 4) + '" y="' + (ky - R0 - 4) + '" width="' + (2 * R0 + 8) + '" height="' + (2 * R0 + 8) + '" rx="10" fill="#fff" opacity=".85"/>');
+      o.push('<rect x="' + (rx - R0) + '" y="' + (ky - R0) + '" width="' + 2 * R0 + '" height="' + 2 * R0 + '" rx="8" fill="' + kc + '" stroke="' + kcs + '" stroke-width="3"/>');
+      if (typZ === 'bb') {
+        o.push('<circle cx="' + rx + '" cy="' + (ky - 10) + '" r="10" fill="' + sym + '"/>' +
+               '<polygon points="' + (rx - 5) + ',' + (ky - 4) + ' ' + (rx + 5) + ',' + (ky - 4) + ' ' + (rx + 11) + ',' + (ky + 22) + ' ' + (rx - 11) + ',' + (ky + 22) + '" fill="' + sym + '"/>');
+      } else if (typZ === 'pz') {
+        o.push('<path d="M' + (rx - 8) + ' ' + (ky - 4) + 'A13 13 0 1 1 ' + (rx + 8) + ' ' + (ky - 4) + 'V' + (ky + 22) + 'Q' + rx + ' ' + (ky + 27) + ' ' + (rx - 8) + ' ' + (ky + 22) + 'Z" fill="' + sym + '"/>' +
+               '<rect x="' + (rx - 2.5) + '" y="' + (ky - 20) + '" width="5" height="22" rx="2" fill="' + kc + '"/>');
+      } else {
+        o.push('<circle cx="' + rx + '" cy="' + ky + '" r="19" fill="' + sym + '"/>' +
+               '<rect x="' + (rx - 15) + '" y="' + (ky - 4) + '" width="30" height="8" rx="4" fill="' + kc + '"/>' +
+               '<circle cx="' + (rx + dir * -28) + '" cy="' + (ky + 24) + '" r="6" fill="#C2342F"/>');
+      }
+      // štítok s typom zámku
+      const ty = ky + R0 + 18;
+      o.push('<rect x="' + (rx - 44) + '" y="' + ty + '" width="88" height="46" rx="23" fill="#7A1F2B"/>' +
+             '<text x="' + rx + '" y="' + (ty + 33) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="32" font-weight="700" fill="#fff">' + typZ.toUpperCase() + '</text>');
     }
     if (opt.rozmer !== false) {
       o.push('<text x="' + cx + '" y="' + (VH - 34) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="54" fill="#7D756B">' +
@@ -680,12 +707,12 @@ const Ponuka = (function () {
   const val = n => { const el = form.querySelector('[name="' + n + '"]:checked') || form.elements[n]; return el ? el.value : ''; };
   const setRadio = (n, v) => { const r = form.querySelector('input[name="' + n + '"][value="' + v + '"]'); if (r) r.checked = true; };
   const polozka = () => val('druh') === 'zarubna' ? ({
-    uid: editUid || 'n', druh: 'zarubna', prevedenie: 'slepa', smer: 'slepa', farba_zarubne: val('farba_zarubne'),
+    uid: editUid || 'n', druh: 'zarubna', prevedenie: 'slepa', smer: 'slepa', farba_zarubne: val('farba_zarubne'), spoj: val('spoj') || 'pokos',
     sirka: val('sirka'), vyska: val('vyska'), so_zarubnou: true, stena: parseInt(form.elements.stena.value, 10) || 0,
     ks: Math.min(50, Math.max(1, parseInt(form.elements.ks.value, 10) || 1)), nazov: form.elements.nazov.value.trim().slice(0, 40)
   }) : ({
     uid: editUid || 'n', druh: 'dvere', kolekcia: val('kolekcia'), prevedenie: val('prevedenie'), farba: val('farba'), farba_zarubne: val('farba_zarubne'),
-    sirka: val('sirka'), vyska: val('vyska'), smer: val('smer'), so_zarubnou: form.elements.so_zarubnou.checked, zavesy: val('zavesy') || 'nikel',
+    sirka: val('sirka'), vyska: val('vyska'), smer: val('smer'), so_zarubnou: form.elements.so_zarubnou.checked, zavesy: val('zavesy') || 'nikel', spoj: val('spoj') || 'pokos',
     stena: parseInt(form.elements.stena.value, 10) || 0,
     kovanie: form.elements.kovanie.value, prah: form.elements.prah.checked,
     mriezka: form.elements.mriezka.value || 'bez', ks: Math.min(50, Math.max(1, parseInt(form.elements.ks.value, 10) || 1)),
@@ -700,7 +727,7 @@ const Ponuka = (function () {
     const p = P.load().polozky.find(x => x.uid === qs.get('upravit'));
     if (p) {
       editUid = p.uid; zarDotknuta = true;
-      setRadio('druh', p.druh || 'dvere'); setRadio('zavesy', p.zavesy || 'nikel');
+      setRadio('druh', p.druh || 'dvere'); setRadio('zavesy', p.zavesy || 'nikel'); setRadio('spoj', p.spoj || 'pokos');
       ['kolekcia', 'prevedenie', 'farba', 'farba_zarubne', 'sirka', 'vyska', 'smer'].forEach(k => setRadio(k, p[k]));
       form.elements.so_zarubnou.checked = p.so_zarubnou !== false;
       form.elements.prah.checked = !!p.prah;
@@ -720,6 +747,7 @@ const Ponuka = (function () {
     const N = +p.sirka * 10, V1 = P.H[p.vyska], slepa = P.jeSlepa(p);
     form.querySelectorAll('[data-dvere]').forEach(el => { el.hidden = slepa; });
     $('zavesyWrap').hidden = slepa || !p.so_zarubnou;
+    $('spojWrap').hidden = !p.so_zarubnou;
     $('druhNote').textContent = slepa ? 'Slepá (tunelová) zárubňa je čistý priechod bez krídla – bez závesov a protiplechu.'
                                       : 'Dvere = krídlo so zámkom, voliteľne aj so zárubňou.';
     if (!p.so_zarubnou) {
@@ -837,12 +865,14 @@ const Ponuka = (function () {
       '<div><dt>Rozmer</dt><dd>' + p.sirka + '/' + P.HTXT[p.vyska] + ', slepá</dd></div>' +
       '<div><dt>Farba zárubne</dt><dd>' + P.NAMES[p.farba_zarubne] + '</dd></div>' +
       '<div><dt>Závesy</dt><dd>bez závesov a protiplechu</dd></div>' +
+      '<div><dt>Rohový spoj</dt><dd>' + (p.spoj === 'tupo' ? 'na tupo 90°' : 'na pokos 45°') + '</dd></div>' +
       '<div><dt>Zárubňa</dt><dd>' + p.stena + ' mm → ' + P.esc(z) + '</dd></div></dl>';
     return '<dl class="qi-dl">' +
       '<div><dt>Rozmer</dt><dd>' + p.sirka + '/' + P.HTXT[p.vyska] + ', ' + P.NAMES[p.smer] + '</dd></div>' +
       '<div><dt>Farba krídla</dt><dd>' + P.NAMES[p.farba] + '</dd></div>' +
       '<div><dt>Farba zárubne</dt><dd>' + (bez ? '–' : P.NAMES[p.farba_zarubne]) + '</dd></div>' +
       '<div><dt>Závesy</dt><dd>' + (bez ? '–' : P.NAMES[p.zavesy || 'nikel']) + '</dd></div>' +
+      '<div><dt>Rohový spoj</dt><dd>' + (bez ? '–' : p.spoj === 'tupo' ? 'na tupo 90°' : 'na pokos 45°') + '</dd></div>' +
       '<div><dt>Výsuvný prah</dt><dd>' + (p.prah ? 'áno' : 'nie') + '</dd></div>' +
       '<div><dt>Vetracia mriežka</dt><dd>' + (P.MRIEZKA[p.mriezka || 'bez'] || p.mriezka) + '</dd></div>' +
       '<div><dt>Zárubňa</dt><dd>' + (bez ? 'bez zárubne' : p.stena + ' mm → ' + P.esc(z)) + '</dd></div></dl>';
@@ -958,7 +988,7 @@ const Ponuka = (function () {
     // riadok = pozícia.poradie (1.1 krídlo, 1.2 zárubňa, 1.3 rozšírenie…) – drží súvislosť dverí, zárubne a elementov
     const COLS = ['ponuka', 'datum', 'pozicia', 'riadok', 'oznacenie_pozicie', 'typ_polozky', 'kod',
                   'otvaranie', 'model', 'kolekcia', 'sirka', 'vyska', 'orientacia', 'farba',
-                  'zamok', 'povrch_kovania', 'vysuvny_prah', 'vetracia_mriezka', 'typ_zarubne', 'zavesy', 'rozsirenie', 'hrubka_steny_mm',
+                  'zamok', 'povrch_kovania', 'vysuvny_prah', 'vetracia_mriezka', 'typ_zarubne', 'zavesy', 'rohovy_spoj', 'rozsirenie', 'hrubka_steny_mm',
                   'mnozstvo', 'jednotka', 'cena_ks_s_dph', 'spolu_s_dph', 'nazov'];
     const rows = [COLS.join(';')];
     const datum = d.vytvorena.slice(0, 10);
@@ -975,7 +1005,8 @@ const Ponuka = (function () {
           zamok: kr ? zm.zamok : '', povrch_kovania: kr ? zm.povrch : '', vysuvny_prah: kr ? (p.prah ? 'áno' : 'nie') : '',
           vetracia_mriezka: kr ? P.MRIEZKA[x.mriezka || p.mriezka || 'bez'] || 'bez' : '',
           typ_zarubne: typ === 'ZARUBNA' ? casti[0] : '',
-          zavesy: typ === 'ZARUBNA' ? (slepa ? 'bez' : ZAVESY[x.zavesy || p.zavesy || 'nikel']) : '', rozsirenie: typ === 'ROZSIRENIE' ? casti[0] : '',
+          zavesy: typ === 'ZARUBNA' ? (slepa ? 'bez' : ZAVESY[x.zavesy || p.zavesy || 'nikel']) : '',
+          rohovy_spoj: typ === 'ZARUBNA' ? ((x.spoj || p.spoj) === 'tupo' ? 'tupo' : 'pokos') : '', rozsirenie: typ === 'ROZSIRENIE' ? casti[0] : '',
           hrubka_steny_mm: typ === 'ZARUBNA' && soZar ? p.stena : '',
           mnozstvo: x.mnozstvo, jednotka: 'ks', cena_ks_s_dph: n(x.cena_ks), spolu_s_dph: n(x.spolu), nazov: x.nazov
         };
@@ -997,7 +1028,8 @@ const Ponuka = (function () {
     const lines = ['Cenová ponuka ' + d.id + (P.DEMO ? ' (ukážka, ilustračné ceny)' : ''), ''];
     d.polozky.forEach(p => {
       lines.push(p.poradie + '. ' + (p.nazov ? p.nazov + ' – ' : '') + P.popis(p) + ', ' + p.ks + ' ks');
-      const zarTxt = 'zárubňa ' + P.NAMES[p.farba_zarubne] + ', stena ' + p.stena + ' mm' + (p.cena ? ' (' + p.cena.zarubna + ')' : '');
+      const zarTxt = 'zárubňa ' + P.NAMES[p.farba_zarubne] + ', stena ' + p.stena + ' mm' + (p.cena ? ' (' + p.cena.zarubna + ')' : '') +
+                     ', spoj na ' + (p.spoj === 'tupo' ? 'tupo' : 'pokos');
       lines.push('   ' + (P.jeSlepa(p) ? 'slepá ' + zarTxt + ', bez závesov a protiplechu' :
                  'krídlo ' + P.NAMES[p.farba] + (p.prah ? ' s výsuvným prahom' : '') +
                  (p.mriezka && p.mriezka !== 'bez' ? ', vetracia mriežka ' + P.MRIEZKA[p.mriezka] : '') + (p.so_zarubnou === false ? ', bez zárubne' : ', ' + zarTxt + ', závesy ' + P.NAMES[p.zavesy || 'nikel'])) +

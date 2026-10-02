@@ -1779,3 +1779,8 @@ header.nav-open .nav-toggle span:nth-child(2){ top:21px; transform:rotate(-45deg
 .calc-klucka{ margin-top:12px; }
 .q-note{ margin-top:22px; font-size:.86rem; color:var(--ink-soft, #6b635a); max-width:60ch; }
 @media print{ .q-note{ display:block !important; margin-top:10px; font-size:9pt; } }
+#spojWrap{ margin-top:22px; }
+#spojWrap .k{ margin-top:0; }
+.seg-spoj span{ display:flex !important; align-items:center; gap:10px; }
+.spoj-ico{ width:26px; height:26px; flex:none; }
+#spojWrap + #stenaWrap{ margin-top:22px; }
