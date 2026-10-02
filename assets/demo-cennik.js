@@ -249,6 +249,32 @@ window.FORTISSIMA_DEMO = {
    "dodanie_dni": "3"
   }
  ],
+ "mriezky": [
+  {
+   "kod": "bez",
+   "nazov": "Bez vetracej mriežky",
+   "cena_s_dph": "0",
+   "dodanie_dni": "0"
+  },
+  {
+   "kod": "biela",
+   "nazov": "Vetracia mriežka biela",
+   "cena_s_dph": "19",
+   "dodanie_dni": "0"
+  },
+  {
+   "kod": "hlinik",
+   "nazov": "Vetracia mriežka hliníková",
+   "cena_s_dph": "24",
+   "dodanie_dni": "0"
+  },
+  {
+   "kod": "cierna",
+   "nazov": "Vetracia mriežka čierna",
+   "cena_s_dph": "24",
+   "dodanie_dni": "3"
+  }
+ ],
  "sluzby": [
   {
    "kod": "montaz-falc",

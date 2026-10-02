@@ -29,6 +29,8 @@ zavesy.csv      kod (nikel | cierna), nazov, cena_s_dph = príplatok k zárubni,
 kovanie.csv     kod (bez medzier, nemeniť pri existujúcich), nazov (zobrazí sa zákazníkovi),
                 cena_s_dph = príplatok ku krídlu, dodanie_dni – poradie riadkov = poradie v ponuke
                 (zámok je súčasťou krídla, nie samostatná položka)
+mriezky.csv     kod (bez | biela | hlinik | cierna …), nazov, cena_s_dph = príplatok ku krídlu, dodanie_dni
+                (vetracia mriežka v spodnom vlysu – len rámové dvere Vertikal a Prestige; riadok "bez" ponechať)
 sluzby.csv      montaz-falc / montaz-bez / montaz-posuvne / montaz-slepa – montáž za kus podľa typu dverí
                 zameranie – pridá sa automaticky, keď zákazník zvolí montáž (paušál za zákazku)
                 doprava – cena za 1 km; počíta sa vzdialenosť × 2 (tam aj späť)

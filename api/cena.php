@@ -120,7 +120,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
     if (isset($_GET['moznosti'])) {
         $kov = array_map(fn($r) => ['kod' => $r['kod'], 'nazov' => $r['nazov']], nacitaj_csv('kovanie.csv'));
         $zav = array_map(fn($r) => ['kod' => $r['kod'], 'nazov' => $r['nazov']], nacitaj_csv('zavesy.csv'));
-        odpoved(['ok' => true, 'kovanie' => array_values($kov), 'zavesy' => array_values($zav)]);
+        $mr = array_map(fn($r) => ['kod' => $r['kod'], 'nazov' => $r['nazov']], nacitaj_csv('mriezky.csv'));
+        odpoved(['ok' => true, 'kovanie' => array_values($kov), 'zavesy' => array_values($zav), 'mriezky' => array_values($mr)]);
     }
     chyba('Použite POST s položkami ponuky.', 405);
 }
@@ -202,16 +203,26 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
         $cenaPrah = $prah ? priplatky($prip, 'prah', $in['sirka'], $in['vyska']) : 0.0;
         if ($prah && $cenaPrah <= 0) throw new ChybaPolozky($nemame);
 
+        // vetracia mriežka v spodnom vlysu – len rámové dvere (Vertikal, Prestige)
+        $mrKod = strtolower((string)($p['mriezka'] ?? 'bez'));
+        $mr = null;
+        if ($mrKod !== 'bez' && $in['kolekcia'] === 'minimal') throw new ChybaPolozky('Vetraciu mriežku ponúkame len pri rámových dverách Vertikal a Prestige.');
+        if ($mrKod !== 'bez') {
+            foreach (nacitaj_csv('mriezky.csv') as $r) if (strtolower($r['kod']) === $mrKod) $mr = $r;
+            if (!$mr) throw new ChybaPolozky('Neplatná vetracia mriežka.');
+        }
+
         $rozmerKridla = $falc ? ($N + 50) . ' × ' . ($V1 + 15) : ($N + 22) . ' × ' . ($V1 + 1);
         $r = najdi(nacitaj_csv('kridla.csv'), ['kolekcia' => $in['kolekcia'], 'prevedenie' => $in['prevedenie'], 'farba' => $in['farba'],
                                                'sirka' => $in['sirka'], 'vyska' => $in['vyska']]);
         if (!$r) throw new ChybaPolozky($nemame);
         $pridaj('KRIDLO', "{$c('kolekcia')}-{$c('prevedenie')}-{$c('farba')}-$rozm-{$c('smer')}",
-            sprintf('Krídlo %s, %s, %s, %s/%s, %s (%s mm), %s%s', $POV['kolekcia'][$in['kolekcia']][0], $POV['prevedenie'][$in['prevedenie']][0],
+            sprintf('Krídlo %s, %s, %s, %s/%s, %s (%s mm), %s%s%s', $POV['kolekcia'][$in['kolekcia']][0], $POV['prevedenie'][$in['prevedenie']][0],
                     $POV['farba'][$in['farba']][0], $in['sirka'], $vyskaTxt, $POV['smer'][$in['smer']][0], $rozmerKridla, $kov['nazov'],
-                    $prah ? ', výsuvný prah' : ''),
-            cislo($r['cena_s_dph']) + priplatky($prip, 'kridlo', $in['sirka'], $in['vyska']) + cislo($kov['cena_s_dph']) + $cenaPrah, $ks,
-            max((int)cislo($r['dodanie_dni'] ?? 0), (int)cislo($kov['dodanie_dni'] ?? 0)), ['prah' => $prah]);
+                    $prah ? ', výsuvný prah' : '', $mr ? ', ' . lcfirst($mr['nazov']) : ''),
+            cislo($r['cena_s_dph']) + priplatky($prip, 'kridlo', $in['sirka'], $in['vyska']) + cislo($kov['cena_s_dph']) + $cenaPrah + ($mr ? cislo($mr['cena_s_dph']) : 0), $ks,
+            max((int)cislo($r['dodanie_dni'] ?? 0), (int)cislo($kov['dodanie_dni'] ?? 0), $mr ? (int)cislo($mr['dodanie_dni'] ?? 0) : 0),
+            ['prah' => $prah, 'mriezka' => $mr ? $mrKod : 'bez']);
     }
 
     if ($soZar) {
