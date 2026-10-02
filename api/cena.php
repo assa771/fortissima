@@ -8,7 +8,7 @@
  *        { "polozky": [ { "uid":"a1", "kolekcia":"minimal", "prevedenie":"falc", "farba":"biela",
  *                         "farba_zarubne":"kasmirova", "sirka":"80", "vyska":"197", "smer":"lave",
  *                         "so_zarubnou":true, "stena":120, "kovanie":"bb-nikel", "ks":2 }, ... ],
- *          "montaz": true, "doprava": true }
+ *          "montaz": true, "doprava": true, "doprava_km": 35 }
  *
  * Každý riadok výsledku má aj "kod" – stabilný kód položky pripravený na import do objednávkového systému.
  */
@@ -172,14 +172,21 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
         $dni = max($dni, $d);
     };
 
-    // krídlo (farba krídla)
+    // zámok/kovanie je súčasťou krídla (cena sa pripočíta ku krídlu, v exporte je v samostatnom stĺpci)
+    $kovKod = (string)($p['kovanie'] ?? 'bez');
+    $kov = null;
+    foreach (nacitaj_csv('kovanie.csv') as $r) if (strtolower($r['kod']) === strtolower($kovKod)) $kov = $r;
+    if (!$kov) throw new ChybaPolozky('Neplatné kovanie.');
+
+    // krídlo (farba krídla) vrátane zámku
     $r = najdi(nacitaj_csv('kridla.csv'), ['kolekcia' => $in['kolekcia'], 'prevedenie' => $in['prevedenie'], 'farba' => $in['farba'],
                                            'sirka' => $in['sirka'], 'vyska' => $in['vyska']]);
     if (!$r) throw new ChybaPolozky($nemame);
     $pridaj('KRIDLO', "KR-{$c('kolekcia')}-{$c('prevedenie')}-{$c('farba')}-$rozm-{$c('smer')}",
-        sprintf('Krídlo %s, %s, %s, %s/%s, %s (%s mm)', $POV['kolekcia'][$in['kolekcia']][0], $POV['prevedenie'][$in['prevedenie']][0],
-                $POV['farba'][$in['farba']][0], $in['sirka'], $vyskaTxt, $POV['smer'][$in['smer']][0], $rozmerKridla),
-        cislo($r['cena_s_dph']) + priplatky($prip, 'kridlo', $in['sirka'], $in['vyska']), $ks, (int)cislo($r['dodanie_dni'] ?? 0));
+        sprintf('Krídlo %s, %s, %s, %s/%s, %s (%s mm), %s', $POV['kolekcia'][$in['kolekcia']][0], $POV['prevedenie'][$in['prevedenie']][0],
+                $POV['farba'][$in['farba']][0], $in['sirka'], $vyskaTxt, $POV['smer'][$in['smer']][0], $rozmerKridla, $kov['nazov']),
+        cislo($r['cena_s_dph']) + priplatky($prip, 'kridlo', $in['sirka'], $in['vyska']) + cislo($kov['cena_s_dph']), $ks,
+        max((int)cislo($r['dodanie_dni'] ?? 0), (int)cislo($kov['dodanie_dni'] ?? 0)));
 
     // zárubňa (farba zárubne) – len ak ju zákazník chce
     if ($soZar) {
@@ -209,13 +216,6 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
     }
     }
 
-    // kovanie
-    $kovKod = (string)($p['kovanie'] ?? 'bez');
-    $kov = null;
-    foreach (nacitaj_csv('kovanie.csv') as $r) if (strtolower($r['kod']) === strtolower($kovKod)) $kov = $r;
-    if (!$kov) throw new ChybaPolozky('Neplatné kovanie.');
-    // kovanie sa uvádza vždy (aj za 0 €), aby bolo v ponuke aj v exporte pre výrobu
-    $pridaj('KOVANIE', 'KO-' . strtoupper($kov['kod']), 'Kovanie: ' . $kov['nazov'], cislo($kov['cena_s_dph']), $ks, (int)cislo($kov['dodanie_dni'] ?? 0));
 
     return [
         'ok' => true,
@@ -223,6 +223,7 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
         'spolu' => round(array_sum(array_column($riadky, 'spolu')), 2),
         'ks' => $ks,
         'so_zarubnou' => $soZar,
+        'prevedenie' => $in['prevedenie'],
         'zarubna' => $soZar ? 'F' . $z['F'] . ($r180 ? ' + ' . ($r180 > 1 ? $r180 . '× ' : '') . 'R180' : '') . ($r90 ? ' + R90' : '') : 'bez zárubne',
         'rozsah_steny' => $soZar ? $z['min'] . '–' . $z['max'] . ' mm' : '',
         'dodanie_dni' => $dni,
@@ -246,16 +247,35 @@ foreach ($vstup['polozky'] as $p) {
 }
 
 // služby na úrovni celej ponuky
+//  - montáž: cena za kus podľa typu dverí (montaz-falc, montaz-bez, neskôr montaz-posuvne)
+//  - zameranie: automaticky pri montáži (paušál za zákazku)
+//  - doprava: sadzba za km × vzdialenosť × 2 (tam aj späť)
 $sluzby = [];
 $sl = [];
 foreach (nacitaj_csv('sluzby.csv') as $r) $sl[strtolower($r['kod'])] = $r;
-if (!empty($vstup['montaz']) && isset($sl['montaz']) && $kusov > 0) {
-    $c = cislo($sl['montaz']['cena_s_dph']);
-    $sluzby[] = ['typ' => 'SLUZBA', 'kod' => 'SL-MONTAZ', 'nazov' => $sl['montaz']['nazov'], 'mnozstvo' => $kusov, 'cena_ks' => round($c, 2), 'spolu' => round($c * $kusov, 2)];
+$sluzba = function (string $kod, string $nazov, float $c, float $mn, string $jedn) use (&$sluzby) {
+    $sluzby[] = ['typ' => 'SLUZBA', 'kod' => $kod, 'nazov' => $nazov, 'mnozstvo' => $mn, 'jednotka' => $jedn,
+                 'cena_ks' => round($c, 2), 'spolu' => round($c * $mn, 2)];
+};
+$upozornenia = [];
+if (!empty($vstup['montaz']) && $kusov > 0) {
+    $podlaTypu = [];
+    foreach ($vysledky as $v) if (!empty($v['ok'])) $podlaTypu[$v['prevedenie']] = ($podlaTypu[$v['prevedenie']] ?? 0) + $v['ks'];
+    foreach ($podlaTypu as $typ => $n) {
+        $r = $sl['montaz-' . $typ] ?? $sl['montaz'] ?? null;
+        if (!$r) { $upozornenia[] = "V cenníku chýba cena montáže pre typ „$typ“."; continue; }
+        $sluzba('SL-MONTAZ-' . strtoupper($typ), $r['nazov'], cislo($r['cena_s_dph']), $n, 'ks');
+    }
+    if (isset($sl['zameranie'])) $sluzba('SL-ZAMERANIE', $sl['zameranie']['nazov'], cislo($sl['zameranie']['cena_s_dph']), 1, 'zákazka');
 }
-if (!empty($vstup['doprava']) && isset($sl['doprava']) && $kusov > 0) {
-    $c = cislo($sl['doprava']['cena_s_dph']);
-    $sluzby[] = ['typ' => 'SLUZBA', 'kod' => 'SL-DOPRAVA', 'nazov' => $sl['doprava']['nazov'], 'mnozstvo' => 1, 'cena_ks' => round($c, 2), 'spolu' => round($c, 2)];
+if (!empty($vstup['doprava']) && $kusov > 0 && isset($sl['doprava'])) {
+    $km = filter_var($vstup['doprava_km'] ?? '', FILTER_VALIDATE_FLOAT);
+    if ($km === false || $km <= 0 || $km > 2000) {
+        $upozornenia[] = 'Pre výpočet dopravy zadajte vzdialenosť v kilometroch.';
+    } else {
+        $km = round($km);
+        $sluzba('SL-DOPRAVA', $sl['doprava']['nazov'] . " ($km km × 2)", cislo($sl['doprava']['cena_s_dph']), $km * 2, 'km');
+    }
 }
 $spoluSluzby = array_sum(array_column($sluzby, 'spolu'));
 
@@ -267,6 +287,7 @@ odpoved([
     'spolu' => round($spolu + $spoluSluzby, 2),
     'kusov' => $kusov,
     'chyby' => $chyby,
+    'upozornenia' => $upozornenia,
     'dodanie_dni' => $dni,
     'dodanie' => $dni === 0 ? 'Skladom' : "do $dni pracovných dní",
 ]);

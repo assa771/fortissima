@@ -448,12 +448,14 @@ const Ponuka = (function () {
     const N = +p.sirka * 10, V1 = H[p.vyska], falc = p.prevedenie === 'falc', rozm = p.sirka + '-' + p.vyska;
     const R = [], add = (typ, kod, nazov, c, m, dd) => R.push({ typ, kod, nazov, mnozstvo: m, cena_ks: r2(c), spolu: r2(c * m), d: dd || 0 });
     const miss = err('Pre túto zostavu zatiaľ nemáme cenu v cenníku. Pošlite nám prosím dopyt.');
+    const kov = D.kovanie.find(k => k.kod.toLowerCase() === String(p.kovanie || 'bez').toLowerCase());
+    if (!kov) return err('Neplatné kovanie.');
     let r = best(D.kridla, { kolekcia: p.kolekcia, prevedenie: p.prevedenie, farba: p.farba, sirka: p.sirka, vyska: p.vyska });
     if (!r) return miss;
     add('KRIDLO', 'KR-' + KODY[p.kolekcia] + '-' + KODY[p.prevedenie] + '-' + KODY[p.farba] + '-' + rozm + '-' + KODY[p.smer],
         'Krídlo ' + NAMES[p.kolekcia] + ', ' + NAMES[p.prevedenie] + ', ' + NAMES[p.farba] + ', ' + p.sirka + '/' + HTXT[p.vyska] + ', ' + NAMES[p.smer] +
-        ' (' + (falc ? (N + 50) + ' × ' + (V1 + 15) : (N + 22) + ' × ' + (V1 + 1)) + ' mm)',
-        num(r.cena_s_dph) + surcharge(D.priplatky, 'kridlo', p.sirka, p.vyska), ks, num(r.dodanie_dni));
+        ' (' + (falc ? (N + 50) + ' × ' + (V1 + 15) : (N + 22) + ' × ' + (V1 + 1)) + ' mm), ' + kov.nazov,
+        num(r.cena_s_dph) + surcharge(D.priplatky, 'kridlo', p.sirka, p.vyska) + num(kov.cena_s_dph), ks, Math.max(num(r.dodanie_dni), num(kov.dodanie_dni)));
     if (soZar) {
     const kz = { prevedenie: p.prevedenie, farba: p.farba_zarubne, sirka: p.sirka, vyska: p.vyska };
     r = best(D.zarubne, Object.assign({ typ: 'F' + z.F }, kz)); if (!r) return miss;
@@ -471,22 +473,32 @@ const Ponuka = (function () {
       if (r90) { if (!e90) return miss; add('ROZSIRENIE', 'RO-R90-' + fz + '-' + rozm, 'Rozširovací element R90', num(e90.cena_s_dph), ks * r90, num(e90.dodanie_dni)); }
     }
     }
-    const kov = D.kovanie.find(k => k.kod.toLowerCase() === String(p.kovanie || 'bez').toLowerCase());
-    if (!kov) return err('Neplatné kovanie.');
-    add('KOVANIE', 'KO-' + kov.kod.toUpperCase(), 'Kovanie: ' + kov.nazov, num(kov.cena_s_dph), ks, num(kov.dodanie_dni));
     const e = extLabel(z.ext);
     return { uid: p.uid, ok: true, riadky: R.map(({ d, ...x }) => x), spolu: r2(R.reduce((a, x) => a + x.spolu, 0)), ks,
-             so_zarubnou: soZar, zarubna: soZar ? 'F' + z.F + (e ? ' + ' + e : '') : 'bez zárubne', rozsah_steny: soZar ? z.min + '–' + z.max + ' mm' : '', dodanie_dni: Math.max(0, ...R.map(x => x.d)) };
+             so_zarubnou: soZar, prevedenie: p.prevedenie, zarubna: soZar ? 'F' + z.F + (e ? ' + ' + e : '') : 'bez zárubne', rozsah_steny: soZar ? z.min + '–' + z.max + ' mm' : '', dodanie_dni: Math.max(0, ...R.map(x => x.d)) };
   }
   function demoPonuka(o, D) {
     const pol = o.polozky.map(p => demoPolozka(p, D));
     const okP = pol.filter(p => p.ok), kusov = okP.reduce((a, p) => a + p.ks, 0);
     const medz = r2(okP.reduce((a, p) => a + p.spolu, 0)), dni = Math.max(0, ...okP.map(p => p.dodanie_dni));
-    const sl = {}; D.sluzby.forEach(x => { sl[x.kod] = x; });
-    const sluzby = [];
-    if (o.montaz && sl.montaz && kusov) sluzby.push({ typ: 'SLUZBA', kod: 'SL-MONTAZ', nazov: sl.montaz.nazov, mnozstvo: kusov, cena_ks: num(sl.montaz.cena_s_dph), spolu: r2(num(sl.montaz.cena_s_dph) * kusov) });
-    if (o.doprava && sl.doprava && kusov) sluzby.push({ typ: 'SLUZBA', kod: 'SL-DOPRAVA', nazov: sl.doprava.nazov, mnozstvo: 1, cena_ks: num(sl.doprava.cena_s_dph), spolu: num(sl.doprava.cena_s_dph) });
-    return { ok: true, polozky: pol, sluzby, medzisucet: medz, spolu: r2(medz + sluzby.reduce((a, s) => a + s.spolu, 0)), kusov,
+    const sl = {}; D.sluzby.forEach(x => { sl[x.kod.toLowerCase()] = x; });
+    const sluzby = [], upozornenia = [];
+    const sluzba = (kod, nazov, c, mn, jedn) => sluzby.push({ typ: 'SLUZBA', kod, nazov, mnozstvo: mn, jednotka: jedn, cena_ks: r2(c), spolu: r2(c * mn) });
+    if (o.montaz && kusov) {
+      const podla = {}; okP.forEach(p => { podla[p.prevedenie] = (podla[p.prevedenie] || 0) + p.ks; });
+      Object.keys(podla).forEach(t => {
+        const r = sl['montaz-' + t] || sl.montaz;
+        if (!r) { upozornenia.push('V cenníku chýba cena montáže pre typ „' + t + '“.'); return; }
+        sluzba('SL-MONTAZ-' + t.toUpperCase(), r.nazov, num(r.cena_s_dph), podla[t], 'ks');
+      });
+      if (sl.zameranie) sluzba('SL-ZAMERANIE', sl.zameranie.nazov, num(sl.zameranie.cena_s_dph), 1, 'zákazka');
+    }
+    if (o.doprava && kusov && sl.doprava) {
+      const km = parseFloat(String(o.doprava_km || '').replace(',', '.'));
+      if (!(km > 0 && km <= 2000)) upozornenia.push('Pre výpočet dopravy zadajte vzdialenosť v kilometroch.');
+      else { const k = Math.round(km); sluzba('SL-DOPRAVA', sl.doprava.nazov + ' (' + k + ' km × 2)', num(sl.doprava.cena_s_dph), k * 2, 'km'); }
+    }
+    return { ok: true, polozky: pol, sluzby, upozornenia, medzisucet: medz, spolu: r2(medz + sluzby.reduce((a, s) => a + s.spolu, 0)), kusov,
              chyby: pol.length - okP.length, dodanie_dni: dni, dodanie: dni === 0 ? 'Skladom' : 'do ' + dni + ' pracovných dní' };
   }
 
@@ -497,7 +509,7 @@ const Ponuka = (function () {
     if (DEMO) return loadDemo().then(D => demoPonuka(o, D));
     if (ctrl) ctrl.abort();
     ctrl = new AbortController();
-    const body = JSON.stringify({ polozky: o.polozky, montaz: !!o.montaz, doprava: !!o.doprava });
+    const body = JSON.stringify({ polozky: o.polozky, montaz: !!o.montaz, doprava: !!o.doprava, doprava_km: o.doprava_km || 0 });
     return fetch(API, { method: 'POST', body, signal: ctrl.signal, headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' } })
       .then(r => r.json().catch(() => ({ ok: false, chyba: 'Server nevrátil platnú odpoveď.' })));
   }
@@ -742,6 +754,7 @@ const Ponuka = (function () {
     $('qId').textContent = o.id;
     $('qDate').textContent = datum(o.vytvorena);
     $('qMontaz').checked = !!o.montaz; $('qDoprava').checked = !!o.doprava;
+    $('qKm').value = o.doprava_km || ''; $('qKmWrap').hidden = !o.doprava;
   }
   function detail(p, r) {
     const bez = p.so_zarubnou === false;
@@ -778,14 +791,15 @@ const Ponuka = (function () {
     }).join('');
     // služby + súčty
     const sl = res && res.ok ? res.sluzby : [];
-    $('qSluzby').innerHTML = sl.map(s => '<li><span>' + P.esc(s.nazov) + ' <small>' + s.mnozstvo + ' × ' + P.eur.format(s.cena_ks) + '</small></span><span>' + P.eur.format(s.spolu) + '</span></li>').join('');
+    $('qSluzby').innerHTML = sl.map(s => '<li><span>' + P.esc(s.nazov) + ' <small>' + s.mnozstvo + ' ' + (s.jednotka || 'ks') + ' × ' + P.eur.format(s.cena_ks) + '</small></span><span>' + P.eur.format(s.spolu) + '</span></li>').join('');
     $('qMedz').textContent = res && res.ok ? P.eur.format(res.medzisucet) : '–';
     $('qTotal').textContent = res && res.ok ? P.eur.format(res.spolu) : '–';
     $('qKs').textContent = P.pocetKusov(o) + ' ks';
     $('qDod').textContent = res && res.ok ? res.dodanie : '–';
-    const ch = res && res.ok ? res.chyby : 0;
-    $('qWarn').hidden = !ch;
-    $('qWarn').textContent = ch ? (ch === 1 ? '1 položka nemá cenu – v súčte nie je zahrnutá.' : ch + ' položky nemajú cenu – v súčte nie sú zahrnuté.') : '';
+    const ch = res && res.ok ? res.chyby : 0, up = res && res.ok && res.upozornenia ? res.upozornenia : [];
+    const warn = (ch ? [ch === 1 ? '1 položka nemá cenu – v súčte nie je zahrnutá.' : ch + ' položky nemajú cenu – v súčte nie sú zahrnuté.'] : []).concat(up);
+    $('qWarn').hidden = !warn.length;
+    $('qWarn').textContent = warn.join(' ');
     $('qErr').hidden = !(res && !res.ok);
     if (res && !res.ok) $('qErr').textContent = res.chyba;
   }
@@ -812,7 +826,8 @@ const Ponuka = (function () {
     if (p) { p.ks = Math.min(50, Math.max(1, parseInt(e.target.value, 10) || 1)); change(); }
   });
   $('qMontaz').addEventListener('change', e => { o.montaz = e.target.checked; change(); });
-  $('qDoprava').addEventListener('change', e => { o.doprava = e.target.checked; change(); });
+  $('qDoprava').addEventListener('change', e => { o.doprava = e.target.checked; $('qKmWrap').hidden = !o.doprava; change(); if (o.doprava) $('qKm').focus(); });
+  $('qKm').addEventListener('input', e => { o.doprava_km = e.target.value; change(); });
   $('qClear').addEventListener('click', () => {
     if (!o.polozky.length) return;
     if (!confirm('Naozaj vymazať celú ponuku?')) return;
@@ -833,6 +848,7 @@ const Ponuka = (function () {
         const r = (res && res.polozky || []).find(x => x.uid === p.uid);
         return Object.assign({ poradie: i + 1 }, p, { cena: r && r.ok ? { spolu: r.spolu, zarubna: r.zarubna, riadky: r.riadky } : null });
       }),
+      doprava_km: o.doprava ? (parseFloat(o.doprava_km) || null) : null,
       sluzby: res && res.ok ? res.sluzby : [], spolu_s_dph: res && res.ok ? res.spolu : null, mena: 'EUR'
     };
   }
@@ -854,34 +870,34 @@ const Ponuka = (function () {
       const t = String(v == null ? '' : v);
       return /[;"\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
     }, n = v => v == null || v === '' ? '' : String(v).replace('.', ',');
-    const COLS = ['ponuka', 'datum', 'pozicia', 'oznacenie_pozicie', 'typ_polozky', 'kod',
-                  'otvaranie', 'model', 'kolekcia', 'sirka', 'vyska', 'orientacia', 'zamok', 'povrch_kovania',
-                  'farba', 'zarubna', 'typ_zarubne', 'rozsirenie', 'hrubka_steny_mm',
-                  'mnozstvo', 'cena_ks_s_dph', 'spolu_s_dph', 'nazov'];
+    // riadok = pozícia.poradie (1.1 krídlo, 1.2 zárubňa, 1.3 rozšírenie…) – drží súvislosť dverí, zárubne a elementov
+    const COLS = ['ponuka', 'datum', 'pozicia', 'riadok', 'oznacenie_pozicie', 'typ_polozky', 'kod',
+                  'otvaranie', 'model', 'kolekcia', 'sirka', 'vyska', 'orientacia', 'farba',
+                  'zamok', 'povrch_kovania', 'typ_zarubne', 'rozsirenie', 'hrubka_steny_mm',
+                  'mnozstvo', 'jednotka', 'cena_ks_s_dph', 'spolu_s_dph', 'nazov'];
     const rows = [COLS.join(';')];
     const datum = d.vytvorena.slice(0, 10);
     d.polozky.forEach(p => {
       const soZar = p.so_zarubnou !== false, zm = zamok(p.kovanie);
-      const zak = {
-        otvaranie: OTVARANIE[p.prevedenie], model: MODEL[p.kolekcia], kolekcia: P.NAMES[p.kolekcia],
-        sirka: p.sirka, vyska: P.HTXT[p.vyska], orientacia: P.NAMES[p.smer], zamok: zm.zamok, povrch_kovania: zm.povrch,
-        zarubna: soZar ? 'áno' : 'nie', hrubka_steny_mm: soZar ? p.stena : ''
-      };
-      (p.cena ? p.cena.riadky : []).forEach(x => {
-        const typ = x.typ || ({ KR: 'KRIDLO', ZA: 'ZARUBNA', RO: 'ROZSIRENIE', KO: 'KOVANIE' }[x.kod.slice(0, 2)] || '');
-        const kodCasti = x.kod.split('-');
-        const r = Object.assign({}, zak, {
-          ponuka: d.id, datum, pozicia: p.poradie, oznacenie_pozicie: p.nazov, typ_polozky: typ, kod: x.kod,
-          farba: typ === 'KRIDLO' ? P.NAMES[p.farba] : (typ === 'ZARUBNA' || typ === 'ROZSIRENIE') ? P.NAMES[p.farba_zarubne] : '',
-          typ_zarubne: typ === 'ZARUBNA' ? kodCasti[1] : (soZar && p.cena ? p.cena.zarubna.split(' ')[0] : ''),
-          rozsirenie: typ === 'ROZSIRENIE' ? kodCasti[1] : '',
-          mnozstvo: x.mnozstvo, cena_ks_s_dph: n(x.cena_ks), spolu_s_dph: n(x.spolu), nazov: x.nazov
-        });
+      (p.cena ? p.cena.riadky : []).forEach((x, i) => {
+        const typ = x.typ || ({ KR: 'KRIDLO', ZA: 'ZARUBNA', RO: 'ROZSIRENIE' }[x.kod.slice(0, 2)] || '');
+        const casti = x.kod.split('-'), kr = typ === 'KRIDLO', zar = typ === 'ZARUBNA' || typ === 'ROZSIRENIE';
+        const r = {
+          ponuka: d.id, datum, pozicia: p.poradie, riadok: p.poradie + '.' + (i + 1), oznacenie_pozicie: p.nazov, typ_polozky: typ, kod: x.kod,
+          otvaranie: OTVARANIE[p.prevedenie], model: kr ? MODEL[p.kolekcia] : '', kolekcia: kr ? P.NAMES[p.kolekcia] : '',
+          sirka: p.sirka, vyska: P.HTXT[p.vyska], orientacia: typ === 'ROZSIRENIE' ? '' : P.NAMES[p.smer],
+          farba: kr ? P.NAMES[p.farba] : zar ? P.NAMES[p.farba_zarubne] : '',
+          zamok: kr ? zm.zamok : '', povrch_kovania: kr ? zm.povrch : '',
+          typ_zarubne: typ === 'ZARUBNA' ? casti[1] : '', rozsirenie: typ === 'ROZSIRENIE' ? casti[1] : '',
+          hrubka_steny_mm: typ === 'ZARUBNA' && soZar ? p.stena : '',
+          mnozstvo: x.mnozstvo, jednotka: 'ks', cena_ks_s_dph: n(x.cena_ks), spolu_s_dph: n(x.spolu), nazov: x.nazov
+        };
         rows.push(COLS.map(c => q(r[c])).join(';'));
       });
     });
     d.sluzby.forEach(sv => {
-      const r = { ponuka: d.id, datum, typ_polozky: 'SLUZBA', kod: sv.kod, mnozstvo: sv.mnozstvo, cena_ks_s_dph: n(sv.cena_ks), spolu_s_dph: n(sv.spolu), nazov: sv.nazov };
+      const r = { ponuka: d.id, datum, typ_polozky: 'SLUZBA', kod: sv.kod, mnozstvo: sv.mnozstvo, jednotka: sv.jednotka || '',
+                  cena_ks_s_dph: n(sv.cena_ks), spolu_s_dph: n(sv.spolu), nazov: sv.nazov };
       rows.push(COLS.map(c => q(r[c])).join(';'));
     });
     download(d.id + '.csv', '﻿' + rows.join('\r\n'), 'text/csv;charset=utf-8');
@@ -899,6 +915,7 @@ const Ponuka = (function () {
                  (p.cena ? ' – ' + P.eur.format(p.cena.spolu) : ' – bez ceny'));
     });
     if (d.sluzby.length) lines.push('', 'Služby: ' + d.sluzby.map(s => s.nazov + ' ' + P.eur.format(s.spolu)).join(', '));
+    if (d.doprava_km) lines.push('Vzdialenosť pre dopravu: ' + d.doprava_km + ' km');
     if (d.spolu_s_dph != null) lines.push('Orientačná cena spolu: ' + P.eur.format(d.spolu_s_dph) + ' s DPH');
     const kol = [...new Set(o.polozky.map(p => P.NAMES[p.kolekcia]))].join(', ');
     try { sessionStorage.setItem('fortissimaDopyt', JSON.stringify({ kolekcia: kol, text: lines.join('\n'), data: d })); } catch (e) {}

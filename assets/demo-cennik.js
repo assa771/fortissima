@@ -194,16 +194,34 @@ window.FORTISSIMA_DEMO = {
  ],
  "sluzby": [
   {
-   "kod": "montaz",
-   "nazov": "Montáž dverí so zárubňou",
+   "kod": "montaz-falc",
+   "nazov": "Montáž falcových dverí",
    "cena_s_dph": "59",
    "jednotka": "ks"
   },
   {
+   "kod": "montaz-bez",
+   "nazov": "Montáž bezfalcových dverí",
+   "cena_s_dph": "79",
+   "jednotka": "ks"
+  },
+  {
+   "kod": "montaz-posuvne",
+   "nazov": "Montáž posuvných dverí",
+   "cena_s_dph": "99",
+   "jednotka": "ks"
+  },
+  {
+   "kod": "zameranie",
+   "nazov": "Zameranie otvorov",
+   "cena_s_dph": "30",
+   "jednotka": "zakazka"
+  },
+  {
    "kod": "doprava",
    "nazov": "Doprava",
-   "cena_s_dph": "39",
-   "jednotka": "objednavka"
+   "cena_s_dph": "1",
+   "jednotka": "km"
   }
  ]
 };

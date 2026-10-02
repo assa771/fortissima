@@ -23,8 +23,11 @@ rozsirenia.csv  typ (R90 | R180), sirka, vyska, cena_s_dph, dodanie_dni
 priplatky.csv   polozka (kridlo | zarubna), sirka, vyska, priplatok_s_dph, popis
                 – príplatky sa k základnej cene PRIČÍTAVAJÚ (všetky, ktoré sedia)
 kovanie.csv     kod (bez medzier, nemeniť pri existujúcich), nazov (zobrazí sa zákazníkovi),
-                cena_s_dph, dodanie_dni – poradie riadkov = poradie v ponuke
-sluzby.csv      montaz (cena za kus dverí v celej ponuke), doprava (cena za celú ponuku)
+                cena_s_dph = príplatok ku krídlu, dodanie_dni – poradie riadkov = poradie v ponuke
+                (zámok je súčasťou krídla, nie samostatná položka)
+sluzby.csv      montaz-falc / montaz-bez / montaz-posuvne – montáž za kus podľa typu dverí
+                zameranie – pridá sa automaticky, keď zákazník zvolí montáž (paušál za zákazku)
+                doprava – cena za 1 km; počíta sa vzdialenosť × 2 (tam aj späť)
 
 BEZPEČNOSŤ: tento priečinok je zablokovaný súborom .htaccess. Ešte bezpečnejšie je
 presunúť ho mimo verejný priečinok webu (napr. vedľa public_html) a cestu nastaviť

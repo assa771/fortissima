@@ -58,8 +58,13 @@
         <div class="sum-meta"><span>Počet dverí</span><span id="qKs">–</span></div>
         <div class="sum-meta"><span>Položky spolu</span><span id="qMedz">–</span></div>
         <div class="q-opts">
-          <label class="chk chk-dark"><input type="checkbox" id="qMontaz"><span>Montáž</span></label>
+          <label class="chk chk-dark"><input type="checkbox" id="qMontaz"><span>Montáž <small>vrátane zamerania</small></span></label>
           <label class="chk chk-dark"><input type="checkbox" id="qDoprava"><span>Doprava</span></label>
+        </div>
+        <div class="q-km" id="qKmWrap" hidden>
+          <label for="qKm">Vzdialenosť k&nbsp;vám (jedným smerom)</label>
+          <div class="q-km-in"><input type="number" id="qKm" min="1" max="2000" step="1" inputmode="numeric" placeholder="napr. 35"><span>km</span></div>
+          <p>Počítame cestu tam aj späť.</p>
         </div>
         <ul class="q-sluzby" id="qSluzby"></ul>
         <div class="sum-total"><span>Spolu s&nbsp;DPH</span><strong id="qTotal">–</strong></div>
