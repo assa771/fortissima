@@ -182,7 +182,7 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
     $r = najdi(nacitaj_csv('kridla.csv'), ['kolekcia' => $in['kolekcia'], 'prevedenie' => $in['prevedenie'], 'farba' => $in['farba'],
                                            'sirka' => $in['sirka'], 'vyska' => $in['vyska']]);
     if (!$r) throw new ChybaPolozky($nemame);
-    $pridaj('KRIDLO', "KR-{$c('kolekcia')}-{$c('prevedenie')}-{$c('farba')}-$rozm-{$c('smer')}",
+    $pridaj('KRIDLO', "{$c('kolekcia')}-{$c('prevedenie')}-{$c('farba')}-$rozm-{$c('smer')}",
         sprintf('Krídlo %s, %s, %s, %s/%s, %s (%s mm), %s', $POV['kolekcia'][$in['kolekcia']][0], $POV['prevedenie'][$in['prevedenie']][0],
                 $POV['farba'][$in['farba']][0], $in['sirka'], $vyskaTxt, $POV['smer'][$in['smer']][0], $rozmerKridla, $kov['nazov']),
         cislo($r['cena_s_dph']) + priplatky($prip, 'kridlo', $in['sirka'], $in['vyska']) + cislo($kov['cena_s_dph']), $ks,
@@ -193,7 +193,7 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
     $kz = ['prevedenie' => $in['prevedenie'], 'farba' => $in['farba_zarubne'], 'sirka' => $in['sirka'], 'vyska' => $in['vyska']];
     $r = najdi(nacitaj_csv('zarubne.csv'), ['typ' => 'F' . $z['F']] + $kz);
     if (!$r) throw new ChybaPolozky($nemame);
-    $pridaj('ZARUBNA', "ZA-F{$z['F']}-{$c('prevedenie')}-{$c('farba_zarubne')}-$rozm-{$c('smer')}",
+    $pridaj('ZARUBNA', "F{$z['F']}-{$c('prevedenie')}-{$c('farba_zarubne')}-$rozm-{$c('smer')}",
         sprintf('Obložková zárubňa F%d, %s, %s', $z['F'], $falc ? 'falcová' : 'bezfalcová', $POV['farba_zarubne'][$in['farba_zarubne']][0]),
         cislo($r['cena_s_dph']) + priplatky($prip, 'zarubna', $in['sirka'], $in['vyska']), $ks, (int)cislo($r['dodanie_dni'] ?? 0));
 
@@ -205,13 +205,13 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
         $e180 = najdi($roz, ['typ' => 'R180'] + $k2);
         $fz = $c('farba_zarubne');
         if ($r180) {
-            if ($e180) $pridaj('ROZSIRENIE', "RO-R180-$fz-$rozm", 'Rozširovací element R180', cislo($e180['cena_s_dph']), $ks * $r180, (int)cislo($e180['dodanie_dni'] ?? 0));
-            elseif ($e90) $pridaj('ROZSIRENIE', "RO-R90-$fz-$rozm", 'Rozširovací element R90', cislo($e90['cena_s_dph']), $ks * $r180 * 2, (int)cislo($e90['dodanie_dni'] ?? 0));
+            if ($e180) $pridaj('ROZSIRENIE', "R180-$fz-$rozm", 'Rozširovací element R180', cislo($e180['cena_s_dph']), $ks * $r180, (int)cislo($e180['dodanie_dni'] ?? 0));
+            elseif ($e90) $pridaj('ROZSIRENIE', "R90-$fz-$rozm", 'Rozširovací element R90', cislo($e90['cena_s_dph']), $ks * $r180 * 2, (int)cislo($e90['dodanie_dni'] ?? 0));
             else throw new ChybaPolozky($nemame);
         }
         if ($r90) {
             if (!$e90) throw new ChybaPolozky($nemame);
-            $pridaj('ROZSIRENIE', "RO-R90-$fz-$rozm", 'Rozširovací element R90', cislo($e90['cena_s_dph']), $ks * $r90, (int)cislo($e90['dodanie_dni'] ?? 0));
+            $pridaj('ROZSIRENIE', "R90-$fz-$rozm", 'Rozširovací element R90', cislo($e90['cena_s_dph']), $ks * $r90, (int)cislo($e90['dodanie_dni'] ?? 0));
         }
     }
     }

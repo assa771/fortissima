@@ -452,25 +452,25 @@ const Ponuka = (function () {
     if (!kov) return err('Neplatné kovanie.');
     let r = best(D.kridla, { kolekcia: p.kolekcia, prevedenie: p.prevedenie, farba: p.farba, sirka: p.sirka, vyska: p.vyska });
     if (!r) return miss;
-    add('KRIDLO', 'KR-' + KODY[p.kolekcia] + '-' + KODY[p.prevedenie] + '-' + KODY[p.farba] + '-' + rozm + '-' + KODY[p.smer],
+    add('KRIDLO', KODY[p.kolekcia] + '-' + KODY[p.prevedenie] + '-' + KODY[p.farba] + '-' + rozm + '-' + KODY[p.smer],
         'Krídlo ' + NAMES[p.kolekcia] + ', ' + NAMES[p.prevedenie] + ', ' + NAMES[p.farba] + ', ' + p.sirka + '/' + HTXT[p.vyska] + ', ' + NAMES[p.smer] +
         ' (' + (falc ? (N + 50) + ' × ' + (V1 + 15) : (N + 22) + ' × ' + (V1 + 1)) + ' mm), ' + kov.nazov,
         num(r.cena_s_dph) + surcharge(D.priplatky, 'kridlo', p.sirka, p.vyska) + num(kov.cena_s_dph), ks, Math.max(num(r.dodanie_dni), num(kov.dodanie_dni)));
     if (soZar) {
     const kz = { prevedenie: p.prevedenie, farba: p.farba_zarubne, sirka: p.sirka, vyska: p.vyska };
     r = best(D.zarubne, Object.assign({ typ: 'F' + z.F }, kz)); if (!r) return miss;
-    add('ZARUBNA', 'ZA-F' + z.F + '-' + KODY[p.prevedenie] + '-' + KODY[p.farba_zarubne] + '-' + rozm + '-' + KODY[p.smer],
+    add('ZARUBNA', 'F' + z.F + '-' + KODY[p.prevedenie] + '-' + KODY[p.farba_zarubne] + '-' + rozm + '-' + KODY[p.smer],
         'Obložková zárubňa F' + z.F + ', ' + (falc ? 'falcová' : 'bezfalcová') + ', ' + NAMES[p.farba_zarubne],
         num(r.cena_s_dph) + surcharge(D.priplatky, 'zarubna', p.sirka, p.vyska), ks, num(r.dodanie_dni));
     if (z.ext) {
       const k2 = { farba: p.farba_zarubne, sirka: p.sirka, vyska: p.vyska }, fz = KODY[p.farba_zarubne];
       const e90 = best(D.rozsirenia, Object.assign({ typ: 'R90' }, k2)), e180 = best(D.rozsirenia, Object.assign({ typ: 'R180' }, k2));
       if (r180) {
-        if (e180) add('ROZSIRENIE', 'RO-R180-' + fz + '-' + rozm, 'Rozširovací element R180', num(e180.cena_s_dph), ks * r180, num(e180.dodanie_dni));
-        else if (e90) add('ROZSIRENIE', 'RO-R90-' + fz + '-' + rozm, 'Rozširovací element R90', num(e90.cena_s_dph), ks * r180 * 2, num(e90.dodanie_dni));
+        if (e180) add('ROZSIRENIE', 'R180-' + fz + '-' + rozm, 'Rozširovací element R180', num(e180.cena_s_dph), ks * r180, num(e180.dodanie_dni));
+        else if (e90) add('ROZSIRENIE', 'R90-' + fz + '-' + rozm, 'Rozširovací element R90', num(e90.cena_s_dph), ks * r180 * 2, num(e90.dodanie_dni));
         else return miss;
       }
-      if (r90) { if (!e90) return miss; add('ROZSIRENIE', 'RO-R90-' + fz + '-' + rozm, 'Rozširovací element R90', num(e90.cena_s_dph), ks * r90, num(e90.dodanie_dni)); }
+      if (r90) { if (!e90) return miss; add('ROZSIRENIE', 'R90-' + fz + '-' + rozm, 'Rozširovací element R90', num(e90.cena_s_dph), ks * r90, num(e90.dodanie_dni)); }
     }
     }
     const e = extLabel(z.ext);
@@ -880,7 +880,7 @@ const Ponuka = (function () {
     d.polozky.forEach(p => {
       const soZar = p.so_zarubnou !== false, zm = zamok(p.kovanie);
       (p.cena ? p.cena.riadky : []).forEach((x, i) => {
-        const typ = x.typ || ({ KR: 'KRIDLO', ZA: 'ZARUBNA', RO: 'ROZSIRENIE' }[x.kod.slice(0, 2)] || '');
+        const typ = x.typ || '';
         const casti = x.kod.split('-'), kr = typ === 'KRIDLO', zar = typ === 'ZARUBNA' || typ === 'ROZSIRENIE';
         const r = {
           ponuka: d.id, datum, pozicia: p.poradie, riadok: p.poradie + '.' + (i + 1), oznacenie_pozicie: p.nazov, typ_polozky: typ, kod: x.kod,
@@ -888,7 +888,7 @@ const Ponuka = (function () {
           sirka: p.sirka, vyska: P.HTXT[p.vyska], orientacia: typ === 'ROZSIRENIE' ? '' : P.NAMES[p.smer],
           farba: kr ? P.NAMES[p.farba] : zar ? P.NAMES[p.farba_zarubne] : '',
           zamok: kr ? zm.zamok : '', povrch_kovania: kr ? zm.povrch : '',
-          typ_zarubne: typ === 'ZARUBNA' ? casti[1] : '', rozsirenie: typ === 'ROZSIRENIE' ? casti[1] : '',
+          typ_zarubne: typ === 'ZARUBNA' ? casti[0] : '', rozsirenie: typ === 'ROZSIRENIE' ? casti[0] : '',
           hrubka_steny_mm: typ === 'ZARUBNA' && soZar ? p.stena : '',
           mnozstvo: x.mnozstvo, jednotka: 'ks', cena_ks_s_dph: n(x.cena_ks), spolu_s_dph: n(x.spolu), nazov: x.nazov
         };
