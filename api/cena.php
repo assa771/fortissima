@@ -197,15 +197,21 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
         foreach (nacitaj_csv('kovanie.csv') as $r) if (strtolower($r['kod']) === strtolower($kovKod)) $kov = $r;
         if (!$kov) throw new ChybaPolozky('Neplatný zámok.');
 
+        // výsuvný (padací) prah – voliteľný príplatok, súčasť krídla
+        $prah = filter_var($p['prah'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $cenaPrah = $prah ? priplatky($prip, 'prah', $in['sirka'], $in['vyska']) : 0.0;
+        if ($prah && $cenaPrah <= 0) throw new ChybaPolozky($nemame);
+
         $rozmerKridla = $falc ? ($N + 50) . ' × ' . ($V1 + 15) : ($N + 22) . ' × ' . ($V1 + 1);
         $r = najdi(nacitaj_csv('kridla.csv'), ['kolekcia' => $in['kolekcia'], 'prevedenie' => $in['prevedenie'], 'farba' => $in['farba'],
                                                'sirka' => $in['sirka'], 'vyska' => $in['vyska']]);
         if (!$r) throw new ChybaPolozky($nemame);
         $pridaj('KRIDLO', "{$c('kolekcia')}-{$c('prevedenie')}-{$c('farba')}-$rozm-{$c('smer')}",
-            sprintf('Krídlo %s, %s, %s, %s/%s, %s (%s mm), %s', $POV['kolekcia'][$in['kolekcia']][0], $POV['prevedenie'][$in['prevedenie']][0],
-                    $POV['farba'][$in['farba']][0], $in['sirka'], $vyskaTxt, $POV['smer'][$in['smer']][0], $rozmerKridla, $kov['nazov']),
-            cislo($r['cena_s_dph']) + priplatky($prip, 'kridlo', $in['sirka'], $in['vyska']) + cislo($kov['cena_s_dph']), $ks,
-            max((int)cislo($r['dodanie_dni'] ?? 0), (int)cislo($kov['dodanie_dni'] ?? 0)));
+            sprintf('Krídlo %s, %s, %s, %s/%s, %s (%s mm), %s%s', $POV['kolekcia'][$in['kolekcia']][0], $POV['prevedenie'][$in['prevedenie']][0],
+                    $POV['farba'][$in['farba']][0], $in['sirka'], $vyskaTxt, $POV['smer'][$in['smer']][0], $rozmerKridla, $kov['nazov'],
+                    $prah ? ', výsuvný prah' : ''),
+            cislo($r['cena_s_dph']) + priplatky($prip, 'kridlo', $in['sirka'], $in['vyska']) + cislo($kov['cena_s_dph']) + $cenaPrah, $ks,
+            max((int)cislo($r['dodanie_dni'] ?? 0), (int)cislo($kov['dodanie_dni'] ?? 0)), ['prah' => $prah]);
     }
 
     if ($soZar) {
@@ -274,7 +280,8 @@ foreach ($vstup['polozky'] as $p) {
 }
 
 // služby na úrovni celej ponuky
-//  - montáž: cena za kus podľa typu (montaz-falc, montaz-bez, montaz-slepa, neskôr montaz-posuvne)
+//  - montáž: cena za kus podľa typu (montaz-falc, montaz-bez, montaz-slepa, neskôr montaz-posuvne);
+//    montuje sa len zárubňa – samostatné krídla (bez zárubne) sa nemontujú
 //  - zameranie: automaticky pri montáži (paušál za zákazku)
 //  - doprava: sadzba za km × vzdialenosť × 2 (tam aj späť)
 $sluzby = [];
@@ -287,13 +294,19 @@ $sluzba = function (string $kod, string $nazov, float $c, float $mn, string $jed
 $upozornenia = [];
 if (!empty($vstup['montaz']) && $kusov > 0) {
     $podlaTypu = [];
-    foreach ($vysledky as $v) if (!empty($v['ok'])) $podlaTypu[$v['prevedenie']] = ($podlaTypu[$v['prevedenie']] ?? 0) + $v['ks'];
+    $bezMontaze = 0;
+    foreach ($vysledky as $v) {
+        if (empty($v['ok'])) continue;
+        if (empty($v['so_zarubnou'])) { $bezMontaze += $v['ks']; continue; }
+        $podlaTypu[$v['prevedenie']] = ($podlaTypu[$v['prevedenie']] ?? 0) + $v['ks'];
+    }
+    if ($bezMontaze) $upozornenia[] = 'Montáž sa počíta len k zárubniam – samostatné krídla bez zárubne (' . $bezMontaze . ' ks) nemontujeme.';
     foreach ($podlaTypu as $typ => $n) {
         $r = $sl['montaz-' . $typ] ?? $sl['montaz'] ?? null;
         if (!$r) { $upozornenia[] = "V cenníku chýba cena montáže pre typ „$typ“."; continue; }
         $sluzba('SL-MONTAZ-' . strtoupper($typ), $r['nazov'], cislo($r['cena_s_dph']), $n, 'ks');
     }
-    if (isset($sl['zameranie'])) $sluzba('SL-ZAMERANIE', $sl['zameranie']['nazov'], cislo($sl['zameranie']['cena_s_dph']), 1, 'zákazka');
+    if ($podlaTypu && isset($sl['zameranie'])) $sluzba('SL-ZAMERANIE', $sl['zameranie']['nazov'], cislo($sl['zameranie']['cena_s_dph']), 1, 'zákazka');
 }
 if (!empty($vstup['doprava']) && $kusov > 0 && isset($sl['doprava'])) {
     $km = filter_var($vstup['doprava_km'] ?? '', FILTER_VALIDATE_FLOAT);

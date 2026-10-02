@@ -182,6 +182,13 @@ window.FORTISSIMA_DEMO = {
    "vyska": "210",
    "priplatok_s_dph": "10",
    "popis": "výška DIN 210"
+  },
+  {
+   "polozka": "prah",
+   "sirka": "*",
+   "vyska": "*",
+   "priplatok_s_dph": "49",
+   "popis": "výsuvný (padací) prah – príplatok ku krídlu"
   }
  ],
  "kovanie": [
