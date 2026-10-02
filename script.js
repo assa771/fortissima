@@ -1020,18 +1020,20 @@ const Ponuka = (function () {
     $('qKm').value = o.doprava_km || ''; $('qKmWrap').hidden = !o.doprava;
   }
   function detail(p, r) {
-    const bez = p.so_zarubnou === false;
+    const bez = p.so_zarubnou === false, skrat = p.skratenie > 0 || (!bez && p.skratenie_zar > 0);
     const z = r && r.ok ? r.zarubna + (r.rozsah_steny ? ' (' + r.rozsah_steny + ')' : '') : '–';
     if (P.jeSlepa(p)) return '<dl class="qi-dl">' +
-      '<div><dt>Rozmer</dt><dd>' + p.sirka + '/' + P.HTXT[p.vyska] + ', slepá' + (p.skratenie_zar > 0 ? ', skrátená o ' + p.skratenie_zar + ' mm' : '') + '</dd></div>' +
+      '<div><dt>' + (p.skratenie_zar > 0 ? 'Východiskový rozmer' : 'Rozmer') + '</dt><dd>' + p.sirka + '/' + P.HTXT[p.vyska] + ', slepá</dd></div>' +
+      (p.skratenie_zar > 0 ? '<div><dt>Skrátenie</dt><dd>zárubňa o ' + p.skratenie_zar + ' mm → priechod ' + (P.H[p.vyska] - p.skratenie_zar) + ' mm</dd></div>' : '') +
       '<div><dt>Farba zárubne</dt><dd>' + P.NAMES[p.farba_zarubne] + '</dd></div>' +
       '<div><dt>Závesy</dt><dd>bez závesov a protiplechu</dd></div>' +
       '<div><dt>Rohový spoj</dt><dd>' + (p.spoj === 'tupo' ? 'na tupo 90°' : 'na pokos 45°') + '</dd></div>' +
       '<div><dt>Zárubňa</dt><dd>' + p.stena + ' mm → ' + P.esc(z) + '</dd></div></dl>';
     return '<dl class="qi-dl">' +
-      '<div><dt>Rozmer</dt><dd>' + p.sirka + '/' + P.HTXT[p.vyska] + ', ' + P.NAMES[p.smer] + '</dd></div>' +
-      ((p.skratenie > 0 || (!bez && p.skratenie_zar > 0)) ? '<div><dt>Skrátenie</dt><dd>krídlo ' + (p.skratenie > 0 ? 'o ' + p.skratenie + ' mm' : 'nie') +
-        (bez ? '' : ', zárubňa ' + (p.skratenie_zar > 0 ? 'o ' + p.skratenie_zar + ' mm' : 'nie')) + '</dd></div>' : '') +
+      '<div><dt>' + (skrat ? 'Východiskový rozmer' : 'Rozmer') + '</dt><dd>' + p.sirka + '/' + P.HTXT[p.vyska] + ', ' + P.NAMES[p.smer] + '</dd></div>' +
+      (skrat ? '<div><dt>Skrátenie</dt><dd>krídlo ' + (p.skratenie > 0 ? 'o ' + p.skratenie + ' mm' : 'nie') +
+        (bez ? '' : ', zárubňa ' + (p.skratenie_zar > 0 ? 'o ' + p.skratenie_zar + ' mm' : 'nie') +
+                    ' → priechod ' + (P.H[p.vyska] - (p.skratenie_zar || 0)) + ' mm') + '</dd></div>' : '') +
       '<div><dt>Farba krídla</dt><dd>' + P.NAMES[p.farba] + '</dd></div>' +
       '<div><dt>Farba zárubne</dt><dd>' + (bez ? '–' : P.NAMES[p.farba_zarubne]) + '</dd></div>' +
       '<div><dt>Závesy</dt><dd>' + (bez ? '–' : P.NAMES[p.zavesy || 'nikel']) + '</dd></div>' +
