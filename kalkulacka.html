@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kalkulácia ceny — Fortissima</title>
-<meta name="description" content="Orientačná cena interiérových dverí Fortissima vrátane zárubne, kovania, montáže a dopravy.">
+<meta name="description" content="Orientačná cena interiérových dverí Fortissima vrátane zárubne, zámku, montáže a dopravy. Kľučka nie je súčasťou ponuky.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,ital@9..144,300..700,0..1&amp;family=Work+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -111,10 +111,11 @@
         <legend class="step-h"><span class="mono"></span>Zámok a&nbsp;výbava</legend>
         <div class="k"><label for="kovanie">Zámok</label></div>
         <select name="kovanie" id="kovanie" class="sel"><option value="bez">Bez kovania</option></select>
+        <p class="calc-dims calc-klucka"><b>Kľučka nie je súčasťou cenovej ponuky.</b> Zámok znamená len prípravu krídla (zámok a&nbsp;otvor); kľučku na nákrese uvádzame iba pre názornosť.</p>
         <div id="mriezkaWrap">
           <div class="k"><label for="mriezka">Vetracia mriežka</label></div>
           <select name="mriezka" id="mriezka" class="sel"><option value="bez">Bez vetracej mriežky</option></select>
-          <p class="calc-dims">Pri rámových dverách sa mriežka osadí do širšieho spodného vlysu.</p>
+          <p class="calc-dims">Mriežka sa osadí do spodnej časti krídla – pri rámových dverách do širšieho spodného vlysu.</p>
         </div>
         <label class="chk chk-big chk-prah"><input type="checkbox" name="prah" id="prah"><span>Výsuvný (padací) prah</span></label>
         <p class="calc-dims">Prah sa pri zatvorení vysunie zo spodku krídla a&nbsp;utesní medzeru pri podlahe – proti prievanu, hluku aj prachu. Príplatková výbava.</p>
@@ -149,7 +150,7 @@
       <button type="button" class="sum-btn" id="sumAdd">Pridať do cenovej ponuky</button>
       <p class="sum-toast" id="calcToast" hidden></p>
       <a href="zostava.html" class="sum-view" id="sumView" hidden>Zobraziť ponuku →</a>
-      <p class="sum-note">Orientačná cena vrátane DPH. Presnú ponuku pripravíme po zameraní.</p>
+      <p class="sum-note">Orientačná cena vrátane DPH. Kľučka nie je súčasťou cenovej ponuky. Presnú ponuku pripravíme po zameraní.</p>
     </aside>
   </div>
 </section>

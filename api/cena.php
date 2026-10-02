@@ -203,10 +203,9 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
         $cenaPrah = $prah ? priplatky($prip, 'prah', $in['sirka'], $in['vyska']) : 0.0;
         if ($prah && $cenaPrah <= 0) throw new ChybaPolozky($nemame);
 
-        // vetracia mriežka v spodnom vlysu – len rámové dvere (Vertikal, Prestige)
+        // vetracia mriežka – všetky kolekcie (pri rámových dverách v spodnom vlysu)
         $mrKod = strtolower((string)($p['mriezka'] ?? 'bez'));
         $mr = null;
-        if ($mrKod !== 'bez' && $in['kolekcia'] === 'minimal') throw new ChybaPolozky('Vetraciu mriežku ponúkame len pri rámových dverách Vertikal a Prestige.');
         if ($mrKod !== 'bez') {
             foreach (nacitaj_csv('mriezky.csv') as $r) if (strtolower($r['kod']) === $mrKod) $mr = $r;
             if (!$mr) throw new ChybaPolozky('Neplatná vetracia mriežka.');
