@@ -1727,3 +1727,23 @@ header.nav-open .nav-toggle span:nth-child(2){ top:21px; transform:rotate(-45deg
   .q-print-foot{ display:block; margin-top:16px; font-size:8.5pt; color:#555; }
   .reveal{ opacity:1 !important; transform:none !important; }
 }
+
+/* --- schematický obrázok dverí --- */
+.door-svg{ display:block; width:100%; height:auto; }
+.door-prev{ background:#ECE8E1; border-radius:2px; overflow:hidden; margin:2px 0 18px; }
+.door-prev{ padding:14px 0 0; }
+.door-prev .door-svg{ max-height:320px; margin:0 auto; }
+.qi{ display:grid; grid-template-columns:96px 1fr; gap:22px; align-items:start; }
+.qi-img{ border:1px solid var(--line); background:#ECE8E1; }
+.qi-main{ min-width:0; }
+.qi-head{ grid-template-columns:30px 1fr auto; }
+.qi-dl, .qi-msg, .qi-lines, .qi-actions{ margin-left:44px; }
+@media (max-width: 980px){
+  .qi{ grid-template-columns:72px 1fr; gap:14px; }
+  .qi-dl, .qi-msg, .qi-lines, .qi-actions{ margin-left:0; }
+}
+
+@media print{
+  .qi{ grid-template-columns:70px 1fr; }
+  .door-prev{ display:none; }
+}

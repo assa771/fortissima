@@ -509,9 +509,84 @@ const Ponuka = (function () {
     return NAMES[p.kolekcia] + ' · ' + NAMES[p.prevedenie] + ' · ' + p.sirka + '/' + HTXT[p.vyska] + ' · ' + NAMES[p.smer];
   }
 
+  /* ---------- schematický obrázok položky (SVG v mierke, rozmery v mm) ---------- */
+  const FARBY = {
+    biela:     { leaf: '#F4F3F0', edge: '#C9C5BE', frame: '#EFEEEA', line: 'rgba(60,52,44,.16)' },
+    kasmirova: { leaf: '#D9CDBD', edge: '#ADA090', frame: '#D3C6B5', line: 'rgba(60,45,30,.22)' }
+  };
+  function obrazok(p, opt) {
+    opt = opt || {};
+    const N = +p.sirka * 10, V1 = H[p.vyska] || 1970, falc = p.prevedenie !== 'bez';
+    const L = FARBY[p.farba] || FARBY.biela, Z = FARBY[p.farba_zarubne] || FARBY.biela;
+    const VW = 1400, VH = 2330, floor = 2250, cx = VW / 2;           // spoločná mierka pre všetky veľkosti
+    const S4 = N + 170, V4 = V1 + 82, S2 = N + 30, V2 = V1 + 12;       // obložky, rozmer vo falci
+    const lw = falc ? N + 50 : N + 22, lh = falc ? V1 + 15 : V1 + 1;   // krídlo
+    const ox = cx - S4 / 2, oy = floor - V4, ix = cx - S2 / 2, iy = floor - V2;
+    const lx = cx - lw / 2, ly = floor - 8 - lh;
+    const hingeLeft = p.smer === 'lave';                                 // pri pohľade zo strany závesov
+    const lockX = hingeLeft ? lx + lw : lx;                              // hrana na strane zámku
+    const dir = hingeLeft ? -1 : 1;                                      // smer do stredu krídla od zámku
+    const kov = String(p.kovanie || ''), kc = /cierna/.test(kov) ? '#2B2826' : '#B8BBBF', kcs = /cierna/.test(kov) ? '#111' : '#8E9297';
+    const o = [];
+    // výrez je pevný (podľa najväčších dverí 90/210), takže menšie dvere vyzerajú v správnom pomere menšie
+    o.push('<svg viewBox="140 20 1120 2300" class="door-svg" role="img" aria-label="' +
+      esc(NAMES[p.kolekcia] + ', ' + NAMES[p.prevedenie] + ', ' + p.sirka + '/' + HTXT[p.vyska] + ', ' + NAMES[p.smer]) + '">');
+    o.push('<rect x="0" y="0" width="' + VW + '" height="' + floor + '" fill="#ECE8E1"/>');
+    o.push('<rect x="0" y="' + floor + '" width="' + VW + '" height="' + (VH - floor) + '" fill="#D9D6D1"/>');
+    // obložky (farba zárubne)
+    o.push('<rect x="' + ox + '" y="' + oy + '" width="' + S4 + '" height="' + V4 + '" fill="' + Z.frame + '" stroke="' + Z.edge + '" stroke-width="5"/>');
+    o.push('<rect x="' + ix + '" y="' + iy + '" width="' + S2 + '" height="' + V2 + '" fill="' + (falc ? Z.frame : '#5E5850') + '" stroke="' + Z.edge + '" stroke-width="4"/>');
+    // krídlo (farba krídla)
+    o.push('<rect x="' + lx + '" y="' + ly + '" width="' + lw + '" height="' + lh + '" fill="' + L.leaf + '" stroke="' + L.edge + '" stroke-width="5"/>');
+    // rámová konštrukcia a presklenie
+    const st = 145, tr = 145, br = 165;
+    const px = lx + st, pw = lw - 2 * st, py = ly + tr, ph = lh - tr - br;
+    const glass = '#C7CFD8', gEdge = '#9EA8B3';
+    if (p.kolekcia !== 'minimal' && pw > 120) {
+      o.push('<g fill="none" stroke="' + L.line + '" stroke-width="4">' +
+        '<line x1="' + px + '" y1="' + (ly + 4) + '" x2="' + px + '" y2="' + (ly + lh - 4) + '"/>' +
+        '<line x1="' + (px + pw) + '" y1="' + (ly + 4) + '" x2="' + (px + pw) + '" y2="' + (ly + lh - 4) + '"/>' +
+        '<line x1="' + px + '" y1="' + py + '" x2="' + (px + pw) + '" y2="' + py + '"/>' +
+        '<line x1="' + px + '" y1="' + (py + ph) + '" x2="' + (px + pw) + '" y2="' + (py + ph) + '"/></g>');
+      if (p.kolekcia === 'vertikal') {
+        const gw = 150, gx = hingeLeft ? px + pw - gw : px;               // sklo pri strane zámku
+        o.push('<rect x="' + gx + '" y="' + py + '" width="' + gw + '" height="' + ph + '" fill="' + glass + '" stroke="' + gEdge + '" stroke-width="3"/>');
+        o.push('<rect x="' + (gx + 18) + '" y="' + (py + 20) + '" width="34" height="' + (ph - 40) + '" fill="#fff" opacity=".25"/>');
+      } else if (p.kolekcia === 'prestige') {
+        for (let k = 1; k <= 4; k++) {
+          const gy = py + ph * k / 5 - 10;
+          o.push('<rect x="' + px + '" y="' + gy + '" width="' + pw + '" height="20" fill="' + glass + '" stroke="' + gEdge + '" stroke-width="2"/>');
+        }
+      }
+    }
+    // závesy (len falcové – bezfalcové majú skryté)
+    if (falc) {
+      const hx = hingeLeft ? lx - 6 : lx + lw - 10;
+      [ly + 200, ly + lh / 2 - 60, ly + lh - 320].forEach(hy =>
+        o.push('<rect x="' + hx + '" y="' + hy + '" width="16" height="110" rx="7" fill="#B8BBBF" stroke="#8E9297" stroke-width="2"/>'));
+    }
+    // kľučka a zámok (výška kľučky 1050 mm od podlahy)
+    const hy = floor - 1050, rx = lockX + dir * 70;
+    o.push('<rect x="' + (rx - 26) + '" y="' + (hy - 26) + '" width="52" height="52" rx="6" fill="' + kc + '" stroke="' + kcs + '" stroke-width="2"/>');
+    o.push('<rect x="' + Math.min(rx, rx + dir * 150) + '" y="' + (hy - 9) + '" width="150" height="18" rx="9" fill="' + kc + '" stroke="' + kcs + '" stroke-width="2"/>');
+    if (kov && kov !== 'bez') {
+      const ky = hy + 90;
+      o.push('<rect x="' + (rx - 22) + '" y="' + (ky - 22) + '" width="44" height="44" rx="6" fill="' + kc + '" stroke="' + kcs + '" stroke-width="2"/>');
+      if (/^wc/.test(kov)) o.push('<circle cx="' + rx + '" cy="' + ky + '" r="11" fill="none" stroke="' + kcs + '" stroke-width="5"/>');
+      else if (/^pz/.test(kov)) o.push('<circle cx="' + rx + '" cy="' + (ky - 5) + '" r="8" fill="' + kcs + '"/><rect x="' + (rx - 4) + '" y="' + (ky - 2) + '" width="8" height="14" fill="' + kcs + '"/>');
+      else o.push('<rect x="' + (rx - 4) + '" y="' + (ky - 12) + '" width="8" height="24" rx="3" fill="' + kcs + '"/>');
+    }
+    if (opt.rozmer !== false) {
+      o.push('<text x="' + cx + '" y="' + (VH - 34) + '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="54" fill="#7D756B">' +
+        esc(p.sirka + '/' + HTXT[p.vyska] + ' · ' + NAMES[p.smer]) + '</text>');
+    }
+    o.push('</svg>');
+    return o.join('');
+  }
+
   badge();
   window.addEventListener('storage', e => { if (e.key === KEY) badge(); });
-  return { load, save, novaPonuka, uid, ocen, kovanie, popis, badge, pocetKusov, DEMO, NAMES, H, HTXT, eur, esc };
+  return { obrazok, load, save, novaPonuka, uid, ocen, kovanie, popis, badge, pocetKusov, DEMO, NAMES, H, HTXT, eur, esc };
 })();
 
 
@@ -571,6 +646,7 @@ const Ponuka = (function () {
   function calc() {
     const p = polozka();
     hints(p);
+    const prev = $('doorPrev'); if (prev) prev.innerHTML = P.obrazok(p);
     sum.classList.add('is-loading');
     P.ocen({ polozky: [p], montaz: false, doprava: false }).then(j => {
       sum.classList.remove('is-loading');
@@ -669,6 +745,7 @@ const Ponuka = (function () {
       const lines = r && r.ok ? r.riadky.map(x => '<tr><td class="qk">' + P.esc(x.kod) + '</td><td>' + P.esc(x.nazov) + '</td><td class="n">' + x.mnozstvo +
         '</td><td class="n">' + P.eur.format(x.cena_ks) + '</td><td class="n">' + P.eur.format(x.spolu) + '</td></tr>').join('') : '';
       return '<article class="qi" data-uid="' + p.uid + '">' +
+        '<div class="qi-img">' + P.obrazok(p, { rozmer: false }) + '</div><div class="qi-main">' +
         '<div class="qi-head"><span class="qi-n mono">' + String(i + 1).padStart(2, '0') + '</span>' +
         '<div class="qi-t"><h3>' + P.esc(p.nazov || P.NAMES[p.kolekcia]) + '</h3><p>' + P.esc((p.nazov ? P.NAMES[p.kolekcia] + ' · ' : '') + P.NAMES[p.prevedenie] + ' dvere') + '</p></div>' +
         '<div class="qi-price">' + (r ? (r.ok ? P.eur.format(r.spolu) : '<span class="qi-err">bez ceny</span>') : '…') + '</div></div>' +
@@ -680,7 +757,7 @@ const Ponuka = (function () {
           '<a href="kalkulacka.html?upravit=' + encodeURIComponent(p.uid) + '" class="qi-btn">Upraviť</a>' +
           '<button type="button" class="qi-btn" data-a="dup">Duplikovať</button>' +
           '<button type="button" class="qi-btn qi-del" data-a="del">Odstrániť</button>' +
-        '</div></article>';
+        '</div></div></article>';
     }).join('');
     // služby + súčty
     const sl = res && res.ok ? res.sluzby : [];
