@@ -872,10 +872,15 @@ const Ponuka = (function () {
     $('skrIn').hidden = !form.elements.skr_on.checked;
     $('skrZIn').hidden = !form.elements.skrz_on.checked;
     $('skrZWrap').hidden = !p.so_zarubnou;
-    form.elements.skratenie.max = maxK || ''; form.elements.skratenie_zar.max = maxZ || '';
+    // zárubňa nemôže byť skrátená viac ako krídlo (pri dverách so zárubňou)
+    const maxZd = slepa ? maxZ : Math.min(maxZ, sk);
+    form.elements.skratenie.max = maxK || ''; form.elements.skratenie_zar.max = maxZd || '';
     $('skrOut').innerHTML = !lk ? 'Skrátenie krídla pri tejto zostave neponúkame.' : 'Najviac o <b>' + maxK + ' mm</b>' +
       (sMr ? ' (s vetracou mriežkou)' : (lk.max_mm_mriezka < lk.max_mm ? ' · s vetracou mriežkou najviac ' + lk.max_mm_mriezka + ' mm' : '')) + '.';
-    $('skrZOut').innerHTML = !lz ? 'Skrátenie zárubne pri tejto zostave neponúkame.' : 'Najviac o <b>' + maxZ + ' mm</b>.';
+    $('skrZOut').innerHTML = !lz ? 'Skrátenie zárubne pri tejto zostave neponúkame.' :
+      slepa ? 'Najviac o <b>' + maxZ + ' mm</b>.' :
+      !sk ? 'Zárubňa nemôže byť skrátená viac ako krídlo – najprv skráťte krídlo.' :
+      'Najviac o <b>' + maxZd + ' mm</b>' + (maxZd < maxZ ? ' (nie viac ako krídlo)' : '') + '.';
     const note = $('skrNote');
     let n = '';
     if (!slepa && p.so_zarubnou && sk > skz) n = 'Krídlo je skrátené o ' + (sk - skz) + ' mm viac ako zárubňa – pod krídlom bude o toľko väčšia medzera nad podlahou.';
