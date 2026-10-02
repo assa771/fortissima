@@ -15,17 +15,20 @@ len pre bielu farbu alebo len pre šírku 90.
 kridla.csv      kolekcia (minimal | vertikal | prestige), prevedenie (falc | bez),
                 farba (biela | kasmirova), sirka (60 | 65 | 70 | 80 | 90),
                 vyska (197 | 2055 | 210), cena_s_dph, dodanie_dni (0 = skladom)
-zarubne.csv     typ (F80 | F100 | F130 | F160), prevedenie, farba (= farba ZÁRUBNE, môže byť iná ako krídla),
+zarubne.csv     typ (F80 | F100 | F130 | F160), prevedenie (falc | bez | slepa = samostatná
+                tunelová zárubňa bez závesov a protiplechu), farba (= farba ZÁRUBNE, môže byť iná ako krídla),
                 sirka, vyska, cena_s_dph, dodanie_dni
 rozsirenia.csv  typ (R90 | R180), sirka, vyska, cena_s_dph, dodanie_dni
                 (voliteľne aj stĺpec farba = farba zárubne)
                 (ak R180 nemá cenu, počíta sa ako 2 × R90)
 priplatky.csv   polozka (kridlo | zarubna), sirka, vyska, priplatok_s_dph, popis
                 – príplatky sa k základnej cene PRIČÍTAVAJÚ (všetky, ktoré sedia)
+zavesy.csv      kod (nikel | cierna), nazov, cena_s_dph = príplatok k zárubni, dodanie_dni
+                (závesy sú súčasťou zárubne, nie samostatná položka; slepá zárubňa závesy nemá)
 kovanie.csv     kod (bez medzier, nemeniť pri existujúcich), nazov (zobrazí sa zákazníkovi),
                 cena_s_dph = príplatok ku krídlu, dodanie_dni – poradie riadkov = poradie v ponuke
                 (zámok je súčasťou krídla, nie samostatná položka)
-sluzby.csv      montaz-falc / montaz-bez / montaz-posuvne – montáž za kus podľa typu dverí
+sluzby.csv      montaz-falc / montaz-bez / montaz-posuvne / montaz-slepa – montáž za kus podľa typu dverí
                 zameranie – pridá sa automaticky, keď zákazník zvolí montáž (paušál za zákazku)
                 doprava – cena za 1 km; počíta sa vzdialenosť × 2 (tam aj späť)
 

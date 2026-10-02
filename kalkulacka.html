@@ -45,19 +45,25 @@
   <div class="wrap calc-grid">
     <form class="cfg" id="calcForm" novalidate>
       <fieldset class="step">
-        <legend class="step-h"><span class="mono">01</span>Kolekcia</legend>
+        <legend class="step-h"><span class="mono"></span>Čo oceňujete</legend>
+        <div class="seg seg-radio seg-druh"><label><input type="radio" name="druh" value="dvere" checked><span>Dvere</span></label><label><input type="radio" name="druh" value="zarubna"><span>Samostatná slepá zárubňa</span></label></div>
+        <p class="calc-dims" id="druhNote">Dvere = krídlo so zámkom, voliteľne aj so zárubňou.</p>
+      </fieldset>
+
+      <fieldset class="step" data-dvere>
+        <legend class="step-h"><span class="mono"></span>Kolekcia</legend>
         <div class="picks"><label class="pick"><input type="radio" name="kolekcia" value="minimal" checked><span class="pick-img"><img src="assets/scenes/AK-1.webp" alt="" loading="lazy"></span><span class="pick-t">Minimal<small>AK-1</small></span></label><label class="pick"><input type="radio" name="kolekcia" value="vertikal"><span class="pick-img"><img src="assets/scenes/XK-1.webp" alt="" loading="lazy"></span><span class="pick-t">Vertikal<small>XK-1</small></span></label><label class="pick"><input type="radio" name="kolekcia" value="prestige"><span class="pick-img"><img src="assets/scenes/QK-1.webp" alt="" loading="lazy"></span><span class="pick-t">Prestige<small>QK-1</small></span></label></div>
       </fieldset>
 
       <fieldset class="step">
-        <legend class="step-h"><span class="mono">02</span>Prevedenie a&nbsp;farba</legend>
-        <div class="row2">
+        <legend class="step-h"><span class="mono"></span>Prevedenie a&nbsp;farba</legend>
+        <div class="row2" data-dvere>
           <div><div class="k">Prevedenie</div><div class="seg seg-radio"><label><input type="radio" name="prevedenie" value="falc" checked><span>Falcové</span></label><label><input type="radio" name="prevedenie" value="bez"><span>Bezfalcové</span></label></div>
             <a href="zarubne.html" class="hint-link">Aký je rozdiel?</a></div>
           <div></div>
         </div>
         <div class="row2">
-          <div><div class="k">Farba krídla</div><div class="sw-radio">
+          <div data-dvere><div class="k">Farba krídla</div><div class="sw-radio">
             <label><input type="radio" name="farba" value="biela" checked><span class="sw" style="background:#FBFAF6;border-color:#D9D2C2"></span><span class="sw-t">Biela</span></label>
             <label><input type="radio" name="farba" value="kasmirova"><span class="sw" style="background:#D9CBB0;border-color:#B5A488"></span><span class="sw-t">Kašmírová</span></label>
           </div></div>
@@ -66,24 +72,31 @@
             <label><input type="radio" name="farba_zarubne" value="kasmirova"><span class="sw" style="background:#D9CBB0;border-color:#B5A488"></span><span class="sw-t">Kašmírová</span></label>
           </div></div>
         </div>
-        <p class="calc-dims">Zárubňa môže mať inú farbu ako krídlo – každú položku si zvolíte zvlášť.</p>
+        <p class="calc-dims" data-dvere>Zárubňa môže mať inú farbu ako krídlo – každú položku si zvolíte zvlášť.</p>
       </fieldset>
 
       <fieldset class="step">
-        <legend class="step-h"><span class="mono">03</span>Rozmer a&nbsp;smer otvárania</legend>
+        <legend class="step-h"><span class="mono"></span>Rozmer<span data-dvere> a&nbsp;smer otvárania</span></legend>
         <div class="k">Menovitá šírka</div>
         <div class="seg seg-radio"><label><input type="radio" name="sirka" value="60"><span>60</span></label><label><input type="radio" name="sirka" value="65"><span>65</span></label><label><input type="radio" name="sirka" value="70"><span>70</span></label><label><input type="radio" name="sirka" value="80" checked><span>80</span></label><label><input type="radio" name="sirka" value="90"><span>90</span></label></div>
         <div class="k">Výška</div>
         <div class="seg seg-radio"><label><input type="radio" name="vyska" value="197" checked><span>STN 197</span></label><label><input type="radio" name="vyska" value="2055"><span>HU 205,5</span></label><label><input type="radio" name="vyska" value="210"><span>DIN 210</span></label></div>
-        <div class="k">Smer otvárania</div>
+        <div data-dvere class="smer-wrap"><div class="k">Smer otvárania</div>
         <div class="seg seg-radio"><label><input type="radio" name="smer" value="lave" checked><span>Ľavé</span></label><label><input type="radio" name="smer" value="prave"><span>Pravé</span></label></div>
-        <a href="rozmery.html#smer" class="hint-link">Ako určiť ľavé a&nbsp;pravé dvere?</a>
+        <a href="rozmery.html#smer" class="hint-link">Ako určiť ľavé a&nbsp;pravé dvere?</a></div>
         <p class="calc-dims" id="calcDims"></p>
       </fieldset>
 
       <fieldset class="step">
-        <legend class="step-h"><span class="mono">04</span>Zárubňa</legend>
-        <label class="chk chk-big"><input type="checkbox" name="so_zarubnou" id="soZarubnou" checked><span>Objednávam aj zárubňu</span></label>
+        <legend class="step-h"><span class="mono"></span>Zárubňa</legend>
+        <label class="chk chk-big" data-dvere><input type="checkbox" name="so_zarubnou" id="soZarubnou" checked><span>Objednávam aj zárubňu</span></label>
+        <div id="zavesyWrap">
+          <div class="k">Závesy na zárubni</div>
+          <div class="sw-radio">
+            <label><input type="radio" name="zavesy" value="nikel" checked><span class="sw" style="background:linear-gradient(135deg,#E2E4E6,#A9ADB2);border-color:#8E9297"></span><span class="sw-t">Nikel</span></label>
+            <label><input type="radio" name="zavesy" value="cierna"><span class="sw" style="background:#2B2826;border-color:#111"></span><span class="sw-t">Čierne</span></label>
+          </div>
+        </div>
         <div id="stenaWrap">
           <div class="k"><label for="stena">Hrúbka steny</label></div>
           <div class="wall-in">
@@ -94,13 +107,13 @@
         <p class="calc-dims" id="stenaOut"></p>
       </fieldset>
 
-      <fieldset class="step">
-        <legend class="step-h"><span class="mono">05</span>Zámok</legend>
+      <fieldset class="step" data-dvere>
+        <legend class="step-h"><span class="mono"></span>Zámok</legend>
         <select name="kovanie" id="kovanie" class="sel"><option value="bez">Bez kovania</option></select>
       </fieldset>
 
       <fieldset class="step">
-        <legend class="step-h"><span class="mono">06</span>Počet a&nbsp;označenie</legend>
+        <legend class="step-h"><span class="mono"></span>Počet a&nbsp;označenie</legend>
         <div class="row2">
           <div><div class="k">Počet kusov</div>
             <div class="qty">

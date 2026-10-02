@@ -1763,3 +1763,14 @@ header.nav-open .nav-toggle span:nth-child(2){ top:21px; transform:rotate(-45deg
 .q-km-in span{ font-family:'JetBrains Mono', monospace; font-size:.8rem; color:rgba(246,244,238,.55); }
 .q-km p{ font-size:.76rem; color:rgba(246,244,238,.5); margin-top:6px; }
 @media print{ .q-km{ display:none !important; } }
+
+/* ===== kalkulácia: druh položky (dvere / slepá zárubňa), závesy, číslovanie krokov ===== */
+.cfg{ counter-reset:krok; }
+.cfg .step:not([hidden]){ counter-increment:krok; }
+.cfg .step-h .mono::before{ content:counter(krok, decimal-leading-zero); }
+.cfg [hidden]{ display:none !important; }
+.seg-druh{ flex-wrap:wrap; }
+#zavesyWrap{ margin-top:18px; }
+#zavesyWrap .k{ margin-top:0; }
+.cfg .smer-wrap > .k:first-child{ margin-top:18px; }
+#zavesyWrap + #stenaWrap{ margin-top:22px; }

@@ -93,6 +93,42 @@ window.FORTISSIMA_DEMO = {
    "vyska": "*",
    "cena_s_dph": "145",
    "dodanie_dni": "5"
+  },
+  {
+   "typ": "F80",
+   "prevedenie": "slepa",
+   "farba": "*",
+   "sirka": "*",
+   "vyska": "*",
+   "cena_s_dph": "105",
+   "dodanie_dni": "0"
+  },
+  {
+   "typ": "F100",
+   "prevedenie": "slepa",
+   "farba": "*",
+   "sirka": "*",
+   "vyska": "*",
+   "cena_s_dph": "110",
+   "dodanie_dni": "0"
+  },
+  {
+   "typ": "F130",
+   "prevedenie": "slepa",
+   "farba": "*",
+   "sirka": "*",
+   "vyska": "*",
+   "cena_s_dph": "119",
+   "dodanie_dni": "0"
+  },
+  {
+   "typ": "F160",
+   "prevedenie": "slepa",
+   "farba": "*",
+   "sirka": "*",
+   "vyska": "*",
+   "cena_s_dph": "129",
+   "dodanie_dni": "5"
   }
  ],
  "rozsirenia": [
@@ -192,6 +228,20 @@ window.FORTISSIMA_DEMO = {
    "dodanie_dni": "3"
   }
  ],
+ "zavesy": [
+  {
+   "kod": "nikel",
+   "nazov": "Závesy nikel",
+   "cena_s_dph": "0",
+   "dodanie_dni": "0"
+  },
+  {
+   "kod": "cierna",
+   "nazov": "Závesy čierne",
+   "cena_s_dph": "8",
+   "dodanie_dni": "3"
+  }
+ ],
  "sluzby": [
   {
    "kod": "montaz-falc",
@@ -209,6 +259,12 @@ window.FORTISSIMA_DEMO = {
    "kod": "montaz-posuvne",
    "nazov": "Montáž posuvných dverí",
    "cena_s_dph": "99",
+   "jednotka": "ks"
+  },
+  {
+   "kod": "montaz-slepa",
+   "nazov": "Montáž slepej zárubne",
+   "cena_s_dph": "45",
    "jednotka": "ks"
   },
   {

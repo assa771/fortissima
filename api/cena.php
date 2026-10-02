@@ -7,7 +7,9 @@
  *   POST cena.php              → telo JSON:
  *        { "polozky": [ { "uid":"a1", "kolekcia":"minimal", "prevedenie":"falc", "farba":"biela",
  *                         "farba_zarubne":"kasmirova", "sirka":"80", "vyska":"197", "smer":"lave",
- *                         "so_zarubnou":true, "stena":120, "kovanie":"bb-nikel", "ks":2 }, ... ],
+ *                         "so_zarubnou":true, "stena":120, "kovanie":"bb-nikel", "zavesy":"nikel", "ks":2 },
+ *                       { "uid":"a2", "druh":"zarubna", "farba_zarubne":"biela", "sirka":"80", "vyska":"197",
+ *                         "stena":130, "ks":1 }, ... ],
  *          "montaz": true, "doprava": true, "doprava_km": 35 }
  *
  * Každý riadok výsledku má aj "kod" – stabilný kód položky pripravený na import do objednávkového systému.
@@ -117,7 +119,8 @@ function zarubna_pre_stenu(int $d): array {
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
     if (isset($_GET['moznosti'])) {
         $kov = array_map(fn($r) => ['kod' => $r['kod'], 'nazov' => $r['nazov']], nacitaj_csv('kovanie.csv'));
-        odpoved(['ok' => true, 'kovanie' => array_values($kov)]);
+        $zav = array_map(fn($r) => ['kod' => $r['kod'], 'nazov' => $r['nazov']], nacitaj_csv('zavesy.csv'));
+        odpoved(['ok' => true, 'kovanie' => array_values($kov), 'zavesy' => array_values($zav)]);
     }
     chyba('Použite POST s položkami ponuky.', 405);
 }
@@ -139,14 +142,20 @@ $POVOLENE = [
 ];
 
 function ocen_polozku(array $p, array $CFG, array $POV): array {
+    // druh položky: "dvere" (krídlo + voliteľne zárubňa) alebo "zarubna" (samostatná slepá/tunelová zárubňa)
+    $druh = (string)($p['druh'] ?? 'dvere');
+    if (!in_array($druh, ['dvere', 'zarubna'], true)) throw new ChybaPolozky('Neplatný druh položky.');
+    $slepa = $druh === 'zarubna';
+    $kluce = $slepa ? ['farba_zarubne', 'sirka', 'vyska'] : array_keys($POV);
     $in = [];
-    foreach ($POV as $k => $moznosti) {
+    foreach ($kluce as $k) {
         $v = (string)($p[$k] ?? '');
-        if (!array_key_exists($v, $moznosti)) throw new ChybaPolozky("Neplatná hodnota: $k");
+        if (!array_key_exists($v, $POV[$k])) throw new ChybaPolozky("Neplatná hodnota: $k");
         $in[$k] = $v;
     }
+    if ($slepa) { $in['prevedenie'] = 'slepa'; $in['smer'] = 'slepa'; }
     // dvere môžu byť aj bez zárubne (napr. do existujúcej zárubne); chýbajúci údaj = so zárubňou
-    $soZar = !array_key_exists('so_zarubnou', $p) || filter_var($p['so_zarubnou'], FILTER_VALIDATE_BOOLEAN);
+    $soZar = $slepa || !array_key_exists('so_zarubnou', $p) || filter_var($p['so_zarubnou'], FILTER_VALIDATE_BOOLEAN);
     $stena = filter_var($p['stena'] ?? '', FILTER_VALIDATE_INT);
     if ($soZar && ($stena === false || $stena < 80 || $stena > (int)$CFG['max_stena'])) {
         throw new ChybaPolozky('Hrúbka steny musí byť od 80 do ' . (int)$CFG['max_stena'] . ' mm. Pre iné hrúbky nám pošlite dopyt.');
@@ -161,69 +170,87 @@ function ocen_polozku(array $p, array $CFG, array $POV): array {
     [$N] = $POV['sirka'][$in['sirka']];
     [$V1, $vyskaTxt] = $POV['vyska'][$in['vyska']];
     $falc = $in['prevedenie'] === 'falc';
-    $rozmerKridla = $falc ? ($N + 50) . ' × ' . ($V1 + 15) : ($N + 22) . ' × ' . ($V1 + 1);
+    $kodPrev = $slepa ? 'S' : $POV['prevedenie'][$in['prevedenie']][1];
+    $kodSmer = $slepa ? 'S' : $POV['smer'][$in['smer']][1];
     $c = fn($k) => $POV[$k][$in[$k]][1];                                  // kód hodnoty
     $rozm = $in['sirka'] . '-' . $in['vyska'];
     $nemame = 'Pre túto zostavu zatiaľ nemáme cenu v cenníku. Pošlite nám prosím dopyt.';
     $prip = nacitaj_csv('priplatky.csv');
     $riadky = []; $dni = 0;
-    $pridaj = function (string $typ, string $kod, string $nazov, float $cenaKs, int $mn, int $d = 0) use (&$riadky, &$dni) {
-        $riadky[] = ['typ' => $typ, 'kod' => $kod, 'nazov' => $nazov, 'mnozstvo' => $mn, 'cena_ks' => round($cenaKs, 2), 'spolu' => round($cenaKs * $mn, 2)];
+    $pridaj = function (string $typ, string $kod, string $nazov, float $cenaKs, int $mn, int $d = 0, array $extra = []) use (&$riadky, &$dni) {
+        $riadky[] = ['typ' => $typ, 'kod' => $kod, 'nazov' => $nazov, 'mnozstvo' => $mn, 'cena_ks' => round($cenaKs, 2), 'spolu' => round($cenaKs * $mn, 2)] + $extra;
         $dni = max($dni, $d);
     };
 
-    // zámok/kovanie je súčasťou krídla (cena sa pripočíta ku krídlu, v exporte je v samostatnom stĺpci)
-    $kovKod = (string)($p['kovanie'] ?? 'bez');
-    $kov = null;
-    foreach (nacitaj_csv('kovanie.csv') as $r) if (strtolower($r['kod']) === strtolower($kovKod)) $kov = $r;
-    if (!$kov) throw new ChybaPolozky('Neplatné kovanie.');
+    // závesy sú súčasťou zárubne (nie samostatná položka); slepá zárubňa závesy ani protiplech nemá
+    $zav = null;
+    if ($soZar && !$slepa) {
+        $zavKod = (string)($p['zavesy'] ?? 'nikel');
+        foreach (nacitaj_csv('zavesy.csv') as $r) if (strtolower($r['kod']) === strtolower($zavKod)) $zav = $r;
+        if (!$zav) throw new ChybaPolozky('Neplatná farba závesov.');
+    }
 
-    // krídlo (farba krídla) vrátane zámku
-    $r = najdi(nacitaj_csv('kridla.csv'), ['kolekcia' => $in['kolekcia'], 'prevedenie' => $in['prevedenie'], 'farba' => $in['farba'],
-                                           'sirka' => $in['sirka'], 'vyska' => $in['vyska']]);
-    if (!$r) throw new ChybaPolozky($nemame);
-    $pridaj('KRIDLO', "{$c('kolekcia')}-{$c('prevedenie')}-{$c('farba')}-$rozm-{$c('smer')}",
-        sprintf('Krídlo %s, %s, %s, %s/%s, %s (%s mm), %s', $POV['kolekcia'][$in['kolekcia']][0], $POV['prevedenie'][$in['prevedenie']][0],
-                $POV['farba'][$in['farba']][0], $in['sirka'], $vyskaTxt, $POV['smer'][$in['smer']][0], $rozmerKridla, $kov['nazov']),
-        cislo($r['cena_s_dph']) + priplatky($prip, 'kridlo', $in['sirka'], $in['vyska']) + cislo($kov['cena_s_dph']), $ks,
-        max((int)cislo($r['dodanie_dni'] ?? 0), (int)cislo($kov['dodanie_dni'] ?? 0)));
+    if (!$slepa) {
+        // zámok je súčasťou krídla (cena sa pripočíta ku krídlu, v exporte je v samostatnom stĺpci)
+        $kovKod = (string)($p['kovanie'] ?? 'bez');
+        $kov = null;
+        foreach (nacitaj_csv('kovanie.csv') as $r) if (strtolower($r['kod']) === strtolower($kovKod)) $kov = $r;
+        if (!$kov) throw new ChybaPolozky('Neplatný zámok.');
 
-    // zárubňa (farba zárubne) – len ak ju zákazník chce
+        $rozmerKridla = $falc ? ($N + 50) . ' × ' . ($V1 + 15) : ($N + 22) . ' × ' . ($V1 + 1);
+        $r = najdi(nacitaj_csv('kridla.csv'), ['kolekcia' => $in['kolekcia'], 'prevedenie' => $in['prevedenie'], 'farba' => $in['farba'],
+                                               'sirka' => $in['sirka'], 'vyska' => $in['vyska']]);
+        if (!$r) throw new ChybaPolozky($nemame);
+        $pridaj('KRIDLO', "{$c('kolekcia')}-{$c('prevedenie')}-{$c('farba')}-$rozm-{$c('smer')}",
+            sprintf('Krídlo %s, %s, %s, %s/%s, %s (%s mm), %s', $POV['kolekcia'][$in['kolekcia']][0], $POV['prevedenie'][$in['prevedenie']][0],
+                    $POV['farba'][$in['farba']][0], $in['sirka'], $vyskaTxt, $POV['smer'][$in['smer']][0], $rozmerKridla, $kov['nazov']),
+            cislo($r['cena_s_dph']) + priplatky($prip, 'kridlo', $in['sirka'], $in['vyska']) + cislo($kov['cena_s_dph']), $ks,
+            max((int)cislo($r['dodanie_dni'] ?? 0), (int)cislo($kov['dodanie_dni'] ?? 0)));
+    }
+
     if ($soZar) {
-    $kz = ['prevedenie' => $in['prevedenie'], 'farba' => $in['farba_zarubne'], 'sirka' => $in['sirka'], 'vyska' => $in['vyska']];
-    $r = najdi(nacitaj_csv('zarubne.csv'), ['typ' => 'F' . $z['F']] + $kz);
-    if (!$r) throw new ChybaPolozky($nemame);
-    $pridaj('ZARUBNA', "F{$z['F']}-{$c('prevedenie')}-{$c('farba_zarubne')}-$rozm-{$c('smer')}",
-        sprintf('Obložková zárubňa F%d, %s, %s', $z['F'], $falc ? 'falcová' : 'bezfalcová', $POV['farba_zarubne'][$in['farba_zarubne']][0]),
-        cislo($r['cena_s_dph']) + priplatky($prip, 'zarubna', $in['sirka'], $in['vyska']), $ks, (int)cislo($r['dodanie_dni'] ?? 0));
-
-    // rozširovacie elementy (vo farbe zárubne)
-    if ($z['ext'] > 0) {
-        $roz = nacitaj_csv('rozsirenia.csv');
-        $k2 = ['farba' => $in['farba_zarubne'], 'sirka' => $in['sirka'], 'vyska' => $in['vyska']];
-        $e90 = najdi($roz, ['typ' => 'R90'] + $k2);
-        $e180 = najdi($roz, ['typ' => 'R180'] + $k2);
-        $fz = $c('farba_zarubne');
-        if ($r180) {
-            if ($e180) $pridaj('ROZSIRENIE', "R180-$fz-$rozm", 'Rozširovací element R180', cislo($e180['cena_s_dph']), $ks * $r180, (int)cislo($e180['dodanie_dni'] ?? 0));
-            elseif ($e90) $pridaj('ROZSIRENIE', "R90-$fz-$rozm", 'Rozširovací element R90', cislo($e90['cena_s_dph']), $ks * $r180 * 2, (int)cislo($e90['dodanie_dni'] ?? 0));
-            else throw new ChybaPolozky($nemame);
+        $kz = ['prevedenie' => $in['prevedenie'], 'farba' => $in['farba_zarubne'], 'sirka' => $in['sirka'], 'vyska' => $in['vyska']];
+        $r = najdi(nacitaj_csv('zarubne.csv'), ['typ' => 'F' . $z['F']] + $kz);
+        if (!$r) throw new ChybaPolozky($nemame);
+        $farbaZ = $POV['farba_zarubne'][$in['farba_zarubne']][0];
+        if ($slepa) {
+            $nazovZ = sprintf('Slepá (tunelová) zárubňa F%d, %s, %s/%s – bez závesov a protiplechu', $z['F'], $farbaZ, $in['sirka'], $vyskaTxt);
+        } else {
+            $nazovZ = sprintf('Obložková zárubňa F%d, %s, %s, %s', $z['F'], $falc ? 'falcová' : 'bezfalcová', $farbaZ, lcfirst($zav['nazov']));
         }
-        if ($r90) {
-            if (!$e90) throw new ChybaPolozky($nemame);
-            $pridaj('ROZSIRENIE', "R90-$fz-$rozm", 'Rozširovací element R90', cislo($e90['cena_s_dph']), $ks * $r90, (int)cislo($e90['dodanie_dni'] ?? 0));
+        $pridaj('ZARUBNA', "F{$z['F']}-$kodPrev-{$c('farba_zarubne')}-$rozm-$kodSmer", $nazovZ,
+            cislo($r['cena_s_dph']) + priplatky($prip, 'zarubna', $in['sirka'], $in['vyska']) + ($zav ? cislo($zav['cena_s_dph']) : 0), $ks,
+            max((int)cislo($r['dodanie_dni'] ?? 0), $zav ? (int)cislo($zav['dodanie_dni'] ?? 0) : 0),
+            ['zavesy' => $zav ? strtolower($zav['kod']) : '']);
+
+        // rozširovacie elementy (vo farbe zárubne)
+        if ($z['ext'] > 0) {
+            $roz = nacitaj_csv('rozsirenia.csv');
+            $k2 = ['farba' => $in['farba_zarubne'], 'sirka' => $in['sirka'], 'vyska' => $in['vyska']];
+            $e90 = najdi($roz, ['typ' => 'R90'] + $k2);
+            $e180 = najdi($roz, ['typ' => 'R180'] + $k2);
+            $fz = $c('farba_zarubne');
+            if ($r180) {
+                if ($e180) $pridaj('ROZSIRENIE', "R180-$fz-$rozm", 'Rozširovací element R180', cislo($e180['cena_s_dph']), $ks * $r180, (int)cislo($e180['dodanie_dni'] ?? 0));
+                elseif ($e90) $pridaj('ROZSIRENIE', "R90-$fz-$rozm", 'Rozširovací element R90', cislo($e90['cena_s_dph']), $ks * $r180 * 2, (int)cislo($e90['dodanie_dni'] ?? 0));
+                else throw new ChybaPolozky($nemame);
+            }
+            if ($r90) {
+                if (!$e90) throw new ChybaPolozky($nemame);
+                $pridaj('ROZSIRENIE', "R90-$fz-$rozm", 'Rozširovací element R90', cislo($e90['cena_s_dph']), $ks * $r90, (int)cislo($e90['dodanie_dni'] ?? 0));
+            }
         }
     }
-    }
-
 
     return [
         'ok' => true,
         'riadky' => $riadky,
         'spolu' => round(array_sum(array_column($riadky, 'spolu')), 2),
         'ks' => $ks,
+        'druh' => $druh,
         'so_zarubnou' => $soZar,
         'prevedenie' => $in['prevedenie'],
+        'zavesy' => $zav ? strtolower($zav['kod']) : '',
         'zarubna' => $soZar ? 'F' . $z['F'] . ($r180 ? ' + ' . ($r180 > 1 ? $r180 . '× ' : '') . 'R180' : '') . ($r90 ? ' + R90' : '') : 'bez zárubne',
         'rozsah_steny' => $soZar ? $z['min'] . '–' . $z['max'] . ' mm' : '',
         'dodanie_dni' => $dni,
@@ -247,7 +274,7 @@ foreach ($vstup['polozky'] as $p) {
 }
 
 // služby na úrovni celej ponuky
-//  - montáž: cena za kus podľa typu dverí (montaz-falc, montaz-bez, neskôr montaz-posuvne)
+//  - montáž: cena za kus podľa typu (montaz-falc, montaz-bez, montaz-slepa, neskôr montaz-posuvne)
 //  - zameranie: automaticky pri montáži (paušál za zákazku)
 //  - doprava: sadzba za km × vzdialenosť × 2 (tam aj späť)
 $sluzby = [];
