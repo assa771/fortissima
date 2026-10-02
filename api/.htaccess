@@ -1,5 +1,5 @@
-# Z prehliadača je dostupný len cena.php
-<FilesMatch "^(?!cena\.php$).*">
+# Z prehliadača sú dostupné len cena.php a partner.php
+<FilesMatch "^(?!(cena|partner)\.php$).*">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

@@ -7,7 +7,7 @@
 <meta name="description" content="Orientačná cena interiérových dverí Fortissima vrátane zárubne, zámku, montáže a dopravy. Kľučka nie je súčasťou ponuky.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,ital@9..144,300..700,0..1&amp;family=Work+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=0f52d284">
+<link rel="stylesheet" href="style.css?v=089c8f31">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
 <link rel="apple-touch-icon" href="assets/favicon-192.png">
@@ -172,7 +172,9 @@
       <p class="sum-demo" id="sumDemo" hidden>Ukážka – ilustračné ceny</p>
       <p class="sum-edit" id="calcEditNote" hidden>Upravujete položku z&nbsp;ponuky.</p>
       <ul class="sum-items" id="sumItems"><li class="sum-wait">Počítam…</li></ul>
-      <div class="sum-total"><span>Cena položky s&nbsp;DPH</span><strong id="sumTotal">–</strong></div>
+      <p class="sum-b2b" id="sumB2b" hidden></p>
+      <div class="sum-total"><span id="sumTotalLbl">Cena položky s&nbsp;DPH</span><strong id="sumTotal">–</strong></div>
+      <div class="sum-meta" id="sumSDphRow" hidden><span>S DPH 23&nbsp;%</span><span id="sumSDph">–</span></div>
       <button type="button" class="sum-why" id="sumWhy">Ako sme k&nbsp;cene prišli? <span>Rozpis ceny →</span></button>
       <div class="sum-meta"><span>Dodanie</span><span id="sumDod">–</span></div>
       <div class="sum-meta"><span>Zárubňa</span><span id="sumZar">–</span></div>
@@ -180,7 +182,7 @@
       <button type="button" class="sum-btn" id="sumAdd">Pridať do cenovej ponuky</button>
       <p class="sum-toast" id="calcToast" hidden></p>
       <a href="zostava.html" class="sum-view" id="sumView" hidden>Zobraziť ponuku →</a>
-      <p class="sum-note">Orientačná cena vrátane DPH. Kľučka nie je súčasťou cenovej ponuky. Presnú ponuku pripravíme po zameraní.</p>
+      <p class="sum-note" id="sumNote">Orientačná cena vrátane DPH. Kľučka nie je súčasťou cenovej ponuky. Presnú ponuku pripravíme po zameraní.</p>
     </aside>
   </div>
 </section>
@@ -202,10 +204,10 @@
     </div>
     <div class="footer-bottom">
       <span>&copy; 2026 Fortissima. Všetky práva vyhradené.</span>
-      <span>fortissima.sk</span>
+      <span><a href="partner.html" class="footer-b2b">Pre partnerov (B2B)</a> · fortissima.sk</span>
     </div>
   </div>
 </footer>
-<script src="script.js?v=67c22818"></script>
+<script src="script.js?v=a12406b6"></script>
 </body>
 </html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pre partnerov — Fortissima</title>
+<meta name="description" content="Prihlásenie obchodných partnerov Fortissima – kalkulácia v cenovej hladine partnera.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,ital@9..144,300..700,0..1&amp;family=Work+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=089c8f31">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/favicon-192.png">
+</head>
+<body>
+<header id="siteHeader">
+  <div class="wrap nav-inner">
+    <a href="index.html" class="logo"><img src="assets/logo-header.png" alt="Fortissima" class="logo-img"></a>
+    <nav id="siteNav" aria-label="Hlavné menu">
+      <ul>
+        <li><a href="kolekcie.html">Kolekcie</a></li>
+        <li><a href="zarubne.html">Zárubne</a></li>
+        <li><a href="rozmery.html">Rozmery</a></li>
+        <li><a href="kalkulacka.html">Kalkulácia</a></li>
+        <li><a href="remeslo.html">Remeslo</a></li>
+        <li><a href="kontakt.html">Kontakt</a></li>
+        <li class="nav-mobile-cta"><a href="kontakt.html">Vyžiadať ponuku</a></li>
+      </ul>
+    </nav>
+    <a href="zostava.html" class="nav-quote" aria-label="Cenová ponuka" title="Cenová ponuka"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h7.5l4 4v13h-11.5z"/><path d="M14 3.5v4h4"/><path d="M9.5 11.5h5.5M9.5 14.5h5.5M9.5 17.5h3.5"/></svg><span class="nav-quote-n" hidden>0</span></a>
+    <a href="kontakt.html" class="nav-cta">VYŽIADAŤ PONUKU</a>
+    <button type="button" class="nav-toggle" aria-label="Otvoriť menu" aria-expanded="false" aria-controls="siteNav"><span></span><span></span></button>
+  </div>
+</header>
+
+<section class="page-hero">
+  <div class="wrap">
+    <div class="breadcrumb mono"><a href="index.html">Domov</a> / Pre partnerov</div>
+    <h1>Pre<br><em>partnerov.</em></h1>
+    <p class="lead">Obchodní partneri sa prihlásia a&nbsp;v&nbsp;kalkulácii aj v&nbsp;cenovej ponuke uvidia ceny podľa svojej cenovej hladiny – bez DPH, s&nbsp;DPH uvedenou zvlášť.</p>
+  </div>
+</section>
+
+<section class="b2b-sec" id="b2b">
+  <div class="wrap b2b-grid">
+    <div class="b2b-card" id="b2bOut" hidden>
+      <div class="eyebrow">PRIHLÁSENIE</div>
+      <form id="b2bForm" class="b2b-form" autocomplete="on">
+        <label for="b2bLogin">Prihlasovacie meno</label>
+        <input type="text" id="b2bLogin" name="username" autocomplete="username" required>
+        <label for="b2bHeslo">Heslo</label>
+        <input type="password" id="b2bHeslo" name="password" autocomplete="current-password" required>
+        <p class="sum-err" id="b2bErr" hidden></p>
+        <button type="submit" class="sum-btn">Prihlásiť sa</button>
+      </form>
+      <p class="b2b-help">Prístup vám pridelíme na požiadanie – <a href="kontakt.html">napíšte nám</a>.</p>
+    </div>
+    <div class="b2b-card" id="b2bIn" hidden>
+      <div class="eyebrow">PRIHLÁSENÝ PARTNER</div>
+      <h2 id="b2bNazov">–</h2>
+      <p class="b2b-lvl">Cenová hladina <b id="b2bHladina">–</b> · ceny <span id="b2bDph">bez DPH</span></p>
+      <div class="b2b-actions">
+        <a href="kalkulacka.html" class="btn-primary">Otvoriť kalkuláciu</a>
+        <a href="zostava.html" class="b2b-link">Cenová ponuka →</a>
+        <button type="button" class="b2b-link" id="b2bOdhlas">Odhlásiť sa</button>
+      </div>
+    </div>
+    <div class="b2b-card b2b-demo" id="b2bDemo" hidden>
+      <div class="eyebrow">UKÁŽKA</div>
+      <p>Toto je ukážková verzia webu bez servera – prihlásenie si vyskúšate prepnutím cenovej hladiny:</p>
+      <div class="b2b-demo-btns" id="b2bDemoBtns"></div>
+      <p class="b2b-help">Na ostrom webe sa partner prihlási menom a&nbsp;heslom a&nbsp;hladinu mu určíte vy v&nbsp;súbore partneri.csv.</p>
+    </div>
+    <div class="b2b-info">
+      <h3>Čo sa po prihlásení zmení</h3>
+      <ul>
+        <li>Ceny v&nbsp;kalkulácii a&nbsp;v&nbsp;cenovej ponuke sú podľa vašej cenovej hladiny, <b>bez DPH</b>.</li>
+        <li>V&nbsp;súhrne ponuky je spolu bez DPH, DPH a&nbsp;spolu s&nbsp;DPH.</li>
+        <li>Doprava sa účtuje za každé krídlo a&nbsp;každú zárubňu, montáž a&nbsp;zameranie sú len pre maloobchodných zákazníkov.</li>
+        <li>Export CSV/JSON obsahuje ceny bez aj s&nbsp;DPH a&nbsp;kód cenovej hladiny – pripravené na import do objednávky.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <a href="index.html" class="logo"><img src="assets/logo-header-light.png" alt="Fortissima" class="logo-img"></a>
+      <nav>
+        <ul>
+          <li><a href="kolekcie.html">Kolekcie</a></li>
+          <li><a href="zarubne.html">Zárubne</a></li>
+          <li><a href="rozmery.html">Rozmery</a></li>
+          <li><a href="kalkulacka.html">Kalkulácia</a></li>
+          <li><a href="remeslo.html">Remeslo</a></li>
+          <li><a href="kontakt.html">Kontakt</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Fortissima. Všetky práva vyhradené.</span>
+      <span><a href="partner.html" class="footer-b2b">Pre partnerov (B2B)</a> · fortissima.sk</span>
+    </div>
+  </div>
+</footer>
+<script src="script.js?v=a12406b6"></script>
+</body>
+</html>

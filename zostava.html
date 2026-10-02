@@ -7,7 +7,7 @@
 <meta name="description" content="Vaša orientačná cenová ponuka interiérových dverí Fortissima.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,ital@9..144,300..700,0..1&amp;family=Work+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=0f52d284">
+<link rel="stylesheet" href="style.css?v=089c8f31">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
 <link rel="apple-touch-icon" href="assets/favicon-192.png">
@@ -56,11 +56,12 @@
       </div>
       <aside class="sum q-sum">
         <div class="eyebrow">SÚHRN</div>
+        <p class="sum-b2b" id="qB2b" hidden></p>
         <div class="sum-meta"><span>Počet kusov</span><span id="qKs">–</span></div>
-        <div class="sum-meta"><span>Položky spolu</span><span id="qMedz">–</span></div>
+        <div class="sum-meta"><span id="qMedzLbl">Položky spolu</span><span id="qMedz">–</span></div>
         <div class="q-opts">
-          <label class="chk chk-dark"><input type="checkbox" id="qMontaz"><span>Montáž <small>zárubní, vrátane zamerania</small></span></label>
-          <label class="chk chk-dark"><input type="checkbox" id="qDoprava"><span>Doprava</span></label>
+          <label class="chk chk-dark" id="qMontazWrap"><input type="checkbox" id="qMontaz"><span>Montáž <small>zárubní, vrátane zamerania</small></span></label>
+          <label class="chk chk-dark"><input type="checkbox" id="qDoprava"><span>Doprava <small id="qDopravaPozn"></small></span></label>
         </div>
         <div class="q-km" id="qKmWrap" hidden>
           <label for="qKm">Vzdialenosť k&nbsp;vám (jedným smerom)</label>
@@ -68,6 +69,10 @@
           <p>Počítame cestu tam aj späť.</p>
         </div>
         <ul class="q-sluzby" id="qSluzby"></ul>
+        <div class="q-dph" id="qDphBox" hidden>
+          <div class="sum-meta"><span>Spolu bez DPH</span><span id="qBez">–</span></div>
+          <div class="sum-meta"><span id="qDphLbl">DPH 23&nbsp;%</span><span id="qDph">–</span></div>
+        </div>
         <div class="sum-total"><span>Spolu s&nbsp;DPH</span><strong id="qTotal">–</strong></div>
         <button type="button" class="sum-why" id="qRozpis">Ako sme k&nbsp;cene prišli? <span>Rozpis ceny →</span></button>
         <div class="sum-meta"><span>Dodanie</span><span id="qDod">–</span></div>
@@ -78,7 +83,7 @@
         <div class="q-tools">
           <button type="button" id="qCsv">Export CSV</button><button type="button" id="qJson">Export JSON</button><button type="button" id="qClear">Vymazať ponuku</button>
         </div>
-        <p class="sum-note">Orientačná cena vrátane DPH. Kľučka nie je súčasťou cenovej ponuky. Presnú ponuku pripravíme po zameraní.</p>
+        <p class="sum-note" id="qNote">Orientačná cena vrátane DPH. Kľučka nie je súčasťou cenovej ponuky. Presnú ponuku pripravíme po zameraní.</p>
       </aside>
     </div>
     <p class="q-print-foot">Orientačná cenová ponuka vrátane DPH, vytvorená na fortissima.sk. Presnú ponuku pripravíme po zameraní na mieste.</p>
@@ -101,10 +106,10 @@
     </div>
     <div class="footer-bottom">
       <span>&copy; 2026 Fortissima. Všetky práva vyhradené.</span>
-      <span>fortissima.sk</span>
+      <span><a href="partner.html" class="footer-b2b">Pre partnerov (B2B)</a> · fortissima.sk</span>
     </div>
   </div>
 </footer>
-<script src="script.js?v=67c22818"></script>
+<script src="script.js?v=a12406b6"></script>
 </body>
 </html>

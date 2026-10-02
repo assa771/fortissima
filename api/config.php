@@ -13,4 +13,11 @@ return [
 
     // Najväčšia hrúbka steny, ktorú kalkulačka rieši (mm).
     'max_stena' => 400,
+
+    // Sadzba DPH (ceny v cenníku sú VOC bez DPH).
+    'dph' => 0.23,
+
+    // Ochrana prihlasovania partnerov: max. pokusov z jednej IP za okno (s).
+    'limit_prihlaseni' => 10,
+    'limit_prihlaseni_okno_s' => 900,
 ];

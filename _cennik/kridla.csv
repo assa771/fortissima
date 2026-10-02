@@ -1,7 +1,7 @@
-﻿kolekcia;prevedenie;farba;sirka;vyska;cena_s_dph;dodanie_dni
-minimal;falc;*;*;*;189;0
-minimal;bez;*;*;*;229;10
-vertikal;falc;*;*;*;239;10
-vertikal;bez;*;*;*;279;14
-prestige;falc;*;*;*;269;10
-prestige;bez;*;*;*;309;14
+﻿kolekcia;prevedenie;farba;sirka;vyska;cena_voc;dodanie_dni
+minimal;falc;*;*;*;122,93;0
+minimal;bez;*;*;*;148,94;10
+vertikal;falc;*;*;*;155,45;10
+vertikal;bez;*;*;*;181,46;14
+prestige;falc;*;*;*;174,96;10
+prestige;bez;*;*;*;200,98;14

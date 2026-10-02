@@ -1,10 +1,10 @@
-﻿polozka;sirka;vyska;priplatok_s_dph;popis
-kridlo;90;*;30;šírka 90
-kridlo;*;2055;15;výška HU 205,5
-kridlo;*;210;20;výška DIN 210
-zarubna;90;*;10;šírka 90
-zarubna;*;210;10;výška DIN 210
-prah;*;*;49;výsuvný (padací) prah – príplatok ku krídlu
-spoj-tupo;*;*;15;rohový spoj zárubne na tupo (90°)
-skratenie-kridlo;*;*;10;skrátenie krídla na mieru
-skratenie-zarubna;*;*;5;skrátenie zárubne na mieru
+﻿polozka;sirka;vyska;priplatok_voc;popis
+kridlo;90;*;19,51;šírka 90
+kridlo;*;2055;9,76;výška HU 205,5
+kridlo;*;210;13,01;výška DIN 210
+zarubna;90;*;6,50;šírka 90
+zarubna;*;210;6,50;výška DIN 210
+prah;*;*;31,87;výsuvný (padací) prah – príplatok ku krídlu
+spoj-tupo;*;*;9,76;rohový spoj zárubne na tupo (90°)
+skratenie-kridlo;*;*;6,50;skrátenie krídla na mieru
+skratenie-zarubna;*;*;3,25;skrátenie zárubne na mieru

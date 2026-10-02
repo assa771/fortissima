@@ -8,7 +8,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "189",
+   "cena_voc": "122,93",
    "dodanie_dni": "0"
   },
   {
@@ -17,7 +17,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "229",
+   "cena_voc": "148,94",
    "dodanie_dni": "10"
   },
   {
@@ -26,7 +26,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "239",
+   "cena_voc": "155,45",
    "dodanie_dni": "10"
   },
   {
@@ -35,7 +35,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "279",
+   "cena_voc": "181,46",
    "dodanie_dni": "14"
   },
   {
@@ -44,7 +44,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "269",
+   "cena_voc": "174,96",
    "dodanie_dni": "10"
   },
   {
@@ -53,7 +53,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "309",
+   "cena_voc": "200,98",
    "dodanie_dni": "14"
   }
  ],
@@ -64,7 +64,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "119",
+   "cena_voc": "77,40",
    "dodanie_dni": "0"
   },
   {
@@ -73,7 +73,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "125",
+   "cena_voc": "81,30",
    "dodanie_dni": "0"
   },
   {
@@ -82,7 +82,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "135",
+   "cena_voc": "87,80",
    "dodanie_dni": "0"
   },
   {
@@ -91,7 +91,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "145",
+   "cena_voc": "94,31",
    "dodanie_dni": "5"
   },
   {
@@ -100,7 +100,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "105",
+   "cena_voc": "68,29",
    "dodanie_dni": "0"
   },
   {
@@ -109,7 +109,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "110",
+   "cena_voc": "71,54",
    "dodanie_dni": "0"
   },
   {
@@ -118,7 +118,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "119",
+   "cena_voc": "77,40",
    "dodanie_dni": "0"
   },
   {
@@ -127,7 +127,7 @@ window.FORTISSIMA_DEMO = {
    "farba": "*",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "129",
+   "cena_voc": "83,90",
    "dodanie_dni": "5"
   }
  ],
@@ -136,14 +136,14 @@ window.FORTISSIMA_DEMO = {
    "typ": "R90",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "45",
+   "cena_voc": "29,27",
    "dodanie_dni": "5"
   },
   {
    "typ": "R180",
    "sirka": "*",
    "vyska": "*",
-   "cena_s_dph": "79",
+   "cena_voc": "51,38",
    "dodanie_dni": "5"
   }
  ],
@@ -152,63 +152,63 @@ window.FORTISSIMA_DEMO = {
    "polozka": "kridlo",
    "sirka": "90",
    "vyska": "*",
-   "priplatok_s_dph": "30",
+   "priplatok_voc": "19,51",
    "popis": "šírka 90"
   },
   {
    "polozka": "kridlo",
    "sirka": "*",
    "vyska": "2055",
-   "priplatok_s_dph": "15",
+   "priplatok_voc": "9,76",
    "popis": "výška HU 205,5"
   },
   {
    "polozka": "kridlo",
    "sirka": "*",
    "vyska": "210",
-   "priplatok_s_dph": "20",
+   "priplatok_voc": "13,01",
    "popis": "výška DIN 210"
   },
   {
    "polozka": "zarubna",
    "sirka": "90",
    "vyska": "*",
-   "priplatok_s_dph": "10",
+   "priplatok_voc": "6,50",
    "popis": "šírka 90"
   },
   {
    "polozka": "zarubna",
    "sirka": "*",
    "vyska": "210",
-   "priplatok_s_dph": "10",
+   "priplatok_voc": "6,50",
    "popis": "výška DIN 210"
   },
   {
    "polozka": "prah",
    "sirka": "*",
    "vyska": "*",
-   "priplatok_s_dph": "49",
+   "priplatok_voc": "31,87",
    "popis": "výsuvný (padací) prah – príplatok ku krídlu"
   },
   {
    "polozka": "spoj-tupo",
    "sirka": "*",
    "vyska": "*",
-   "priplatok_s_dph": "15",
+   "priplatok_voc": "9,76",
    "popis": "rohový spoj zárubne na tupo (90°)"
   },
   {
    "polozka": "skratenie-kridlo",
    "sirka": "*",
    "vyska": "*",
-   "priplatok_s_dph": "10",
+   "priplatok_voc": "6,50",
    "popis": "skrátenie krídla na mieru"
   },
   {
    "polozka": "skratenie-zarubna",
    "sirka": "*",
    "vyska": "*",
-   "priplatok_s_dph": "5",
+   "priplatok_voc": "3,25",
    "popis": "skrátenie zárubne na mieru"
   }
  ],
@@ -216,43 +216,43 @@ window.FORTISSIMA_DEMO = {
   {
    "kod": "bez",
    "nazov": "Bez spodného otvoru",
-   "cena_s_dph": "0",
+   "cena_voc": "0",
    "dodanie_dni": "0"
   },
   {
    "kod": "bb-nikel",
    "nazov": "NIKEL zámok na kľúč (BB)",
-   "cena_s_dph": "0",
+   "cena_voc": "0",
    "dodanie_dni": "0"
   },
   {
    "kod": "bb-cierna",
    "nazov": "ČIERNY zámok na kľúč (BB)",
-   "cena_s_dph": "10",
+   "cena_voc": "6,50",
    "dodanie_dni": "0"
   },
   {
    "kod": "pz-nikel",
    "nazov": "NIKEL zámok na vložku (PZ)",
-   "cena_s_dph": "0",
+   "cena_voc": "0",
    "dodanie_dni": "0"
   },
   {
    "kod": "pz-cierna",
    "nazov": "ČIERNY zámok na vložku (PZ)",
-   "cena_s_dph": "10",
+   "cena_voc": "6,50",
    "dodanie_dni": "0"
   },
   {
    "kod": "wc-nikel",
    "nazov": "NIKEL WC zámok",
-   "cena_s_dph": "5",
+   "cena_voc": "3,25",
    "dodanie_dni": "3"
   },
   {
    "kod": "wc-cierna",
    "nazov": "ČIERNA WC zámok",
-   "cena_s_dph": "10",
+   "cena_voc": "6,50",
    "dodanie_dni": "3"
   }
  ],
@@ -260,13 +260,13 @@ window.FORTISSIMA_DEMO = {
   {
    "kod": "nikel",
    "nazov": "Závesy nikel",
-   "cena_s_dph": "0",
+   "cena_voc": "0",
    "dodanie_dni": "0"
   },
   {
    "kod": "cierna",
    "nazov": "Závesy čierne",
-   "cena_s_dph": "8",
+   "cena_voc": "5,20",
    "dodanie_dni": "3"
   }
  ],
@@ -274,25 +274,25 @@ window.FORTISSIMA_DEMO = {
   {
    "kod": "bez",
    "nazov": "Bez vetracej mriežky",
-   "cena_s_dph": "0",
+   "cena_voc": "0",
    "dodanie_dni": "0"
   },
   {
    "kod": "biela",
    "nazov": "Vetracia mriežka biela",
-   "cena_s_dph": "19",
+   "cena_voc": "12,36",
    "dodanie_dni": "0"
   },
   {
    "kod": "hlinik",
    "nazov": "Vetracia mriežka hliníková",
-   "cena_s_dph": "24",
+   "cena_voc": "15,61",
    "dodanie_dni": "0"
   },
   {
    "kod": "cierna",
    "nazov": "Vetracia mriežka čierna",
-   "cena_s_dph": "24",
+   "cena_voc": "15,61",
    "dodanie_dni": "3"
   }
  ],
@@ -418,6 +418,50 @@ window.FORTISSIMA_DEMO = {
    "nazov": "Doprava",
    "cena_s_dph": "1",
    "jednotka": "km"
+  }
+ ],
+ "sluzby_b2b": [
+  {
+   "kod": "doprava-kridlo",
+   "nazov": "Doprava – krídlo",
+   "cena_bez_dph": "5",
+   "jednotka": "ks"
+  },
+  {
+   "kod": "doprava-zarubna",
+   "nazov": "Doprava – zárubňa",
+   "cena_bez_dph": "5",
+   "jednotka": "ks"
+  }
+ ],
+ "hladiny": [
+  {
+   "kod": "moc",
+   "nazov": "Maloobchodná cena (MOC)",
+   "koeficient": "1,25",
+   "zobrazit_s_dph": "1",
+   "poznamka": "verejná cena pre koncových zákazníkov = VOC × 1,25 + DPH"
+  },
+  {
+   "kod": "voc",
+   "nazov": "VOC",
+   "koeficient": "1",
+   "zobrazit_s_dph": "0",
+   "poznamka": "veľkoobchodná cena (základ cenníka)"
+  },
+  {
+   "kod": "voc-10",
+   "nazov": "VOC −10 %",
+   "koeficient": "0,9",
+   "zobrazit_s_dph": "0",
+   "poznamka": ""
+  },
+  {
+   "kod": "voc+5",
+   "nazov": "VOC +5 %",
+   "koeficient": "1,05",
+   "zobrazit_s_dph": "0",
+   "poznamka": ""
   }
  ]
 };
