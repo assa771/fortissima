@@ -46,6 +46,25 @@
     for (const x of F.vsetkyPobocky(F.skupinaPartnera(p) || p)) if (F.partnerNorm(x.b.nazov) === n) return x;
     return null;
   };
+  /** Na koho sa fakturuje zákazka objednaná pobočkou: vlastné údaje pobočky, inak firma */
+  F.fakturaciaPobocky = (b, firma) => b && b.fakturacia && b.fakturacia.nazov ? Object.assign({ krajina: b.krajina || firma.krajina || 'SK' }, b.fakturacia, { vlastna: true }) :
+    { nazov: firma.nazov, ulica: firma.ulica || '', psc: firma.psc || '', mesto: firma.mesto || '', krajina: firma.krajina || 'SK', ico: firma.ico || '', dic: firma.dic || '', icdph: firma.icdph || '', email: firma.email || '', vlastna: false };
+  /** Prepíše odberateľa zákazky fakturačnými údajmi objednávajúcej pobočky (ak ich má) */
+  F.aplikujFakturaciu = z => {
+    const r = F.najdiPobocku(z.zakaznik.pobockaId);
+    if (!r || !r.b.fakturacia || !r.b.fakturacia.nazov) { delete z.zakaznik.fakturaPobocky; return; }
+    const f = r.b.fakturacia;
+    Object.assign(z.zakaznik, { nazov: f.nazov, adresa: [f.ulica, [f.psc, f.mesto].filter(Boolean).join(' ')].filter(Boolean).join(', ') + (f.krajina && f.krajina !== 'SK' ? ', ' + (F.KRAJINY_N[f.krajina] || f.krajina) : ''),
+      ico: f.ico || '', dic: f.dic || '', icdph: f.icdph || '', email: f.email || z.zakaznik.email || '', fakturaPobocky: r.b.id });
+  };
+  // každé priradenie partnera k zákazke rešpektuje fakturačné údaje pobočky
+  const povodnePrirad = F.priradPartnera;
+  F.priradPartnera = (z, p) => {
+    povodnePrirad(z, p);
+    const r = F.najdiPobocku(z.zakaznik.pobockaId);
+    if (r && r.firma !== p && !F.jeSkupina(r.firma) && (F.skupinaPartnera(p) || p) !== (F.skupinaPartnera(r.firma) || r.firma)) { z.zakaznik.pobockaId = ''; z.zakaznik.pobockaNazov = ''; }
+    F.aplikujFakturaciu(z);
+  };
   /** Zákazky partnera; pri skupine aj zákazky všetkých firiem skupiny */
   F.zakazkyPartnera = p => { const ids = new Set(F.firmySkupiny(p).map(f => f.id)); return D().zakazky.filter(z => ids.has(z.zakaznik.partnerId)).sort((a, b) => (b.vytvorena || '').localeCompare(a.vytvorena || '')); };
   const datumZ = z => (z.datumy && (z.datumy.potvrdena || z.datumy.dopyt)) || (z.vytvorena || '').slice(0, 10);
@@ -138,11 +157,30 @@
       ${fld('ulica', 'Ulica', 1)}${fld('psc', 'PSČ')}${fld('mesto', 'Mesto')}<label>Krajina<select name="krajina">${opt(F.KRAJINY_N, b.krajina)}</select></label>
       ${fld('kontakt', 'Kontaktná osoba')}${fld('telefon', 'Telefón')}${fld('email', 'E-mail')}
       <label class="w">Poznámka pre vodiča / vykládku<input name="pozn" value="${e(b.pozn || '')}" placeholder="napr. vykládka len do 14:00, rampa vzadu"></label>
+      <fieldset class="w fakt" data-pred><legend>Fakturácia zákaziek tejto pobočky</legend>
+        <label class="w">Fakturuje sa na<select name="fak">${opt({ firma: 'firmu, ktorej pobočka patrí', vlastna: 'vlastné fakturačné údaje pobočky' }, b.fakturacia && b.fakturacia.nazov ? 'vlastna' : 'firma')}</select></label>
+        <div class="w fak-f kf">
+          <label class="w">Obchodné meno<input name="f_nazov" value="${e((b.fakturacia || {}).nazov || '')}"></label>
+          <label class="w">Ulica<input name="f_ulica" value="${e((b.fakturacia || {}).ulica || '')}"></label>
+          <label>PSČ<input name="f_psc" value="${e((b.fakturacia || {}).psc || '')}"></label><label>Mesto<input name="f_mesto" value="${e((b.fakturacia || {}).mesto || '')}"></label>
+          <label>Krajina<select name="f_krajina">${opt(F.KRAJINY_N, (b.fakturacia || {}).krajina || b.krajina || vlastnik.krajina || 'SK')}</select></label><label>IČO<input name="f_ico" value="${e((b.fakturacia || {}).ico || '')}"></label>
+          <label>DIČ<input name="f_dic" value="${e((b.fakturacia || {}).dic || '')}"></label><label>IČ DPH<input name="f_icdph" value="${e((b.fakturacia || {}).icdph || '')}"></label>
+          <label class="w">E-mail pre faktúry<input name="f_email" value="${e((b.fakturacia || {}).email || '')}"></label>
+          <p class="w"><button type="button" class="btn sm ghost" id="fakCopy">skopírovať údaje firmy</button> <button type="button" class="btn sm ghost" id="fakAdr">adresa = adresa pobočky</button></p>
+        </div>
+        <p class="w muted small fak-info"></p>
+      </fieldset>
       <label class="chk w"><input type="checkbox" name="aktivna" ${b.aktivna === false ? '' : 'checked'}> aktívna</label></form>`,
       [{ t: 'Uložiť', f: () => {
         const fd = new FormData($('#bf')); if (!fd.get('nazov').trim()) { F.ui.toast('Zadajte názov', 'err'); return false; }
         ['nazov', 'typ', 'ulica', 'psc', 'mesto', 'krajina', 'kontakt', 'telefon', 'email', 'pozn'].forEach(k => b[k] = (fd.get(k) || '').trim());
         b.aktivna = !!fd.get('aktivna');
+        if (b.typ === 'predajna' && fd.get('fak') === 'vlastna') {
+          if (!fd.get('f_nazov').trim()) { F.ui.toast('Zadajte obchodné meno pre fakturáciu', 'err'); return false; }
+          b.fakturacia = Object.fromEntries(['nazov', 'ulica', 'psc', 'mesto', 'krajina', 'ico', 'dic', 'icdph', 'email'].map(k => [k, (fd.get('f_' + k) || '').trim()]));
+        } else delete b.fakturacia;
+        // otvorené zákazky pobočky dostanú aktuálne fakturačné údaje
+        D().zakazky.filter(z => z.zakaznik.pobockaId === b.id && F.stavIdx(z.stav) < F.stavIdx('expedovana')).forEach(z => { const f = F.partner(z.zakaznik.partnerId); if (f) F.priradPartnera(z, f); });
         const ciel = (fd.get('firma') && F.partner(fd.get('firma'))) || vlastnik;
         if (nova) { F.pobockyP(ciel).push(b); F.pobockyP(ciel); }
         else if (ciel !== vlastnik) { vlastnik.pobocky = vlastnik.pobocky.filter(x => x !== b); F.pobockyP(ciel).push(b); }
@@ -152,6 +190,16 @@
         if (!confirm(`Odstrániť ${POB_KRATKO[b.typ]} „${b.nazov}“?${n ? `\n${n} zákaziek si ponechá adresu, stratí len prepojenie.` : ''}`)) return false;
         vlastnik.pobocky = vlastnik.pobocky.filter(x => x !== b); F.save(); poUlozeni && poUlozeni();
       } }] : [])]);
+    const bf = $('#bf'), firmaVyb = () => (bf.firma && F.partner(bf.firma.value)) || vlastnik;
+    const sync = () => {
+      bf.querySelector('[data-pred]').hidden = bf.typ.value !== 'predajna';
+      const vl = bf.fak.value === 'vlastna'; bf.querySelector('.fak-f').hidden = !vl;
+      const f = firmaVyb();
+      bf.querySelector('.fak-info').innerHTML = vl ? 'Zákazky tejto pobočky sa fakturujú na údaje vyššie (dodací list aj CSV pre MRP). Cenová hladina a štatistika ostávajú pri firme.' : `Faktúra ide na <b>${e(f.nazov)}</b>${f.ico ? ', IČO ' + e(f.ico) : ''}${F.jeSkupina(f) ? ' – <span class="warnc">pobočka ešte nie je priradená firme</span>' : ''}.`;
+    };
+    bf.addEventListener('change', sync); sync();
+    $('#fakCopy').onclick = () => { const f = firmaVyb(); [['nazov', f.nazov], ['ulica', f.ulica], ['psc', f.psc], ['mesto', f.mesto], ['ico', f.ico], ['dic', f.dic], ['icdph', f.icdph], ['email', f.email]].forEach(([k, v]) => bf['f_' + k].value = v || ''); bf.f_krajina.value = f.krajina || 'SK'; };
+    $('#fakAdr').onclick = () => { ['ulica', 'psc', 'mesto'].forEach(k => bf['f_' + k].value = bf[k].value); bf.f_krajina.value = bf.krajina.value; };
   };
 
   /* =====================================================================
@@ -203,7 +251,7 @@
         <section class="card tbl"><table class="t pt pz"><thead><tr><th class="chk"><input type="checkbox" id="ball" title="označiť zobrazené"></th>${th('nazov', 'Partner')}${th('mesto', 'Mesto')}<th>IČO</th><th>Hladina</th>${th('pob', 'Pobočky', 'r')}${th('zak', 'Zákazky', 'r')}${th('kr12', 'Krídla 12 m.', 'r')}${th('hod', 'Hodnota', 'r')}${th('posl', 'Posledná')}<th>Web</th></tr></thead><tbody>
         ${rows.map(({ p, s, grp, kat, str, nPred, nDod }) => { const cl = str === 'skupina' ? F.clenoviaSkupiny(p) : []; return `<tr data-href="#/partner/${p.id}" data-id="${p.id}" data-kat="${kat}" data-kraj="${p.krajina || 'SK'}" data-hl="${p.hladina || ''}" data-akt="${s.aktivita}" data-st="${e((p.stitky || []).join('|'))}" data-web="${p.web && p.web.hash ? 'ano' : 'nie'}" data-ico="${p.ico || F.jeSkupina(p) ? 'ano' : 'bez'}" data-kontrola="${/Možná zhoda/.test(p.poznamka || '') ? 1 : 0}" data-otv="${s.otv.length}" data-str="${str}"
             data-nazov="${e(grp ? grp.nazov + '\u0001' + p.nazov : p.nazov + (str === 'skupina' ? '\u0000' : ''))}" data-mesto="${e(p.mesto || '')}" data-zak="${s.zak.length}" data-kr12="${s.kr12}" data-hod="${s.hodnota}" data-posl="${s.posledna || ''}" data-pob="${nPred + nDod}"
-            data-txt="${e(F.partnerNorm([p.nazov, grp ? grp.nazov : '', ...(p.aliasy || []), p.mesto, p.ico, p.email, p.telefon, ...(p.stitky || []), ...(p.pobocky || []).map(b => b.nazov + ' ' + b.mesto), ...(p.kontakty || []).map(k => k.meno)].join(' ')))}"
+            data-txt="${e(F.partnerNorm([p.nazov, grp ? grp.nazov : '', ...(p.aliasy || []), p.mesto, p.ico, p.email, p.telefon, ...(p.stitky || []), ...(p.pobocky || []).map(b => b.nazov + ' ' + b.mesto + ' ' + (b.fakturacia ? b.fakturacia.nazov + ' ' + (b.fakturacia.ico || '') : '')), ...(p.kontakty || []).map(k => k.meno)].join(' ')))}"
             class="${grp ? 'clen' : ''} ${str === 'skupina' ? 'skup' : ''}">
           <td class="chk"><input type="checkbox" class="bsel"></td>
           <td><span class="akt akt-${s.aktivita}" title="${e(F.AKTIVITA[s.aktivita])}"></span><a class="nm" href="#/partner/${p.id}"><b>${grp ? '<span class="muted">↳ </span>' : ''}${e(p.nazov)}</b></a> ${str === 'skupina' ? '<span class="kchip skupina">skupina</span>' : katChip(kat)}${(p.stitky || []).map(t => `<span class="stitok">${e(t)}</span>`).join('')}
@@ -333,7 +381,7 @@
     const zaznamy = (p.zaznamy || []).slice().sort((a, b) => b.t.localeCompare(a.t));
     const pohOpt = `<option value="">${skup ? 'celá skupina' : 'celá firma'}</option>${skup && firmy.length > 1 ? `<optgroup label="Firmy">${firmy.slice(1).map(f => `<option value="f:${f.id}" ${poh === 'f:' + f.id ? 'selected' : ''}>${e(f.nazov)}</option>`).join('')}</optgroup>` : ''}${pobAll.length ? `<optgroup label="Pobočky a adresy">${pobAll.map(x => `<option value="b:${x.b.id}" ${poh === 'b:' + x.b.id ? 'selected' : ''}>${e(x.b.nazov)}</option>`).join('')}</optgroup>` : ''}`;
     const pobRiadok = x => { const ss = F.suhrnZakaziek(x.zak); return `<tr data-b="${x.b.id}" class="${x.b.aktivna === false ? 'off' : ''}"><td class="chk no-print">${skup ? '<input type="checkbox" class="psel">' : ''}</td>
-      <td><a class="lnk-b" href="#/partner/${p.id}?pohlad=b:${x.b.id}"><b>${e(x.b.nazov)}</b></a>${x.b.aktivna === false ? ' <span class="badge">neaktívna</span>' : ''}<br><span class="tpob tpob-${x.b.typ}">${POB_KRATKO[x.b.typ]}</span>${skup ? ` <span class="fdot" style="--c:${farbaFirmy[x.firma.id]}"></span><span class="small ${F.jeSkupina(x.firma) ? 'warnc' : 'muted'}">${F.jeSkupina(x.firma) ? 'nepriradená firme' : e(x.firma.nazov)}</span>` : ''}</td>
+      <td><a class="lnk-b" href="#/partner/${p.id}?pohlad=b:${x.b.id}"><b>${e(x.b.nazov)}</b></a>${x.b.aktivna === false ? ' <span class="badge">neaktívna</span>' : ''}<br><span class="tpob tpob-${x.b.typ}">${POB_KRATKO[x.b.typ]}</span>${x.b.fakturacia && x.b.fakturacia.nazov ? ` <span class="tpob tpob-fak" title="${e(x.b.fakturacia.nazov)}${x.b.fakturacia.ico ? ', IČO ' + e(x.b.fakturacia.ico) : ''}">vlastná fakturácia${x.b.fakturacia.ico ? ' · IČO ' + e(x.b.fakturacia.ico) : ''}</span>` : ''}${skup ? ` <span class="fdot" style="--c:${farbaFirmy[x.firma.id]}"></span><span class="small ${F.jeSkupina(x.firma) ? 'warnc' : 'muted'}">${F.jeSkupina(x.firma) ? 'nepriradená firme' : e(x.firma.nazov)}</span>` : ''}</td>
       <td class="small">${e([x.b.ulica, [x.b.psc, x.b.mesto].filter(Boolean).join(' ')].filter(Boolean).join(', '))} ${x.b.krajina && x.b.krajina !== 'SK' ? `<span class="badge">${x.b.krajina}</span>` : ''}${x.b.kontakt || x.b.telefon ? `<br><span class="muted">${e([x.b.kontakt, x.b.telefon].filter(Boolean).join(' · '))}</span>` : ''}</td>
       <td class="r">${ss.zak.length || ''}</td><td class="r">${ss.kr12 || ''}</td><td class="small ${ss.aktivita === 'aktivny' ? '' : 'muted'}">${ss.posledna ? F.fmtD(ss.posledna) : ''}</td><td class="r no-print"><button class="lnk" data-act="pob" data-b="${x.b.id}">upraviť</button></td></tr>`; };
 
@@ -468,18 +516,20 @@
     const grpOpt = list => firmy.length > 1 ? [...firmy.slice(1), firmy[0]].map(f => { const l = list.filter(x => x.firma === f); return l.length ? `<optgroup label="${e(F.jeSkupina(f) ? f.nazov + ' – nepriradené firme' : f.nazov)}">${l.map(x => o1(x, objId)).join('')}</optgroup>` : ''; }).join('') : list.map(x => o1(x, objId)).join('');
     return `${pred.length ? `<label class="w">Objednala pobočka<select name="objPobocka"><option value="">– objednáva firma (centrála) –</option>${grpOpt(pred)}</select></label>` : ''}
       ${vlastne.length ? `<label class="w">Miesto vykládky<select name="dodPobocka"><option value="">fakturačná adresa – ${e(p.nazov)}</option>${['predajna', 'dodacia'].map(t => { const l = vlastne.filter(x => x.b.typ === t); return l.length ? `<optgroup label="${t === 'predajna' ? 'Pobočky' : 'Dodacie adresy'}">${l.map(x => o1(x, dodId)).join('')}</optgroup>` : ''; }).join('')}<option value="ine" ${z.dodanie && !dodId && (z.dodanie.mesto || z.dodanie.ulica) ? 'selected' : ''}>iná adresa (vyplniť nižšie)…</option></select></label>` : ''}
+      ${obj && obj.b.typ === 'predajna' ? `<p class="w small muted">Fakturuje sa na: <b>${e(z.zakaznik.nazov)}</b>${z.zakaznik.ico ? ', IČO ' + e(z.zakaznik.ico) : ''}${z.zakaznik.fakturaPobocky ? ' <span class="badge web">vlastné údaje pobočky</span>' : ''}</p>` : ''}
       ${F.jeSkupina(p) && F.clenoviaSkupiny(p).length ? '<p class="w warnc small">Zákazka je priradená skupine – vyberte pobočku, aby sa fakturovalo na správnu firmu.</p>' : ''}`;
   };
   const adresaPobocky = (b, firma) => ({ nazov: b.nazov, ulica: b.ulica || '', psc: b.psc || '', mesto: b.mesto || '', krajina: b.krajina || firma.krajina || 'SK', kontakt: [b.kontakt, b.telefon].filter(Boolean).join(' '), pozn: b.pozn || '', pobocka: b.nazov, pobockaId: b.id });
   /** Spracuje zmenu výberu; vráti text pre hlášku alebo null */
   F.zmenaPobockyZakazky = (z, pole, hodnota) => {
     if (pole === 'objPobocka') {
-      if (!hodnota) { z.zakaznik.pobockaId = ''; z.zakaznik.pobockaNazov = ''; return 'Objednáva firma'; }
+      const firma = F.partner(z.zakaznik.partnerId);
+      if (!hodnota) { z.zakaznik.pobockaId = ''; z.zakaznik.pobockaNazov = ''; if (firma) F.priradPartnera(z, firma); return 'Objednáva firma – fakturuje sa na ' + (firma ? firma.nazov : '–'); }
       const r = F.najdiPobocku(hodnota); if (!r) return null;
-      if (!F.jeSkupina(r.firma) && z.zakaznik.partnerId !== r.firma.id) F.priradPartnera(z, r.firma);     // fakturuje sa na firmu pobočky
       z.zakaznik.pobockaId = r.b.id; z.zakaznik.pobockaNazov = r.b.nazov;
+      F.priradPartnera(z, F.jeSkupina(r.firma) ? (firma || r.firma) : r.firma);     // fakturuje sa na firmu pobočky, prípadne na vlastné údaje pobočky
       z.dodanie = adresaPobocky(r.b, r.firma);
-      return `Objednala ${r.b.nazov} – fakturuje sa na ${F.partner(z.zakaznik.partnerId).nazov}, vykládka na adrese pobočky`;
+      return `Objednala ${r.b.nazov} – fakturuje sa na ${z.zakaznik.nazov}, vykládka na adrese pobočky`;
     }
     if (pole === 'dodPobocka') {
       if (hodnota === 'ine') { z.dodanie = Object.assign({}, F.dodanie(z), { pobockaId: '', pobocka: '' }); return 'Doplňte adresu vykládky'; }
@@ -490,7 +540,7 @@
     return null;
   };
   /** Pobočka podľa textu (napr. názov z objednávky „Jola -C- Sopron“) */
-  F.najdiPobockuPodlaNazvu = (text, p) => { const n = F.partnerNorm(text); if (!n) return null; const zoz = p ? F.vsetkyPobocky(F.skupinaPartnera(p) || p) : D().partneri.flatMap(f => (f.pobocky || []).map(b => ({ b, firma: f }))); return zoz.find(x => F.partnerNorm(x.b.nazov) === n) || null; };
+  F.najdiPobockuPodlaNazvu = (text, p) => { const n = F.partnerNorm(text); if (!n) return null; const zoz = p ? F.vsetkyPobocky(F.skupinaPartnera(p) || p) : D().partneri.flatMap(f => (f.pobocky || []).map(b => ({ b, firma: f }))); return zoz.find(x => F.partnerNorm(x.b.nazov) === n) || zoz.find(x => x.b.fakturacia && (F.partnerNorm(x.b.fakturacia.nazov) === n || (x.b.fakturacia.ico && x.b.fakturacia.ico === String(text).trim()))) || null; };
   /** Text „objednala pobočka“ pre doklady */
   F.textPobockyZakazky = z => { const r = F.pobockaZakazky(z); return r && r.b.typ === 'predajna' ? r.b.nazov : ''; };
 })();

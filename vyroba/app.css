@@ -501,3 +501,10 @@ a.lnk-b{color:inherit;text-decoration:none} a.lnk-b:hover{text-decoration:underl
 .stat-pick select{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;margin-left:6px;max-width:360px}
 .kf p.w.warnc{margin:0}
 .grid-pob{display:grid;grid-template-columns:1fr 1.15fr;gap:20px;align-items:start} .grid-pob .pob-list{max-height:460px} @media (max-width:1200px){.grid-pob{grid-template-columns:1fr}}
+fieldset.fakt{border:1px solid var(--line);border-radius:var(--r);padding:10px 14px 12px;margin:4px 0}
+fieldset.fakt[hidden]{display:none}
+fieldset.fakt legend{font-size:12px;color:var(--soft);padding:0 6px}
+.fak-f[hidden]{display:none}
+.fak-f.kf{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.tpob-fak{background:#E3ECE5;color:var(--ok)}
+.kf fieldset.fakt{grid-column:1/-1}
