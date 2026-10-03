@@ -654,7 +654,7 @@
   function route() {
     const h = location.hash.slice(1) || '/prehlad', [path, qs] = h.split('?'), q = new URLSearchParams(qs || ''), c = path.split('/').filter(Boolean);
     document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', ('#/' + c[0]).startsWith(a.getAttribute('href')) || (c[0] === 'zakazka' && a.getAttribute('href') === '#/zakazky') || (c[0] === 'davka' && a.getAttribute('href') === '#/davky') || (c[0] === 'karta' && a.getAttribute('href') === '#/sklad')));
-    app().onclick = null; app().onchange = null;
+    app().onclick = null; app().onchange = null; $('#modal').hidden = true;
     const v = { prehlad: vPrehlad, zakazky: () => vZakazky(q), zakazka: () => vZakazka(c[1]), nova: vNova, davky: () => vDavky(q), davka: () => vDavka(c[1], c[2]), sklad: () => vSklad(q), karta: () => F.vKarta(decodeURIComponent(c[1] || ''), q), expedicia: vExpedicia, partneri: () => vPartneri(q), sken: vSken, nastavenia: vNastavenia, doc: () => vDoc(c[1], c[2]) }[c[0]] || vPrehlad;
     v();
     if (q.get('nova') === '1') { const el = document.querySelector('.plan'); el && el.scrollIntoView(); }

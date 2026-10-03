@@ -446,3 +446,5 @@ table.kvt td{vertical-align:top}
 .hbars b{font-family:var(--mono);font-weight:400;text-align:right;font-size:12px}
 @media (max-width:1200px){.kpis.k6{grid-template-columns:repeat(3,1fr)}.grid-prog,.grid-stat{grid-template-columns:1fr}}
 @media print{.kpis.k6{grid-template-columns:repeat(6,1fr)} .grid-prog,.grid-stat{grid-template-columns:1.6fr 1fr} .card{break-inside:avoid}}
+.kf label[hidden],.kf p[hidden]{display:none}
+.kf p.w{grid-column:1/-1;margin:4px 0 0}

@@ -20,6 +20,7 @@
     const c = kluc.split('|'), t = c[0];
     const druh = { KR: 'kridla', OB: 'zarubne', OS: 'zarubne', RZ: 'rozsirenia', ZM: 'kovanie', ZV: 'kovanie', PP: 'kovanie', MR: 'kovanie', PR: 'kovanie' }[t] || 'prislusenstvo';
     const o = { kluc, typ: t, druh, jednotka: F.kartaJednotka(kluc), farba: '', podtyp: 'ine' };
+    if (t === 'AC') { const k = F.karta(kluc); if (k && k.druh && F.DRUHY_SKLADU[k.druh]) o.druh = k.druh; if (k && k.farba) o.farba = k.farba; }
     if (t === 'KR') Object.assign(o, { kolekcia: c[1], prevedenie: c[2], farba: c[3], sirka: c[4], vyska: c[5], podtyp: '' });
     if (t === 'OB') Object.assign(o, { farba: c[1], podtyp: 'oblozka' });
     if (t === 'OS') Object.assign(o, { zarubna: c[1], farba: c[2], podtyp: 'ostenie' });
@@ -322,7 +323,7 @@
           <td class="r nowrap"><button class="lnk" data-act="inv">inventúra</button>${k.objednane ? ' <button class="lnk" data-act="naskladnit">naskladniť</button>' : ''}</td></tr>`; }).join('')}</tbody></table></section>`).join('');
     }
     app().innerHTML = `<div class="v-head"><div><h1>Sklad</h1><p class="muted">polotovary, profily a kovanie · rezervované = potvrdené zákazky ešte nevydané · kliknite na riadok pre skladovú kartu${hodnota ? ` · hodnota zásob ${F.eur(hodnota)}${bezCeny ? ` <small>(${bezCeny} položiek bez ceny)</small>` : ''}` : ''}</p></div>
-      <div class="v-act"><label class="btn ghost file">Príjem dodávky (packing list)<input type="file" id="dodFile" accept=".json" hidden></label><button class="btn" data-act="prijem">+ Príjem</button></div></div>${tabs}${body}`;
+      <div class="v-act"><label class="btn ghost file">Príjem dodávky (packing list)<input type="file" id="dodFile" accept=".json" hidden></label><button class="btn" data-act="prijem">+ Príjem</button><button class="btn" data-act="nova">+ Nová položka</button></div></div>${tabs}${body}`;
 
     /* --- filtre a zoradenie priamo v DOM (bez prekresľovania, kurzor zostane vo vyhľadávaní) --- */
     const st = {}; FILTRE.forEach(f => st[f] = q.get(f) || '');
@@ -387,6 +388,7 @@
       if (a === 'inv') inventura(k);
       if (a === 'naskladnit') naskladnit(k);
       if (a === 'prijem') prijem();
+      if (a === 'nova') novaKarta();
     };
   };
 
@@ -397,6 +399,60 @@
     const kl = D().karty.slice().sort((x, y) => F.kartaNazov(x.kluc).localeCompare(F.kartaNazov(y.kluc), 'sk', { numeric: true }));
     F.ui.modal(typ === 'príjem' ? 'Príjem na sklad' : 'Ručný výdaj zo skladu', `<form id="pr" class="kf"><label class="w">Položka<select name="k">${kl.map(x => `<option value="${e(x.kluc)}" ${x.kluc === kluc ? 'selected' : ''}>${e(F.kartaNazov(x.kluc))}</option>`).join('')}</select></label><label>Množstvo<input name="m" type="number" step="0.01" min="0" required></label><label>Doklad<input name="d" placeholder="${typ === 'príjem' ? 'DL dodávateľa' : 'napr. reklamácia FP-…'}"></label></form>`,
       [{ t: typ === 'príjem' ? 'Prijať' : 'Vydať', f: () => { const fd = new FormData($('#pr')); const m = F.num(fd.get('m')); if (!m) return false; F.pohyb(fd.get('k'), typ === 'príjem' ? m : -m, typ, fd.get('d') || (typ === 'príjem' ? '' : 'ručný výdaj')); F.ui.commit(typ === 'príjem' ? 'Prijaté' : 'Vydané'); } }]);
+  };
+
+
+  /* ---------- založenie novej skladovej karty ---------- */
+  const novaKarta = () => {
+    const op = (obj, fn = v => v) => Object.entries(obj).map(([k, v]) => `<option value="${e(k)}">${e(fn(v))}</option>`).join('');
+    const kol = Object.fromEntries(Object.entries(F.KOLEKCIE).map(([k, v]) => [k, `${v.nazov} ${v.model}`]));
+    const vys = Object.fromEntries(Object.entries(F.VYSKY).map(([k, v]) => [k, `${v.txt} ${v.norma}`]));
+    const far = Object.fromEntries(Object.entries(F.FARBY).map(([k, v]) => [k, v.nazov]));
+    const kov = Object.fromEntries(Object.entries(F.KOVANIE).filter(([k]) => k !== 'bez'));
+    const mr = Object.fromEntries(Object.entries(F.MRIEZKY).filter(([k]) => k !== 'bez'));
+    const DR = { KR: 'Krídlo – polotovar', OB: 'Obložka (profil zárubne)', OS: 'Ostenie (profil zárubne)', RZ: 'Rozšírenie zárubne R90/R180', ZM: 'Zámok', ZV: 'Sada závesov', MR: 'Vetracia mriežka', PP: 'Protiplech', PR: 'Padací prah', AC: 'Iná položka (voľný názov)' };
+    F.ui.modal('Nová skladová karta', `<form id="nk" class="kf kf4">
+      <label class="w">Druh položky<select name="t">${op(DR)}</select></label>
+      <label data-t="KR">Kolekcia<select name="kol">${op(kol)}</select></label>
+      <label data-t="KR">Prevedenie<select name="prev">${op(F.PREVEDENIA)}</select></label>
+      <label data-t="KR">Šírka<select name="sir">${F.SIRKY.map(s => `<option ${s === '80' ? 'selected' : ''}>${s}</option>`).join('')}</select></label>
+      <label data-t="KR">Výška polotovaru<select name="vys">${op(vys)}</select></label>
+      <label data-t="OS">Typ zárubne<select name="zar">${F.ZARUBNE.map(z => `<option>${z}</option>`).join('')}</select></label>
+      <label data-t="RZ">Rozšírenie<select name="rz"><option>R90</option><option>R180</option></select></label>
+      <label data-t="KR OB OS RZ">Farba (dekor)<select name="farba">${op(far)}</select></label>
+      <label data-t="ZM">Zámok<select name="zm">${op(kov)}</select></label>
+      <label data-t="ZV">Závesy<select name="zv">${op(F.ZAVESY)}</select></label>
+      <label data-t="MR">Mriežka<select name="mr">${op(mr)}</select></label>
+      <label data-t="AC" class="w">Názov položky<input name="naz" placeholder="napr. Kľučka Lucia R nikel"></label>
+      <label data-t="AC">Zaradiť do<select name="druh">${op(F.DRUHY_SKLADU)}</select></label>
+      <label data-t="AC">Merná jednotka<select name="mj"><option>ks</option><option>m</option><option>bal</option><option>sada</option><option>kg</option><option>l</option><option>m²</option></select></label>
+      <label data-t="AC">Farba / povrch<input name="afarba" placeholder="nepovinné"></label>
+      <label>Počiatočný stav<input name="stav" inputmode="decimal" value="0"></label>
+      <label>Minimálna zásoba<input name="min" inputmode="decimal" value="0"></label>
+      <label>Nákupná cena €<input name="cena" inputmode="decimal" placeholder="bez DPH"></label>
+      <label>Dodávateľ<input name="dod"></label>
+      <label>Umiestnenie<input name="um" placeholder="regál / pozícia"></label>
+      <p class="w muted small" id="nkInfo"></p></form>`,
+      [{ t: 'Založiť kartu', f: () => {
+        const fd = Object.fromEntries(new FormData($('#nk'))), t = fd.t;
+        const kluc = { KR: `KR|${fd.kol}|${fd.prev}|${fd.farba}|${fd.sir}|${fd.vys}`, OB: 'OB|' + fd.farba, OS: `OS|${fd.zar}|${fd.farba}`, RZ: `RZ|${fd.rz}|${fd.farba}`, ZM: 'ZM|' + fd.zm, ZV: 'ZV|' + fd.zv, MR: 'MR|' + fd.mr, PP: 'PP|', PR: 'PR|', AC: 'AC|' + (fd.naz || '').trim().replace(/\|/g, '/') }[t];
+        if (t === 'AC' && !fd.naz.trim()) { F.ui.toast('Zadajte názov položky', 'err'); return false; }
+        if (F.karta(kluc)) { F.ui.toast('Táto položka už má kartu – otváram ju', 'err'); F.ui.go('#/karta/' + encodeURIComponent(kluc)); return; }
+        const k = F.zaistiKartu(kluc);
+        Object.assign(k, { min: F.num(fd.min), cena: fd.cena ? F.num(fd.cena) : '', dodavatel: fd.dod.trim(), umiestnenie: fd.um.trim(), zalozena: F.today() });
+        if (t === 'AC') Object.assign(k, { druh: fd.druh, jednotka: fd.mj, farba: fd.afarba.trim() });
+        const st = F.num(fd.stav); if (st) F.pohyb(kluc, st, 'príjem', 'počiatočný stav');
+        F.save(); F.ui.toast('Karta založená', 'ok'); F.ui.go('#/karta/' + encodeURIComponent(kluc));
+      } }]);
+    const f = $('#nk');
+    const prepni = () => {
+      const t = f.t.value;
+      f.querySelectorAll('[data-t]').forEach(l => l.hidden = !l.dataset.t.split(' ').includes(t));
+      const kl = { KR: `KR|${f.kol.value}|${f.prev.value}|${f.farba.value}|${f.sir.value}|${f.vys.value}`, OB: 'OB|' + f.farba.value, OS: `OS|${f.zar.value}|${f.farba.value}`, RZ: `RZ|${f.rz.value}|${f.farba.value}`, ZM: 'ZM|' + f.zm.value, ZV: 'ZV|' + f.zv.value, MR: 'MR|' + f.mr.value, PP: 'PP|', PR: 'PR|', AC: 'AC|' + f.naz.value.trim() }[t];
+      const ex = t !== 'AC' || f.naz.value.trim() ? F.karta(kl) : null;
+      $('#nkInfo').innerHTML = ex ? `<span class="warnc">⚠ Karta „${e(F.kartaNazov(kl))}“ už existuje (stav ${ex.stav} ${F.kartaJednotka(kl)}).</span>` : (t === 'AC' ? 'Voľná položka – napr. kľučky, tesnenia, lepidlo, obalový materiál. Do zákaziek sa dostane ako príslušenstvo s rovnakým názvom.' : 'Položka z katalógu – systém ju bude automaticky rezervovať a vydávať podľa zákaziek.');
+    };
+    f.addEventListener('input', prepni); prepni();
   };
 
   /* =====================================================================
@@ -424,7 +480,7 @@
     app().innerHTML = `<div class="v-head"><div><a class="back no-print" href="#/sklad">← sklad</a><h1>${e(F.kartaNazov(kluc))}</h1>
         <p class="muted"><span class="badge">${e(F.DRUHY_SKLADU[o.druh])}</span> <span class="mono small">${e(kluc)}</span>${k.umiestnenie ? ` · umiestnenie <b>${e(k.umiestnenie)}</b>` : ''}</p></div>
       <div class="v-act no-print">${pred ? `<a class="btn ghost sm" href="#/karta/${encodeURIComponent(pred)}" title="${e(F.kartaNazov(pred))}">‹</a>` : ''}${dalsi ? `<a class="btn ghost sm" href="#/karta/${encodeURIComponent(dalsi)}" title="${e(F.kartaNazov(dalsi))}">›</a>` : ''}
-        <button class="btn ghost" data-act="vydaj">− Výdaj</button><button class="btn ghost" data-act="inv">Inventúra</button>${k.objednane ? '<button class="btn ghost" data-act="naskladnit">Naskladniť objednané</button>' : ''}<button class="btn" data-act="prijem">+ Príjem</button><button class="btn ghost" onclick="print()">Tlačiť kartu</button></div></div>
+        <button class="btn ghost" data-act="vydaj">− Výdaj</button><button class="btn ghost" data-act="inv">Inventúra</button>${k.objednane ? '<button class="btn ghost" data-act="naskladnit">Naskladniť objednané</button>' : ''}<button class="btn" data-act="prijem">+ Príjem</button><button class="btn ghost" onclick="print()">Tlačiť kartu</button><button class="btn ghost" data-act="zrus" title="zrušiť skladovú kartu">Zrušiť kartu</button></div></div>
 
       <div class="kpis k6">
         ${kpi('Na sklade', fmt(k.stav) + ' <small>' + j + '</small>', cena ? 'hodnota ' + F.eur(k.stav * cena) : '')}
@@ -508,6 +564,13 @@
       if (a === 'naskladnit') naskladnit(k);
       if (a === 'prijem') prijem(kluc, 'príjem');
       if (a === 'vydaj') prijem(kluc, 'výdaj');
+      if (a === 'zrus') {
+        const pouz = D().zakazky.filter(z => !z.vydane && F.potreba(z)[kluc]);
+        if (k.stav) return F.ui.toast('Kartu so stavom ' + k.stav + ' nemožno zrušiť – najprv inventúrou nastavte stav na 0.', 'err');
+        if (pouz.length) return F.ui.toast('Položku potrebujú zákazky: ' + pouz.map(z => z.id).join(', '), 'err');
+        if (!confirm('Zrušiť skladovú kartu „' + F.kartaNazov(kluc) + '“? História pohybov ostane zachovaná.')) return;
+        D().karty = D().karty.filter(x => x.kluc !== kluc); F.save(); F.ui.toast('Karta zrušená', 'ok'); F.ui.go('#/sklad');
+      }
       if (a === 'objednat') { const d = prompt('Dátum príchodu (RRRR-MM-DD):', F.addDays(F.today(), pg.lehota)); if (d == null) return; k.objednane = r2((+k.objednane || 0) + +b.dataset.m); k.prichod = d; F.ui.commit('Zapísané ako objednané'); }
     };
   };

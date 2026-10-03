@@ -261,7 +261,7 @@ F.kartaNazov = kluc => {
   return kluc;
 };
 F.kartaSkupina = kluc => ({ KR: 'Krídla – polotovar', OB: 'Profily zárubní', OS: 'Profily zárubní', RZ: 'Rozšírenia', ZM: 'Kovanie', ZV: 'Kovanie', PP: 'Kovanie', MR: 'Kovanie', PR: 'Kovanie', AC: 'Príslušenstvo' }[kluc.split('|')[0]] || 'Ostatné');
-F.kartaJednotka = kluc => ({ OB: 'm', OS: 'm' }[kluc.split('|')[0]] || 'ks');
+F.kartaJednotka = kluc => { const k = (F.load().karty || []).find(x => x.kluc === kluc); return (k && k.jednotka) || ({ OB: 'm', OS: 'm' }[kluc.split('|')[0]] || 'ks'); };
 
 /** Potreba materiálu pre zákazku: { kluc: množstvo } (profily v metroch) */
 F.potreba = z => {
