@@ -161,22 +161,6 @@
   /* ---------- malá ikona položky (pre zoznamy) ---------- */
   F.mini = p => F.jeSlepa(p) ? F.svgZarubna(p, null, { h: 54, dim: false }) : F.svgKridlo(p, { h: 54, dim: false });
 
-  /* ---------- nákladka: poradie zastávok a vrstvy v aute ---------- */
-  F.svgNakladka = zastavky => {
-    const n = zastavky.length, W = 520, H = 120, bw = (W - 80) / Math.max(n, 1);
-    let g = `<rect x="20" y="20" width="${W - 60}" height="${H - 40}" fill="none" stroke="${C.ink}" stroke-width="1.2" rx="3"/>`;
-    g += `<rect x="${W - 40}" y="40" width="30" height="${H - 60}" fill="none" stroke="${C.ink}" stroke-width="1.2" rx="6"/><text x="${W - 25}" y="${H / 2 + 3}" text-anchor="middle" class="t-lab">kabína</text>`;
-    // naložené od zadu: posledná zastávka najhlbšie (pri kabíne)
-    zastavky.slice().reverse().forEach((z, i) => {
-      const x = W - 40 - (i + 1) * bw;
-      const col = ['#B08D57', '#8B5A2B', '#6E2620', '#3F6B4F', '#2F5A6B', '#9C7A45'][(n - 1 - i) % 6];
-      g += `<rect x="${x + 2}" y="24" width="${bw - 4}" height="${H - 48}" fill="${col}" opacity=".85" rx="2"/>`;
-      g += `<text x="${x + bw / 2}" y="${H / 2 - 4}" text-anchor="middle" class="t-in">${n - i}.</text><text x="${x + bw / 2}" y="${H / 2 + 10}" text-anchor="middle" class="t-in-s">${F.esc((z.zakaznik.nazov || '').slice(0, 14))}</text>`;
-    });
-    g += `<text x="22" y="14" class="t-lab" text-anchor="start">← dvere auta (vykladá sa od 1.)</text>`;
-    return `<svg class="v-nakladka" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Nákladka">${g}</svg>`;
-  };
-
   /* ---------- rozpis CNC kódu po poliach ---------- */
   F.rozpisKodu = (kod, polia) => {
     let i = 0;

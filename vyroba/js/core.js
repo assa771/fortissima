@@ -557,12 +557,28 @@ F.ukazka = () => {
   // dávka na najbližší pracovný deň s dvoma zákazkami
   const den = F.nextWorkDay(F.addDays(F.today(), 1));
   F.vytvorDavku(den, [d.zakazky[0].id, d.zakazky[1].id]);
-  const hot = d.zakazky[5];
-  const v2 = F.vytvorDavku(F.nextWorkDay(F.addDays(F.today(), -3)), [hot.id]);
-  F.vydajDavky(v2); v2.hotove = true; F.nastavStav(hot, 'hotova');
-  F.kusy(hot).forEach(k => { d.skeny.push({ t: new Date().toISOString(), kus: k.id, op: 'cnc' }, { t: new Date().toISOString(), kus: k.id, op: 'kompletacia' }); });
-  d.trasy.push({ id: F.noveCisloTrasy(), datum: F.nextWorkDay(F.addDays(F.today(), 2)), vozidlo: 'Iveco Daily KE-123AB', vodic: 'Marek', zastavky: [hot.id], stav: 'planovana' });
-  hot.trasa = d.trasy[0].id;
+  // hotové zákazky na expedíciu: Maďarsko (pobočky Jola) a Slovensko + Česko (JAF HOLZ Vyškov)
+  const M = (n, s, k, kr) => ({ nazov: n, kolekcia: k || 'minimal', prevedenie: 'falc', farba: 'biela', farba_zarubne: 'biela', sirka: s, vyska: '2055', smer: kr || 'lave', stena: 120, kovanie: 'bb-nikel', ks: 2 });
+  const exp = [
+    { z: { nazov: 'Jola', typ: 'b2b', hladina: 'voc-10', krajina: 'HU' }, dod: { nazov: 'Jola -C- Sopron', ulica: 'Ipar krt. 2', psc: '9400', mesto: 'Sopron', krajina: 'HU' }, pol: [M('Főző', '80'), M('Főző WC', '60', 'minimal', 'prave')] },
+    { z: { nazov: 'Jola', typ: 'b2b', hladina: 'voc-10', krajina: 'HU' }, dod: { nazov: 'Jola -C- Győr', ulica: 'Fehérvári út 75', psc: '9028', mesto: 'Győr', krajina: 'HU' }, pol: [M('Szollár', '90', 'vertikal')] },
+    { z: { nazov: 'Jola', typ: 'b2b', hladina: 'voc-10', krajina: 'HU' }, dod: { nazov: 'Jola -D- Újpest', ulica: 'Váci út 64', psc: '1044', mesto: 'Újpest', krajina: 'HU' }, pol: [M('Mayer', '80'), M('Mayer 2', '70')] },
+    { z: { nazov: 'Jola', typ: 'b2b', hladina: 'voc-10', krajina: 'HU' }, dod: { nazov: 'Jola -D- Újpest', ulica: 'Váci út 64', psc: '1044', mesto: 'Újpest', krajina: 'HU' }, pol: [M('Minta', '90', 'prestige')] },
+    { z: { nazov: 'JAF HOLZ Vyškov', typ: 'b2b', hladina: 'voc', krajina: 'CZ' }, dod: { nazov: 'JAFHOLZ Vyškov', ulica: 'Hybešova 50', psc: '682 01', mesto: 'Vyškov', krajina: 'CZ' }, pol: [M('Sklad', '80'), M('Sklad P', '80', 'minimal', 'prave')] },
+    { z: { nazov: 'PARKETT MANN, s.r.o.', typ: 'b2b', hladina: 'voc-10', ico: '35853816', adresa: 'Mikovíniho 11, 917 01 Trnava' }, dod: { nazov: 'PARKETT MANN, s.r.o.', ulica: 'Mikovíniho 11', psc: '917 01', mesto: 'Trnava', krajina: 'SK' }, pol: [M('Byt 12', '80', 'vertikal')] },
+  ];
+  const hotove = [d.zakazky[5]];
+  d.zakazky[5].dodanie = { nazov: 'Dverové centrum Michalovce', ulica: 'Sama Chalupku 3', psc: '071 01', mesto: 'Michalovce', krajina: 'SK' };
+  exp.forEach((x, i) => {
+    const z = F.zPonuky({ id: 'FP-2610' + (30 + i) + '-DEMO', polozky: x.pol }, x.z);
+    z.dodanie = x.dod; z.datumy = { dopyt: F.addDays(F.today(), -20 + i) };
+    ['potvrdena', 'vyroba', 'hotova'].forEach(s => F.nastavStav(z, s));
+    d.zakazky.push(z); hotove.push(z);
+  });
+  const v2 = F.vytvorDavku(F.nextWorkDay(F.addDays(F.today(), -3)), hotove.map(z => z.id));
+  F.vydajDavky(v2); v2.hotove = true;
+  hotove.forEach(z => { if (z.stav !== 'hotova') F.nastavStav(z, 'hotova'); F.kusy(z).forEach(k => d.skeny.push({ t: new Date().toISOString(), kus: k.id, op: 'cnc' }, { t: new Date().toISOString(), kus: k.id, op: 'kompletacia' })); });
+  if (F.navrhniRozvoz) F.navrhniRozvoz(F.nextWorkDay(F.addDays(F.today(), 2)));
   F.save();
 };
 

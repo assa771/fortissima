@@ -11,6 +11,7 @@
       <div class="doc-id">${F.barcode(cislo, { h: 30, w: 1.2 })}<div>vytlačené ${F.fmtD(F.today())}</div>${extra}</div>
     </header>`;
   };
+  F.docHlav = hlav;
   const hodnota = (l, v) => `<div class="kv"><span>${l}</span><b>${v}</b></div>`;
   const zamokTxt = p => !p.kovanie || p.kovanie === 'bez' ? 'bez zámku' : F.KOVANIE[p.kovanie];
 
@@ -148,29 +149,20 @@
 
   /* ---------- 6. DODACÍ LIST (bez cien) ---------- */
   F.docDodaciList = (z, tr) => {
-    const n = F.N(), kusy = F.kusy(z), stop = tr ? tr.zastavky.indexOf(z.id) + 1 : null;
+    const n = F.N(), kusy = F.kusy(z), dod = F.dodanie(z), stop = tr ? F.zastavkyTrasy(tr).findIndex(s => s.zakazky.includes(z)) + 1 : null;
     const rows = (z.polozky || []).map(p => `<tr><td>${p.poradie}</td><td class="ic">${F.mini(p)}</td><td><b>${e(p.nazov || '')}</b><br>${e(F.popisPozicie(p))}${F.maZarubnu(p) && !F.jeSlepa(p) ? `<br><span class="muted">zárubňa ${F.zarubna(p).typ}${p.spoj === 'tupo' ? ' tupo' : ''}, ${F.FARBY[p.farba_zarubne].nazov}, závesy ${F.ZAVESY[p.zavesy || 'nikel']}</span>` : ''}</td><td class="r big">${p.ks}</td></tr>`).join('');
     const acc = (z.prislusenstvo || []).map(a => `<tr><td></td><td></td><td>${e(a.nazov)}</td><td class="r big">${a.ks}</td></tr>`).join('');
     return `<section class="sheet">${hlav('Dodací list', 'DL-' + z.id, `k zákazke ${z.id}${z.ponuka ? ' · ponuka ' + e(z.ponuka) : ''}`, tr ? `<div class="stop">zastávka <b>${stop}</b> · ${e(tr.id)}</div>` : '')}
       <div class="parties"><div><span>Dodávateľ</span><b>${e(n.firma.nazov)}</b><br>${e(n.firma.adresa)}<br>IČO ${e(n.firma.ico)} · IČ DPH ${e(n.firma.icdph)}</div>
         <div><span>Odberateľ</span><b>${e(z.zakaznik.nazov)}</b><br>${e(z.zakaznik.adresa || '')}<br>${z.zakaznik.ico ? 'IČO ' + e(z.zakaznik.ico) : ''}${z.zakaznik.icdph ? ' · IČ DPH ' + e(z.zakaznik.icdph) : z.zakaznik.dic ? ' · DIČ ' + e(z.zakaznik.dic) : ''}<br>${e(z.zakaznik.telefon || '')}</div>
-        <div><span>Dodanie</span><b>${tr ? F.fmtD(tr.datum) : '–'}</b><br>${tr ? e(tr.vozidlo || '') : ''}<br>${z.montaz ? 's montážou' : 'bez montáže'}</div></div>
+        <div><span>Miesto vykládky</span><b>${e(dod.nazov || '')}</b><br>${e(F.dodanieText(dod))}<br>${dod.kontakt ? e(dod.kontakt) + ' · ' : ''}${tr ? F.fmtD(tr.datum) : 'termín –'}${z.montaz ? ' · s montážou' : ''}</div></div>
       ${z.objednal ? `<p class="muted">Objednávka cez web: ${e(z.objednal.partner)}${z.objednal.login ? ' (' + e(z.objednal.login) + ')' : ''}${z.objednal.cas ? ', ' + F.fmtD(z.objednal.cas) : ''}${z.ponuka ? ', ponuka ' + e(z.ponuka) : ''}</p>` : ''}
       <table class="doc-t"><thead><tr><th>#</th><th></th><th>Položka</th><th class="r">Ks</th></tr></thead><tbody>${rows}${acc}</tbody></table>
       <p class="muted">Počet balíkov / kusov na nakládku: <b>${kusy.length}</b> (krídla ${kusy.filter(k => k.typ === 'kridlo').length}, dielce zárubní ${kusy.filter(k => k.typ === 'dielec').length}, rozšírenia ${kusy.filter(k => k.typ === 'rozsirenie').length})</p>
       <footer class="doc-f"><span>Odovzdal: ____________________</span><span>Prevzal (meno, podpis, dátum): ______________________________</span></footer></section>`;
   };
 
-  /* ---------- 7. NÁKLADKOVÝ LIST TRASY ---------- */
-  F.docNakladka = tr => {
-    const zak = tr.zastavky.map(F.zakazka).filter(Boolean);
-    const rows = zak.map((z, i) => { const c = F.pocty(z), kusy = F.kusy(z), nal = kusy.filter(k => F.skenKusu(k.id).nakladka).length;
-      return `<tr><td class="big">${i + 1}.</td><td class="big">${zak.length - i}.</td><td><b>${e(z.zakaznik.nazov)}</b><br><span class="muted">${e(z.zakaznik.adresa || '')} · ${e(z.zakaznik.telefon || '')}</span></td><td>${e(z.id)}</td><td class="r">${c.kr}</td><td class="r">${c.zar}</td><td class="r">${kusy.length}</td><td class="r">${nal}/${kusy.length}</td><td class="chk"><span class="box"></span></td></tr>`; }).join('');
-    return `<section class="sheet">${hlav('Nákladkový list', tr.id, `${F.fmtD(tr.datum)} · ${e(tr.vozidlo || '')} · vodič ${e(tr.vodic || '–')}`)}
-      ${F.svgNakladka(zak)}
-      <p class="muted">Nakladá sa v opačnom poradí ako sa vykladá: posledná zastávka ide do auta prvá (ku kabíne).</p>
-      <table class="doc-t"><thead><tr><th>Vykl.</th><th>Nakl.</th><th>Odberateľ</th><th>Zákazka</th><th class="r">Krídla</th><th class="r">Zárubne</th><th class="r">Kusov</th><th class="r">Naložené</th><th class="chk">✓</th></tr></thead><tbody>${rows}</tbody></table></section>`;
-  };
+  /* 7. nákladkový list – v rozvoz.js */
 
   /* ---------- 8. ŠTÍTKY na balenie ---------- */
   F.docStitky = kusy => {
