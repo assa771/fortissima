@@ -410,16 +410,22 @@
   /* =====================================================================
      EXPEDÍCIA – trasy, nakládka, dodacie listy, export pre MRP
      ===================================================================== */
-  function vExpedicia() {
+  function vExpedicia(q) {
+    q = q || new URLSearchParams();
+    if (q.get('tab') === 'trasy') return F.vTrasyPrehlad(q);
+    if (q.get('tab') === 'stat') return F.vTrasyStat(q);
+    const detail = q.get('trasa') && F.trasa(q.get('trasa'));
     const d = D(), pripravene = d.zakazky.filter(z => z.stav === 'hotova' && !z.trasa), otvorene = d.trasy.filter(t => t.stav !== 'expedovana');
     const den = F.nextWorkDay(F.addDays(F.today(), 1));
     const podlaAut = F.groupBy(pripravene, z => F.vozidloPreKrajinu(F.dodanie(z).krajina || 'SK').id);
     app().innerHTML = `<div class="v-head"><div><h1>Expedícia</h1><p class="muted">každé auto má svoj okruh · zákazky na rovnakom mieste sú jedna zastávka · nakladá sa opačne ako sa vykladá</p></div>
       <div class="v-act"><label class="inl">Deň rozvozu <input type="date" id="rDen" value="${den}"></label><button class="btn" data-act="navrh" ${pripravene.length ? '' : 'disabled'}>Navrhnúť rozvoz (${pripravene.length})</button><button class="btn ghost" data-act="nova">+ Prázdna trasa</button></div></div>
-      <section class="card"><h2>Pripravené na expedíciu</h2>${pripravene.length ? `<div class="ready">${F.vozidla().map(v => { const zz = podlaAut[v.id] || []; return zz.length ? `<div class="ready-v"><h3>${e(v.nazov)} <span class="muted small">${(v.krajiny || []).join(' + ')}</span></h3>
+      ${F.expTabs('plan')}<section class="card"><h2>Pripravené na expedíciu</h2>${pripravene.length ? `<div class="ready">${F.vozidla().map(v => { const zz = podlaAut[v.id] || []; return zz.length ? `<div class="ready-v"><h3>${e(v.nazov)} <span class="muted small">${(v.krajiny || []).join(' + ')}</span></h3>
         <table class="t slim"><tbody>${zz.map(z => { const dd = F.dodanie(z); return `<tr><td><a href="#/zakazka/${z.id}">${z.id}</a></td><td>${e(z.zakaznik.nazov)}</td><td>${e(dd.nazov !== z.zakaznik.nazov ? dd.nazov + ', ' : '')}${e(dd.mesto || '')} <span class="badge">${dd.krajina || 'SK'}</span>${F.suradnice(dd.mesto) ? '' : ' <span class="warnc small">bez mapy</span>'}</td><td>${F.pocty(z).kr} kr. / ${F.pocty(z).zar} zár.</td>
           <td class="r"><select data-z="${z.id}" class="btn ghost sm"><option value="">do trasy…</option>${otvorene.map(t => `<option value="${t.id}">${t.id} · ${e((F.vozidlo(t.vozidloId) || {}).nazov || t.vozidlo || '')} · ${F.fmtD(t.datum)}</option>`).join('')}</select></td></tr>`; }).join('')}</tbody></table></div>` : ''; }).join('')}</div>` : '<p class="muted">Nič nie je pripravené – zákazky sa sem dostanú po skompletizovaní.</p>'}</section>
-      ${d.trasy.slice().sort((x, y) => (x.stav === 'expedovana') - (y.stav === 'expedovana') || y.datum.localeCompare(x.datum)).map(t => trasaKarta(t)).join('')}`;
+      ${(() => { const nedavno = F.addDays(F.today(), -7), L = d.trasy.filter(t => t.stav !== 'expedovana' || t.datum >= nedavno), star = d.trasy.length - L.length;
+        return L.sort((x, y) => (x.stav === 'expedovana') - (y.stav === 'expedovana') || y.datum.localeCompare(x.datum)).map(t => trasaKarta(t)).join('') + (star ? `<p class="muted">Staršie expedované trasy (${star}) nájdete v <a href="#/expedicia?tab=trasy&stav=expedovana">Prehľade trás</a>.</p>` : ''); })()}`;
+    if (detail) app().innerHTML = `<div class="v-head"><div><a class="back" href="#/expedicia?tab=trasy">← prehľad trás</a><h1>Trasa ${detail.id}</h1></div></div>${F.expTabs('trasy')}${detail.zastavky.length || !detail.suhrn ? trasaKarta(detail) : F.trasaSuhrnKarta(detail)}`;
     app().onchange = ev => { const s = ev.target.closest('[data-z]'); if (s && s.value) { const t = F.trasa(s.value), z = F.zakazka(s.dataset.z); t.zastavky.push(z.id); z.trasa = t.id; F.optimalizujTrasu(t); commit('Pridané do ' + t.id); }
       const vs = ev.target.closest('[data-tv]'); if (vs) { const t = F.trasa(vs.dataset.tv), v = F.vozidlo(vs.value); t.vozidloId = v.id; t.vozidlo = `${v.nazov} ${v.spz || ''}`.trim(); commit(); }
       const vd = ev.target.closest('[data-tvodic]'); if (vd) { F.trasa(vd.dataset.tvodic).vodic = vd.value; F.save(); }
@@ -441,7 +447,7 @@
         const zak = t.zastavky.map(F.zakazka).filter(Boolean), nen = zak.filter(z => F.stavIdx(z.stav) < F.stavIdx('hotova'));
         if (!zak.length) return toast('Trasa nemá zastávky', 'err');
         if (nen.length && !confirm('Niektoré zákazky nie sú skompletizované:\n' + nen.map(z => z.id).join(', ') + '\nExpedovať aj tak?')) return;
-        zak.forEach(z => { F.nastavStav(z, 'expedovana'); z.datumy.expedovana = t.datum; }); t.stav = 'expedovana'; commit('Trasa expedovaná – podklady pre MRP sú pripravené');
+        F.zamrazSuhrnTrasy(t); zak.forEach(z => { F.nastavStav(z, 'expedovana'); z.datumy.expedovana = t.datum; }); t.stav = 'expedovana'; commit('Trasa expedovaná – podklady pre MRP sú pripravené');
       }
     };
   }
@@ -577,7 +583,7 @@
     const h = location.hash.slice(1) || '/prehlad', [path, qs] = h.split('?'), q = new URLSearchParams(qs || ''), c = path.split('/').filter(Boolean);
     document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', ('#/' + c[0]).startsWith(a.getAttribute('href')) || (c[0] === 'zakazka' && a.getAttribute('href') === '#/zakazky') || (c[0] === 'davka' && a.getAttribute('href') === '#/davky') || (c[0] === 'karta' && a.getAttribute('href') === '#/sklad') || (c[0] === 'partner' && a.getAttribute('href') === '#/partneri')));
     app().onclick = null; app().onchange = null; $('#modal').hidden = true;
-    const v = { prehlad: vPrehlad, zakazky: () => vZakazky(q), zakazka: () => vZakazka(c[1]), nova: vNova, davky: () => vDavky(q), davka: () => vDavka(c[1], c[2]), sklad: () => vSklad(q), karta: () => F.vKarta(decodeURIComponent(c[1] || ''), q), expedicia: vExpedicia, partneri: () => vPartneri(q), partner: () => F.vPartner(c[1], q), sken: vSken, nastavenia: vNastavenia, doc: () => vDoc(c[1], c[2]) }[c[0]] || vPrehlad;
+    const v = { prehlad: vPrehlad, zakazky: () => vZakazky(q), zakazka: () => vZakazka(c[1]), nova: vNova, davky: () => vDavky(q), davka: () => vDavka(c[1], c[2]), sklad: () => vSklad(q), karta: () => F.vKarta(decodeURIComponent(c[1] || ''), q), expedicia: () => vExpedicia(q), partneri: () => vPartneri(q), partner: () => F.vPartner(c[1], q), sken: vSken, nastavenia: vNastavenia, doc: () => vDoc(c[1], c[2]) }[c[0]] || vPrehlad;
     v();
     if (q.get('nova') === '1') { const el = document.querySelector('.plan'); el && el.scrollIntoView(); }
     window.scrollTo(0, 0);
