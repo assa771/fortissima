@@ -37,7 +37,7 @@
         <label class="z">Hrúbka steny (mm)<input name="stena" type="number" min="80" max="400" value="${p.stena}"></label>
         <label class="z">Farba zárubne<select name="farba_zarubne">${opt(F.FARBY, p.farba_zarubne)}</select></label>
         <label class="z">Rohový spoj<select name="spoj">${opt({ pokos: 'na pokos 45°', tupo: 'na tupo 90°' }, p.spoj)}</select></label>
-        <label class="z k">Závesy<select name="zavesy">${opt(F.ZAVESY, p.zavesy)}</select></label>
+        <label class="z k">Závesy (pri bezfalc skryté)<select name="zavesy">${opt(F.ZAVESY, p.zavesy)}</select></label>
         <label class="z">Skrátenie zárubne (mm)<input name="skratenie_zar" type="number" min="0" max="100" value="${p.skratenie_zar || 0}"></label>
       </div>
       <div class="pf-preview" id="pfPrev"></div>

@@ -150,7 +150,7 @@
   /* ---------- 6. DODACÍ LIST (bez cien) ---------- */
   F.docDodaciList = (z, tr) => {
     const n = F.N(), kusy = F.kusy(z), dod = F.dodanie(z), stop = tr ? F.zastavkyTrasy(tr).findIndex(s => s.zakazky.includes(z)) + 1 : null;
-    const rows = (z.polozky || []).map(p => `<tr><td>${p.poradie}</td><td class="ic">${F.mini(p)}</td><td><b>${e(p.nazov || '')}</b><br>${e(F.popisPozicie(p))}${F.maZarubnu(p) && !F.jeSlepa(p) ? `<br><span class="muted">zárubňa ${F.zarubna(p).typ}${p.spoj === 'tupo' ? ' tupo' : ''}, ${F.FARBY[p.farba_zarubne].nazov}, závesy ${F.ZAVESY[p.zavesy || 'nikel']}</span>` : ''}</td><td class="r big">${p.ks}</td></tr>`).join('');
+    const rows = (z.polozky || []).map(p => `<tr><td>${p.poradie}</td><td class="ic">${F.mini(p)}</td><td><b>${e(p.nazov || '')}</b><br>${e(F.popisPozicie(p))}${F.maZarubnu(p) && !F.jeSlepa(p) ? `<br><span class="muted">zárubňa ${F.zarubna(p).typ}${p.spoj === 'tupo' ? ' tupo' : ''}, ${F.FARBY[p.farba_zarubne].nazov}, ${F.textZavesov(p)}</span>` : ''}</td><td class="r big">${p.ks}</td></tr>`).join('');
     const acc = (z.prislusenstvo || []).map(a => `<tr><td></td><td></td><td>${e(a.nazov)}</td><td class="r big">${a.ks}</td></tr>`).join('');
     return `<section class="sheet">${hlav('Dodací list', 'DL-' + z.id, `k zákazke ${z.id}${z.ponuka ? ' · ponuka ' + e(z.ponuka) : ''}`, tr ? `<div class="stop">zastávka <b>${stop}</b> · ${e(tr.id)}</div>` : '')}
       <div class="parties"><div><span>Dodávateľ</span><b>${e(n.firma.nazov)}</b><br>${e(n.firma.adresa)}<br>IČO ${e(n.firma.ico)} · IČ DPH ${e(n.firma.icdph)}</div>
