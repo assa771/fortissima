@@ -110,12 +110,13 @@ function aktualny_partner(): ?array {
     if (!$p) return null;
     $h = hladina((string)$p['hladina']);
     if (!$h) return null;
-    return ['login' => $p['login'], 'nazov' => $p['nazov'] ?? $p['login'], 'hladina' => $h];
+    return ['login' => $p['login'], 'nazov' => $p['nazov'] ?? $p['login'], 'hladina' => $h,
+            'id' => trim((string)($p['id'] ?? '')), 'ico' => trim((string)($p['ico'] ?? ''))];
 }
 /** Hladina pre tento dopyt: partnerova alebo verejná MOC. */
 function aktualna_hladina(): array {
     $p = aktualny_partner();
-    if ($p) return $p['hladina'] + ['partner' => $p['nazov']];
+    if ($p) return $p['hladina'] + ['partner' => $p['nazov'], 'partner_id' => $p['id'], 'partner_ico' => $p['ico'], 'partner_login' => $p['login']];
     $h = hladina('moc') ?? ['kod' => 'moc', 'nazov' => 'MOC', 'koeficient' => 1.25, 's_dph' => true];
-    return $h + ['partner' => null];
+    return $h + ['partner' => null, 'partner_id' => null, 'partner_ico' => null, 'partner_login' => null];
 }

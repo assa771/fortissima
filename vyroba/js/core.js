@@ -413,7 +413,13 @@ F.zPonuky = (ponuka, zakaznik) => {
     spolu_bez_dph: ponuka.spolu_bez_dph ?? null, spolu_s_dph: ponuka.spolu_s_dph ?? null,
     financie: { zaloha: 'nie', faktura: '' }, poznamka: '',
   };
-  if (ponuka.hladina && ponuka.hladina.partner && !z.zakaznik.nazov) z.zakaznik.nazov = ponuka.hladina.partner;
+  const h = ponuka.hladina;
+  if (h && h.partner) {
+    const p = F.partnerZPonuky(ponuka);
+    if (p && !(zakaznik && zakaznik.partnerId && zakaznik.partnerId !== p.id)) F.priradPartnera(z, p);
+    else if (!z.zakaznik.nazov) z.zakaznik.nazov = h.partner;
+    z.objednal = { kanal: ponuka.ukazka ? 'web (ukážka)' : 'web', partner: h.partner, login: h.partner_login || '', id: h.partner_id || '', ico: h.partner_ico || '', overeny: !!p, cas: ponuka.exportovana || '' };
+  }
   return z;
 };
 F.ponukaZWebu = () => { try { return JSON.parse(localStorage.getItem('fortissima.ponuka.v1') || 'null'); } catch (e) { return null; } };
@@ -594,3 +600,21 @@ F.partneriZCsv = text => {
   const map = { nazov: ['nazov', 'firma', 'odberatel', 'meno'], ico: ['ico'], dic: ['dic'], icdph: ['icdph'], ulica: ['ulica', 'adresa'], psc: ['psc'], mesto: ['mesto', 'obec'], telefon: ['telefon', 'tel'], email: ['email', 'mail'], hladina: ['hladina'] };
   return lines.map(l => { const c = l.split(sep), o = {}; for (const k in map) { const i = head.findIndex(h => map[k].includes(h)); if (i >= 0) o[k] = (c[i] || '').replace(/^"|"$/g, '').trim(); } return o; });
 };
+
+/** Partner, ktorý bol prihlásený na webe pri tvorbe ponuky: podľa ID, IČO, loginu, potom názvu */
+F.partnerZPonuky = pon => {
+  const h = pon && pon.hladina; if (!h || !h.partner) return null;
+  const P = F.load().partneri;
+  return (h.partner_id && F.partner(h.partner_id)) || (h.partner_ico && P.find(p => p.ico === String(h.partner_ico))) ||
+    (h.partner_login && P.find(p => p.web && p.web.login && p.web.login.toLowerCase() === String(h.partner_login).toLowerCase())) || F.najdiPartnera(h.partner);
+};
+F.loginZNazvu = n => F.partnerNorm(String(n || '').replace(/,?\s*(s\.?\s?r\.?\s?o\.?|spol\..*|a\.\s?s\.|kft\.?)$/i, '')).slice(0, 20) || 'partner';
+/** partneri.csv pre server webu (prihlasovanie do kalkulačky) – len partneri s nastaveným prístupom */
+F.webPristupyCsv = () => {
+  const q = v => { const t = String(v == null ? '' : v); return /[;"\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+  const rows = ['login;heslo;hladina;nazov;aktivny;id;ico'];
+  F.load().partneri.filter(p => p.web && p.web.login && p.web.hash).forEach(p => rows.push([p.web.login, p.web.hash, p.hladina || 'voc', p.nazov, p.web.aktivny === false ? 0 : 1, p.id, p.ico || ''].map(q).join(';')));
+  return '\uFEFF' + rows.join('\r\n') + '\r\n';
+};
+F.noveHeslo = () => { const a = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789', r = new Uint32Array(12); crypto.getRandomValues(r); return Array.from(r, x => a[x % a.length]).join(''); };
+F.hashHesla = heslo => dcodeIO.bcrypt.hashSync(heslo, 10).replace(/^\$2[ab]\$/, '$2y$');

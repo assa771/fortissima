@@ -356,3 +356,11 @@ svg.bc{display:block;max-width:100%;height:auto}
 .pstat span{font-size:11px;color:var(--faint)} .pstat b{font:500 16px var(--serif)}
 .t.pt td{vertical-align:top}
 .empty-db{max-width:720px}
+.obj{border:1px solid var(--line);border-left:4px solid var(--brass);background:var(--white);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:13px}
+.obj.ok{border-left-color:var(--ok)} .obj.warn{border-left-color:var(--ox)}
+.badge.web{background:#E3ECE5;color:var(--ok)}
+.web-acc{border:1px solid var(--line);border-radius:6px;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.web-acc legend{font-size:12px;color:var(--soft);padding:0 4px}
+.web-pw{font-size:12.5px;color:var(--soft);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.pw-box{background:#F7F1E6;border:1px solid var(--brass);border-radius:6px;padding:8px 12px;color:var(--ink)}
+.pw-box b{font-size:16px;letter-spacing:.05em}

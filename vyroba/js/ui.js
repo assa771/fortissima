@@ -144,7 +144,7 @@
         <input type="search" id="zq" placeholder="hľadať…" value="${e(q.get('q') || '')}"></div>
       <table class="t zt"><thead><tr><th>Zákazka</th><th>Zákazník</th><th>Položky</th><th class="r">Kr.</th><th class="r">Zár.</th><th>Stav</th><th>Dávka</th><th>Termín</th></tr></thead><tbody>
       ${list.map(z => { const c = F.pocty(z); return `<tr data-href="#/zakazka/${z.id}"><td><b>${z.id}</b>${z.ponuka ? `<br><small class="muted">${e(z.ponuka)}</small>` : ''}</td>
-        <td>${e(z.zakaznik.nazov)} <span class="badge ${z.zakaznik.typ}">${z.zakaznik.typ === 'b2b' ? 'B2B ' + e(z.zakaznik.hladina || '') : 'retail'}</span></td>
+        <td>${e(z.zakaznik.nazov)}${z.objednal ? ' <span class="badge web" title="objednávka z webu">web</span>' : ''} <span class="badge ${z.zakaznik.typ}">${z.zakaznik.typ === 'b2b' ? 'B2B ' + e(z.zakaznik.hladina || '') : 'retail'}</span></td>
         <td class="minis">${(z.polozky || []).slice(0, 5).map(F.mini).join('')}${z.polozky.length > 5 ? `<span>+${z.polozky.length - 5}</span>` : ''}</td>
         <td class="r">${c.kr}</td><td class="r">${c.zar}</td><td>${F.chip(z.stav)}</td><td>${z.davka ? `<a href="#/davka/${z.davka}">${z.davka}</a>` : '–'}</td><td>${z.terminDodania ? F.fmtD(z.terminDodania) : '–'}</td></tr>`; }).join('') || '<tr><td colspan="8" class="empty">Žiadne zákazky.</td></tr>'}
       </tbody></table>`;
@@ -159,6 +159,7 @@
     app().innerHTML = `
       <div class="v-head"><div><a href="#/zakazky" class="back">← zákazky</a><h1>${z.id} <span class="h-sub">${e(zk.nazov || 'bez mena')}</span></h1><p class="muted">${z.ponuka ? 'z ponuky ' + e(z.ponuka) + ' · ' : ''}${c.kr} krídel · ${c.zar} zárubní · vytvorená ${F.fmtD(z.vytvorena)}</p></div>
         <div class="v-act">${dalsi ? `<button class="btn" data-act="dalsi">→ ${dalsi.n}</button>` : ''}<select id="stavSel" class="btn ghost">${F.STAVY.map(s => `<option value="${s.k}" ${s.k === z.stav ? 'selected' : ''}>${s.n}</option>`).join('')}</select></div></div>
+      ${z.objednal ? `<div class="obj ${z.objednal.overeny ? 'ok' : 'warn'}"><b>Objednávka z webu</b> – ${e(z.objednal.partner)}${z.objednal.login ? ` (login <span class="mono">${e(z.objednal.login)}</span>)` : ''}${z.objednal.ico ? ` · IČO ${e(z.objednal.ico)}` : ''}${z.objednal.cas ? ` · ${F.fmtD(z.objednal.cas)} ${z.objednal.cas.slice(11, 16)}` : ''}${z.objednal.overeny ? '' : ' · ⚠ nespárované s databázou partnerov'}</div>` : ''}
       ${F.pipeline(z)}
       <div class="grid3">
         <section class="card"><h2>Zákazník</h2><form id="zkForm" class="kf">
@@ -256,7 +257,7 @@
           <label class="btn ghost file">Vybrať súbor<input type="file" id="file" accept=".json,.csv" hidden></label></section>
         <section class="card src-card"><h2>Ručne</h2><p>Zadajte pozície priamo – s okamžitým náhľadom krídla, zárubne a CNC kódov.</p><button class="btn ghost" data-act="rucne">Pridať pozíciu</button></section>
       </div>
-      <section class="card"><h2>Zákazník</h2><form id="zkNew" class="kf">
+      <section class="card"><h2>Zákazník</h2><div id="objInfo"></div><form id="zkNew" class="kf">
         ${partnerPicker('')}
         <label>Názov / meno<input name="nazov" required></label><label>Typ<select name="typ"><option value="retail">retail (Košice a okolie)</option><option value="b2b">B2B partner</option></select></label>
         <label>Hladina<select name="hladina">${opt({ moc: 'MOC', voc: 'VOC', 'voc-10': 'VOC −10 %', 'voc+5': 'VOC +5 %' }, 'moc')}</select></label><label>IČO<input name="ico"></label><label>DIČ<input name="dic"></label><label>IČ DPH<input name="icdph"></label><input type="hidden" name="partnerId">
@@ -271,7 +272,12 @@
     const nacitaj = pon => {
       ponuka = pon; polozky = F.normPolozky(pon);
       const f = $('#zkNew');
-      if (pon.hladina && pon.hladina.partner) { const pp = F.najdiPartnera(pon.hladina.partner); if (pp) vyplnPartnera(pp); else { f.nazov.value = pon.hladina.partner; f.typ.value = 'b2b'; f.hladina.value = pon.hladina.kod; } }
+      $('#objInfo').innerHTML = '';
+      if (pon.hladina && pon.hladina.partner) {
+        const pp = F.partnerZPonuky(pon), h = pon.hladina;
+        if (pp) vyplnPartnera(pp); else { f.nazov.value = h.partner; f.typ.value = 'b2b'; f.hladina.value = h.kod; }
+        $('#objInfo').innerHTML = `<div class="obj ${pp ? 'ok' : 'warn'}"><b>Objednal partner prihlásený na webe:</b> ${e(h.partner)}${h.partner_login ? ` · login <span class="mono">${e(h.partner_login)}</span>` : ''}${h.partner_id ? ` · ${e(h.partner_id)}` : ''}${h.partner_ico ? ` · IČO ${e(h.partner_ico)}` : ''}<br>${pp ? '✓ spárované s databázou partnerov – údaje sú doplnené' : '⚠ partner sa v databáze nenašiel – vyberte ho ručne alebo ho pridajte v časti Partneri'}${pon.ukazka ? ' · <i>ukážková ponuka</i>' : ''}</div>`;
+      }
       if (pon.montaz) f.montaz.checked = f.zameranie.checked = true;
       render(); toast(`Načítaných ${polozky.length} pozícií`, 'ok');
     };
@@ -301,6 +307,7 @@
         const z = F.zPonuky(Object.assign({}, ponuka || {}, { polozky }), { partnerId: fd.get('partnerId') || '', nazov: fd.get('nazov'), typ: fd.get('typ'), hladina: fd.get('hladina'), ico: fd.get('ico'), dic: fd.get('dic'), icdph: fd.get('icdph'), adresa: fd.get('adresa'), telefon: fd.get('telefon'), email: fd.get('email') });
         z.polozky = polozky.map((p, j) => Object.assign(p, { poradie: j + 1 }));
         z.montaz = !!fd.get('montaz'); z.zameranie = !!fd.get('zameranie');
+        if (fd.get('partnerId')) { const pp = F.partner(fd.get('partnerId')); if (pp) F.priradPartnera(z, pp); }
         D().zakazky.push(z); F.save(); toast('Zákazka ' + z.id + ' vytvorená', 'ok'); go('#/zakazka/' + z.id);
       }
     };
@@ -527,13 +534,13 @@
     const zobraz = list.slice(0, 250);
     const fl = (k, t, c) => `<a class="fchip ${f === k ? 'on' : ''}" href="#/partneri?f=${k}">${t} <i>${c}</i></a>`;
     app().innerHTML = `<div class="v-head"><div><h1>Obchodní partneri</h1><p class="muted">${d.partneri.length} partnerov · VOC odberatelia a firmy z dodacích listov</p></div>
-      <div class="v-act"><label class="btn ghost file">Importovať (JSON / CSV)<input type="file" id="pimp" accept=".json,.csv" hidden></label><button class="btn ghost" data-act="pexp">Exportovať</button><button class="btn" data-act="pnew">+ Nový partner</button></div></div>
+      <div class="v-act"><label class="btn ghost file">Importovať (JSON / CSV)<input type="file" id="pimp" accept=".json,.csv" hidden></label><button class="btn ghost" data-act="pexp">Exportovať</button><button class="btn ghost" data-act="pweb" title="partneri.csv pre server webu">Prístupy pre web (${d.partneri.filter(p => p.web && p.web.hash).length})</button><button class="btn" data-act="pnew">+ Nový partner</button></div></div>
       ${d.partneri.length ? `<div class="filters">${fl('', 'všetci', d.partneri.length)}${fl('obj', 's objednávkami 2024', d.partneri.filter(p => p.stat && p.stat.zakazky).length)}${fl('bezico', 'chýba IČO', d.partneri.filter(p => !p.ico).length)}${fl('hu', 'Maďarsko', d.partneri.filter(p => p.krajina === 'HU').length)}${fl('zhoda', 'na kontrolu', d.partneri.filter(p => /Možná zhoda/.test(p.poznamka || '')).length)}
         <input type="search" id="pq" placeholder="názov, mesto, IČO…" value="${e(hl)}"></div>
-      <table class="t pt"><thead><tr><th>Partner</th><th>Mesto</th><th>IČO</th><th>IČ DPH</th><th>Hladina</th><th class="r">Zákazky 2024</th><th class="r">Obrat 2024 bez DPH</th><th>Posledná</th><th class="r">V systéme</th></tr></thead><tbody>
+      <table class="t pt"><thead><tr><th>Partner</th><th>Mesto</th><th>IČO</th><th>IČ DPH</th><th>Hladina</th><th class="r">Zákazky 2024</th><th class="r">Obrat 2024 bez DPH</th><th>Posledná</th><th class="r">V systéme</th><th>Web</th></tr></thead><tbody>
       ${zobraz.map(p => `<tr data-p="${p.id}"><td><b>${e(p.nazov)}</b>${p.aliasy && p.aliasy.length ? ` <span class="muted small">+${p.aliasy.length} názvov</span>` : ''}${p.poznamka ? `<br><small class="${/Možná/.test(p.poznamka) ? 'warnc' : 'muted'}">${e(p.poznamka)}</small>` : ''}</td>
         <td>${e(p.mesto || '')}${p.krajina === 'HU' ? ' <span class="badge">HU</span>' : ''}</td><td class="mono">${e(p.ico || '')}${!p.ico ? '<span class="neg small">–</span>' : ''}</td><td class="mono small">${e(p.icdph || '')}</td>
-        <td><span class="badge b2b">${F.HLADINY[p.hladina] || p.hladina}</span></td><td class="r">${p.stat?.zakazky || ''}</td><td class="r">${p.stat?.obrat ? F.eur(p.stat.obrat) : ''}</td><td>${p.stat?.posledna ? F.fmtD(p.stat.posledna) : ''}</td><td class="r">${(vSys[p.id] || []).length || ''}</td></tr>`).join('')}
+        <td><span class="badge b2b">${F.HLADINY[p.hladina] || p.hladina}</span></td><td class="r">${p.stat?.zakazky || ''}</td><td class="r">${p.stat?.obrat ? F.eur(p.stat.obrat) : ''}</td><td>${p.stat?.posledna ? F.fmtD(p.stat.posledna) : ''}</td><td class="r">${(vSys[p.id] || []).length || ''}</td><td>${p.web && p.web.hash ? `<span class="badge ${p.web.aktivny === false ? '' : 'web'}">${e(p.web.login)}</span>` : ''}</td></tr>`).join('')}
       </tbody></table>${list.length > zobraz.length ? `<p class="muted">Zobrazených ${zobraz.length} z ${list.length} – spresnite hľadanie.</p>` : ''}` :
       `<section class="card empty-db"><h2>Databáza partnerov je prázdna</h2><p>Importujte súbor <b>partneri.json</b> (pripravený z evidencie, dodacích listov a zoznamu zákazníkov) alebo CSV so stĺpcami <span class="mono">nazov; ico; dic; icdph; ulica; psc; mesto; telefon; email; hladina</span>.</p><p class="muted">Databáza sa uloží len v tomto prehliadači – nie je súčasťou verejného webu.</p></section>`}`;
     const pq = $('#pq'); pq && pq.addEventListener('change', ev => go('#/partneri?' + new URLSearchParams({ f, q: ev.target.value })));
@@ -541,7 +548,9 @@
       const fl2 = ev.target.files[0]; if (!fl2) return;
       fl2.text().then(t => { try { const data = /\.csv$/i.test(fl2.name) ? F.partneriZCsv(t) : JSON.parse(t); const r = F.importPartnerov(Array.isArray(data) ? data : data.partneri || []); commit(`Import: ${r.nove} nových, ${r.upd} aktualizovaných`); } catch (er) { toast('Súbor sa nepodarilo načítať', 'err'); } });
     });
+    let noveHeslo = null;
     const edit = p => {
+      noveHeslo = null;
       const nov = !p; p = p || { nazov: '', hladina: 'voc', krajina: 'SK', aliasy: [], stat: {} };
       const fld = (k, l, w) => `<label class="${w ? 'w' : ''}">${l}<input name="${k}" value="${e(p[k] || '')}"></label>`;
       const zak = d.zakazky.filter(z => z.zakaznik.partnerId === p.id);
@@ -550,7 +559,12 @@
         <label>Cenová hladina<select name="hladina">${opt(F.HLADINY, p.hladina)}</select></label><label>Úhrada<select name="uhrada">${opt({ '': '–', 'faktúra': 'faktúra', 'hotovosť': 'hotovosť', 'záloha': 'záloha' }, p.uhrada || '')}</select></label>
         <label class="chk w"><input type="checkbox" name="predajna" ${p.predajna ? 'checked' : ''}> má predajňu (cenník „s predajňou“)</label>
         <label class="w">Iné názvy (oddeľte bodkočiarkou)<input name="aliasy" value="${e((p.aliasy || []).join('; '))}"></label>
-        <label class="w">Poznámka<textarea name="poznamka" rows="2">${e(p.poznamka || '')}</textarea></label></form>
+        <label class="w">Poznámka<textarea name="poznamka" rows="2">${e(p.poznamka || '')}</textarea></label>
+        <fieldset class="w web-acc"><legend>Prístup do kalkulačky na webe</legend>
+          <label>Prihlasovacie meno<input name="web_login" value="${e(p.web?.login || F.loginZNazvu(p.nazov))}"></label>
+          <label class="chk"><input type="checkbox" name="web_aktivny" ${p.web?.aktivny === false ? '' : 'checked'}> prístup povolený</label>
+          <div class="w web-pw">${p.web?.hash ? `heslo nastavené ${p.web.vytvorene ? F.fmtD(p.web.vytvorene) : ''}` : 'zatiaľ bez prístupu'} <button type="button" class="btn sm ghost" id="genPw">${p.web?.hash ? 'Nové heslo' : 'Vytvoriť prístup'}</button><output id="pwOut"></output></div>
+        </fieldset></form>
         ${!nov ? `<div class="pstat"><div><span>Zákazky 2024</span><b>${p.stat?.zakazky || 0}</b></div><div><span>Obrat 2024</span><b>${F.eur(p.stat?.obrat || 0)}</b></div><div><span>Dvere / zárubne</span><b>${p.stat?.dvere || 0} / ${p.stat?.zarubne || 0}</b></div><div><span>Zdroje</span><b class="small">${e((p.zdroje || []).join(', '))}</b></div></div>
         ${zak.length ? `<p>Zákazky v systéme: ${zak.map(z => `<a href="#/zakazka/${z.id}">${z.id}</a>`).join(', ')}</p>` : ''}<p><a class="btn sm" href="#/nova?partner=${p.id}">+ Nová zákazka pre partnera</a></p>` : ''}`,
         [{ t: 'Uložiť', f: () => {
@@ -558,16 +572,28 @@
           if (!fd.get('nazov').trim()) return false;
           ['nazov', 'ulica', 'psc', 'mesto', 'ico', 'dic', 'icdph', 'krajina', 'telefon', 'email', 'hladina', 'uhrada', 'poznamka'].forEach(k => p[k] = fd.get(k).trim());
           p.predajna = !!fd.get('predajna'); p.aliasy = fd.get('aliasy').split(';').map(s => s.trim()).filter(Boolean);
+          const wl = (fd.get('web_login') || '').trim();
+          if (p.web || noveHeslo) {
+            if (wl && d.partneri.some(x => x !== p && x.web && x.web.login && x.web.login.toLowerCase() === wl.toLowerCase())) { toast('Login „' + wl + '“ už používa iný partner', 'err'); return false; }
+            p.web = Object.assign(p.web || {}, { login: wl, aktivny: !!fd.get('web_aktivny') }, noveHeslo || {});
+          }
           if (nov) F.importPartnerov([p]);
           // aktualizovať otvorené zákazky partnera
           d.zakazky.filter(z => z.zakaznik.partnerId === p.id && F.stavIdx(z.stav) < F.stavIdx('expedovana')).forEach(z => F.priradPartnera(z, p));
           commit('Partner uložený');
         } }, ...(!nov ? [{ t: 'Zmazať', cls: 'ghost neg', f: () => { if (!confirm('Zmazať partnera ' + p.nazov + '?')) return false; d.partneri = d.partneri.filter(x => x !== p); commit('Zmazané'); } }] : [])]);
+      const gb = $('#genPw');
+      gb && gb.addEventListener('click', () => {
+        const pw = F.noveHeslo(); noveHeslo = { hash: F.hashHesla(pw), vytvorene: new Date().toISOString() };
+        $('#pwOut').innerHTML = `<div class="pw-box">Heslo: <b class="mono">${pw}</b> <button type="button" class="lnk" id="cpPw">kopírovať</button><br><small>Heslo sa zobrazí len teraz – pošlite ho partnerovi. Po uložení exportujte „Prístupy pre web“ a nahrajte na server.</small></div>`;
+        $('#cpPw').onclick = () => { navigator.clipboard && navigator.clipboard.writeText(pw); toast('Skopírované', 'ok'); };
+      });
     };
     app().onclick = ev => {
       const tr = ev.target.closest('tr[data-p]'); if (tr && !ev.target.closest('a')) return edit(F.partner(tr.dataset.p));
       const b = ev.target.closest('[data-act]'); if (!b) return;
       if (b.dataset.act === 'pnew') edit(null);
+      if (b.dataset.act === 'pweb') { const n = d.partneri.filter(p => p.web && p.web.hash).length; if (!n) { toast('Žiadny partner zatiaľ nemá prístup – nastavte ho v karte partnera', 'err'); return; } F.stiahni('partneri.csv', F.webPristupyCsv(), 'text/csv;charset=utf-8'); toast(`Exportovaných ${n} prístupov – nahrajte súbor na server do priečinka _cennik`, 'ok'); }
       if (b.dataset.act === 'pexp') F.stiahni('partneri-' + F.today() + '.json', JSON.stringify(d.partneri, null, 1), 'application/json');
     };
   }

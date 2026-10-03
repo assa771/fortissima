@@ -1,4 +1,4 @@
-﻿login;heslo;hladina;nazov;aktivny
-partner-voc;$2y$12$z00OwgBhWATAQV.N.ntqAe0/j7M4z8c/7.7RqokA7md.hZw0sM0eO;voc;Ukážkový partner VOC s.r.o.;1
-partner-minus10;$2y$12$eVwOYmMyasH3IGi6YVncmuI7EjU4hDgIbJoTJND8yuBchywlh/WhO;voc-10;Ukážkový veľkoodberateľ s.r.o.;1
-partner-plus5;$2y$12$MSgT8RH1i4dKKbAPhGAWoOP47rsuKFGuu26FM/ieELd5lxBhX5rE.;voc+5;Ukážkový predajca s.r.o.;1
+﻿login;heslo;hladina;nazov;aktivny;id;ico
+partner-voc;$2y$12$z00OwgBhWATAQV.N.ntqAe0/j7M4z8c/7.7RqokA7md.hZw0sM0eO;voc;Ukážkový partner VOC s.r.o.;1;;
+partner-minus10;$2y$12$eVwOYmMyasH3IGi6YVncmuI7EjU4hDgIbJoTJND8yuBchywlh/WhO;voc-10;Ukážkový veľkoodberateľ s.r.o.;1;;
+partner-plus5;$2y$12$MSgT8RH1i4dKKbAPhGAWoOP47rsuKFGuu26FM/ieELd5lxBhX5rE.;voc+5;Ukážkový predajca s.r.o.;1;;

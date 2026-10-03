@@ -15,7 +15,7 @@ header('X-Content-Type-Options: nosniff');
 function stav(): array {
     $p = aktualny_partner();
     if (!$p) return ['ok' => true, 'prihlaseny' => false];
-    return ['ok' => true, 'prihlaseny' => true, 'nazov' => $p['nazov'],
+    return ['ok' => true, 'prihlaseny' => true, 'nazov' => $p['nazov'], 'id' => $p['id'], 'ico' => $p['ico'], 'login' => $p['login'],
             'hladina' => ['kod' => $p['hladina']['kod'], 'nazov' => $p['hladina']['nazov'], 's_dph' => $p['hladina']['s_dph']]];
 }
 

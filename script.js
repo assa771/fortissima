@@ -555,7 +555,7 @@ const Ponuka = (function () {
     const kod = demoKod(), row = (D.hladiny || []).find(h => h.kod.toLowerCase() === kod) || (D.hladiny || []).find(h => h.kod.toLowerCase() === 'moc');
     if (!row) return { kod: 'moc', nazov: 'MOC', koeficient: 1.25, s_dph: true, partner: null };
     const k = row.kod.toLowerCase();
-    return { kod: k, nazov: row.nazov, koeficient: num(row.koeficient), s_dph: String(row.zobrazit_s_dph).trim() === '1', partner: k === 'moc' ? null : 'Ukážkový partner' };
+    return { kod: k, nazov: row.nazov, koeficient: num(row.koeficient), s_dph: String(row.zobrazit_s_dph).trim() === '1', partner: k === 'moc' ? null : 'Ukážkový partner', partner_id: null, partner_ico: null, partner_login: k === 'moc' ? null : 'ukazka-' + k };
   }
   function demoPonuka(o, D) {
     const H = demoHladina(D), DPH = 0.23, b2b = H.partner !== null;
@@ -600,7 +600,7 @@ const Ponuka = (function () {
     }
     const sum = (L, k) => r2(L.reduce((a, x) => a + x[k], 0));
     const bez = r2(sum(okP, 'spolu_bez') + sum(sluzby, 'spolu_bez')), sd = r2(sum(okP, 'spolu_s_dph') + sum(sluzby, 'spolu_s_dph'));
-    return { ok: true, hladina: { kod: H.kod, nazov: H.nazov, s_dph: H.s_dph, partner: H.partner }, polozky: pol, sluzby, upozornenia,
+    return { ok: true, hladina: { kod: H.kod, nazov: H.nazov, s_dph: H.s_dph, partner: H.partner, partner_id: H.partner_id, partner_ico: H.partner_ico, partner_login: H.partner_login }, polozky: pol, sluzby, upozornenia,
              medzisucet: medz, spolu: r2(medz + sum(sluzby, 'spolu')), spolu_bez: bez, dph: r2(sd - bez), dph_sadzba: DPH, spolu_s_dph: sd, kusov,
              chyby: pol.length - okP.length, dodanie_dni: dni, dodanie: dni === 0 ? 'Skladom' : 'do ' + dni + ' pracovných dní' };
   }
@@ -1261,18 +1261,19 @@ const Ponuka = (function () {
       return /[;"\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
     }, n = v => v == null || v === '' ? '' : Number(v).toFixed(2).replace('.', ',');
     // riadok = pozícia.poradie (1.1 krídlo, 1.2 zárubňa, 1.3 rozšírenie…) – drží súvislosť dverí, zárubne a elementov
-    const COLS = ['ponuka', 'datum', 'pozicia', 'riadok', 'oznacenie_pozicie', 'typ_polozky', 'kod',
+    const COLS = ['ponuka', 'datum', 'partner', 'partner_id', 'partner_ico', 'pozicia', 'riadok', 'oznacenie_pozicie', 'typ_polozky', 'kod',
                   'otvaranie', 'model', 'kolekcia', 'sirka', 'vyska', 'orientacia', 'farba',
                   'zamok', 'povrch_kovania', 'vysuvny_prah', 'vetracia_mriezka', 'typ_zarubne', 'zavesy', 'rohovy_spoj', 'rozsirenie', 'hrubka_steny_mm',
                   'skratenie_mm', 'mnozstvo', 'jednotka', 'hladina', 'cena_ks_bez_dph', 'spolu_bez_dph', 'cena_ks_s_dph', 'spolu_s_dph', 'nazov'];
     const rows = [COLS.join(';')];
     const datum = d.vytvorena.slice(0, 10), hl = d.hladina ? d.hladina.kod : '';
+    const pid = d.hladina && d.hladina.partner ? { partner: d.hladina.partner, partner_id: d.hladina.partner_id || '', partner_ico: d.hladina.partner_ico || '' } : {};
     d.polozky.forEach(p => {
       const slepa = P.jeSlepa(p), soZar = slepa || p.so_zarubnou !== false, zm = zamok(p.kovanie);
       (p.cena ? p.cena.riadky : []).forEach((x, i) => {
         const typ = x.typ || '';
         const casti = x.kod.split('-'), kr = typ === 'KRIDLO', zar = typ === 'ZARUBNA' || typ === 'ROZSIRENIE';
-        const r = {
+        const r = Object.assign({}, pid, {
           ponuka: d.id, datum, pozicia: p.poradie, riadok: p.poradie + '.' + (i + 1), oznacenie_pozicie: p.nazov, typ_polozky: typ, kod: x.kod,
           otvaranie: OTVARANIE[slepa ? 'slepa' : p.prevedenie], model: kr ? MODEL[p.kolekcia] : '', kolekcia: kr ? P.NAMES[p.kolekcia] : '',
           sirka: p.sirka, vyska: P.HTXT[p.vyska], orientacia: typ === 'ROZSIRENIE' ? '' : slepa ? 'slepá' : P.NAMES[p.smer],
@@ -1286,12 +1287,12 @@ const Ponuka = (function () {
           skratenie_mm: kr ? (p.skratenie || 0) : typ === 'ZARUBNA' ? (p.skratenie_zar || 0) : '',
           mnozstvo: x.mnozstvo, jednotka: 'ks', hladina: hl, cena_ks_bez_dph: n(x.cena_ks_bez), spolu_bez_dph: n(x.spolu_bez),
           cena_ks_s_dph: n(x.cena_ks_s_dph), spolu_s_dph: n(x.spolu_s_dph), nazov: x.nazov
-        };
+        });
         rows.push(COLS.map(c => q(r[c])).join(';'));
       });
     });
     d.sluzby.forEach(sv => {
-      const r = { ponuka: d.id, datum, typ_polozky: 'SLUZBA', kod: sv.kod, mnozstvo: sv.mnozstvo, jednotka: sv.jednotka || '', hladina: hl,
+      const r = { ...pid, ponuka: d.id, datum, typ_polozky: 'SLUZBA', kod: sv.kod, mnozstvo: sv.mnozstvo, jednotka: sv.jednotka || '', hladina: hl,
                   cena_ks_bez_dph: n(sv.cena_ks_bez), spolu_bez_dph: n(sv.spolu_bez), cena_ks_s_dph: n(sv.cena_ks_s_dph), spolu_s_dph: n(sv.spolu_s_dph), nazov: sv.nazov };
       rows.push(COLS.map(c => q(r[c])).join(';'));
     });
@@ -1304,7 +1305,7 @@ const Ponuka = (function () {
     const d = exportData();
     const hh = d.hladina || { s_dph: true };
     const lines = ['Cenová ponuka ' + d.id + (P.DEMO ? ' (ukážka, ilustračné ceny)' : ''),
-                   ...(hh.partner ? ['Partner: ' + hh.partner + ' – cenová hladina ' + hh.nazov + ', ceny bez DPH'] : []), ''];
+                   ...(hh.partner ? ['Partner: ' + hh.partner + (hh.partner_id ? ' [' + hh.partner_id + ']' : '') + (hh.partner_ico ? ', IČO ' + hh.partner_ico : '') + ' – cenová hladina ' + hh.nazov + ', ceny bez DPH'] : []), ''];
     d.polozky.forEach(p => {
       lines.push(p.poradie + '. ' + (p.nazov ? p.nazov + ' – ' : '') + P.popis(p) + ', ' + p.ks + ' ks');
       const zarTxt = 'zárubňa ' + P.NAMES[p.farba_zarubne] + ', stena ' + p.stena + ' mm' + (p.cena ? ' (' + p.cena.zarubna + ')' : '') +

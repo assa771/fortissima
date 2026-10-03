@@ -155,6 +155,7 @@
       <div class="parties"><div><span>Dodávateľ</span><b>${e(n.firma.nazov)}</b><br>${e(n.firma.adresa)}<br>IČO ${e(n.firma.ico)} · IČ DPH ${e(n.firma.icdph)}</div>
         <div><span>Odberateľ</span><b>${e(z.zakaznik.nazov)}</b><br>${e(z.zakaznik.adresa || '')}<br>${z.zakaznik.ico ? 'IČO ' + e(z.zakaznik.ico) : ''}${z.zakaznik.icdph ? ' · IČ DPH ' + e(z.zakaznik.icdph) : z.zakaznik.dic ? ' · DIČ ' + e(z.zakaznik.dic) : ''}<br>${e(z.zakaznik.telefon || '')}</div>
         <div><span>Dodanie</span><b>${tr ? F.fmtD(tr.datum) : '–'}</b><br>${tr ? e(tr.vozidlo || '') : ''}<br>${z.montaz ? 's montážou' : 'bez montáže'}</div></div>
+      ${z.objednal ? `<p class="muted">Objednávka cez web: ${e(z.objednal.partner)}${z.objednal.login ? ' (' + e(z.objednal.login) + ')' : ''}${z.objednal.cas ? ', ' + F.fmtD(z.objednal.cas) : ''}${z.ponuka ? ', ponuka ' + e(z.ponuka) : ''}</p>` : ''}
       <table class="doc-t"><thead><tr><th>#</th><th></th><th>Položka</th><th class="r">Ks</th></tr></thead><tbody>${rows}${acc}</tbody></table>
       <p class="muted">Počet balíkov / kusov na nakládku: <b>${kusy.length}</b> (krídla ${kusy.filter(k => k.typ === 'kridlo').length}, dielce zárubní ${kusy.filter(k => k.typ === 'dielec').length}, rozšírenia ${kusy.filter(k => k.typ === 'rozsirenie').length})</p>
       <footer class="doc-f"><span>Odovzdal: ____________________</span><span>Prevzal (meno, podpis, dátum): ______________________________</span></footer></section>`;

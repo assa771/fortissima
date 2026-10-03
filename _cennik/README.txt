@@ -50,7 +50,9 @@ CENOVÉ HLADINY A PARTNERI
 -------------------------
 hladiny.csv     kod, nazov (zobrazí sa partnerovi), koeficient (× VOC), zobrazit_s_dph (1 = ceny s DPH, 0 = bez DPH), poznamka
                 riadok "moc" = verejný web (neprihlásený návštevník). Kód hladiny nemeňte, názov a koeficient áno.
-partneri.csv    login, heslo, hladina (kód z hladiny.csv), nazov (firma), aktivny (1 = môže sa prihlásiť, 0 = zablokovaný)
+partneri.csv    login, heslo, hladina (kód z hladiny.csv), nazov (firma), aktivny (1 = môže sa prihlásiť, 0 = zablokovaný),
+                id (číslo partnera z výroby, napr. P002), ico – podľa nich výroba pozná, kto objednávku poslal.
+                Súbor sa dá vygenerovať vo výrobe: Partneri → Exportovať prístupy pre web.
                 heslo: odporúčame zahašované (začína $2y$…); dá sa zadať aj čisté heslo, ale potom
                 ho chráni iba zablokovaný priečinok. Hash vytvoríte napr. príkazom:
                    php -r 'echo password_hash("NoveHeslo", PASSWORD_DEFAULT);'

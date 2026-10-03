@@ -399,7 +399,8 @@ $spoluSDph = round($sum($ok, 'spolu_s_dph') + $sum($sluzby, 'spolu_s_dph'), 2);
 
 odpoved([
     'ok' => true,
-    'hladina' => ['kod' => $H['kod'], 'nazov' => $H['nazov'], 's_dph' => $H['s_dph'], 'partner' => $H['partner']],
+    'hladina' => ['kod' => $H['kod'], 'nazov' => $H['nazov'], 's_dph' => $H['s_dph'], 'partner' => $H['partner'],
+                  'partner_id' => $H['partner_id'] ?? null, 'partner_ico' => $H['partner_ico'] ?? null, 'partner_login' => $H['partner_login'] ?? null],
     'polozky' => $vysledky,
     'sluzby' => $sluzby,
     'medzisucet' => $medz,
