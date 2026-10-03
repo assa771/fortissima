@@ -145,7 +145,7 @@
         <input type="search" id="zq" placeholder="hľadať…" value="${e(q.get('q') || '')}"></div>
       <table class="t zt"><thead><tr><th>Zákazka</th><th>Zákazník</th><th>Položky</th><th class="r">Kr.</th><th class="r">Zár.</th><th>Stav</th><th>Dávka</th><th>Termín</th></tr></thead><tbody>
       ${list.map(z => { const c = F.pocty(z); return `<tr data-href="#/zakazka/${z.id}"><td><b>${z.id}</b>${z.ponuka ? `<br><small class="muted">${e(z.ponuka)}</small>` : ''}</td>
-        <td>${e(z.zakaznik.nazov)}${z.objednal ? ' <span class="badge web" title="objednávka z webu">web</span>' : ''} <span class="badge ${z.zakaznik.typ}">${z.zakaznik.typ === 'b2b' ? 'B2B ' + e(z.zakaznik.hladina || '') : 'retail'}</span></td>
+        <td>${e(z.zakaznik.nazov)}${F.textPobockyZakazky && F.textPobockyZakazky(z) ? `<br><small class="muted">pobočka ${e(F.textPobockyZakazky(z))}</small>` : ''}${z.objednal ? ' <span class="badge web" title="objednávka z webu">web</span>' : ''} <span class="badge ${z.zakaznik.typ}">${z.zakaznik.typ === 'b2b' ? 'B2B ' + e(z.zakaznik.hladina || '') : 'retail'}</span></td>
         <td class="minis">${(z.polozky || []).slice(0, 5).map(F.mini).join('')}${z.polozky.length > 5 ? `<span>+${z.polozky.length - 5}</span>` : ''}</td>
         <td class="r">${c.kr}</td><td class="r">${c.zar}</td><td>${F.chip(z.stav)}</td><td>${z.davka ? `<a href="#/davka/${z.davka}">${z.davka}</a>` : '–'}</td><td>${z.terminDodania ? F.fmtD(z.terminDodania) : '–'}</td></tr>`; }).join('') || '<tr><td colspan="8" class="empty">Žiadne zákazky.</td></tr>'}
       </tbody></table>`;
@@ -158,7 +158,7 @@
     const i = F.stavIdx(z.stav), dalsi = F.STAVY[i + 1], c = F.pocty(z), t = F.terminExpedicie(z);
     const zk = z.zakaznik;
     app().innerHTML = `
-      <div class="v-head"><div><a href="#/zakazky" class="back">← zákazky</a><h1>${z.id} <span class="h-sub">${e(zk.nazov || 'bez mena')}</span></h1><p class="muted">${z.ponuka ? 'z ponuky ' + e(z.ponuka) + ' · ' : ''}${c.kr} krídel · ${c.zar} zárubní · vytvorená ${F.fmtD(z.vytvorena)}</p></div>
+      <div class="v-head"><div><a href="#/zakazky" class="back">← zákazky</a><h1>${z.id} <span class="h-sub">${e(zk.nazov || 'bez mena')}${F.textPobockyZakazky && F.textPobockyZakazky(z) ? ' · ' + e(F.textPobockyZakazky(z)) : ''}</span></h1><p class="muted">${z.ponuka ? 'z ponuky ' + e(z.ponuka) + ' · ' : ''}${c.kr} krídel · ${c.zar} zárubní · vytvorená ${F.fmtD(z.vytvorena)}</p></div>
         <div class="v-act">${dalsi ? `<button class="btn" data-act="dalsi">→ ${dalsi.n}</button>` : ''}<select id="stavSel" class="btn ghost">${F.STAVY.map(s => `<option value="${s.k}" ${s.k === z.stav ? 'selected' : ''}>${s.n}</option>`).join('')}</select></div></div>
       ${z.objednal ? `<div class="obj ${z.objednal.overeny ? 'ok' : 'warn'}"><b>Objednávka z webu</b> – ${e(z.objednal.partner)}${z.objednal.login ? ` (login <span class="mono">${e(z.objednal.login)}</span>)` : ''}${z.objednal.ico ? ` · IČO ${e(z.objednal.ico)}` : ''}${z.objednal.cas ? ` · ${F.fmtD(z.objednal.cas)} ${z.objednal.cas.slice(11, 16)}` : ''}${z.objednal.overeny ? '' : ' · ⚠ nespárované s databázou partnerov'}</div>` : ''}
       ${F.pipeline(z)}
@@ -203,16 +203,13 @@
     const save = () => F.save();
     $('#dodForm').addEventListener('change', ev => {
       const fd = new FormData(ev.currentTarget);
-      if (ev.target.name === 'pobocka') {
-        const p = F.partner(z.zakaznik.partnerId), b = p && (p.pobocky || []).find(x => x.nazov === ev.target.value);
-        z.dodanie = b ? { nazov: b.nazov, ulica: b.ulica || '', psc: b.psc || '', mesto: b.mesto || '', krajina: b.krajina || p.krajina || 'SK', kontakt: b.kontakt || '', pobocka: b.nazov } : null;
-        return commit('Miesto vykládky: ' + (b ? b.nazov : 'sídlo partnera'));
-      }
-      z.dodanie = { nazov: fd.get('d_nazov'), ulica: fd.get('d_ulica'), psc: fd.get('d_psc'), mesto: fd.get('d_mesto'), krajina: fd.get('d_krajina'), kontakt: fd.get('d_kontakt'), pobocka: fd.get('pobocka') || '' };
+      if (['objPobocka', 'dodPobocka'].includes(ev.target.name)) { const m = F.zmenaPobockyZakazky(z, ev.target.name, ev.target.value); return commit(m); }
+      const pr = z.dodanie || {}, rovnaka = pr.pobockaId && pr.nazov === fd.get('d_nazov');
+      z.dodanie = { nazov: fd.get('d_nazov'), ulica: fd.get('d_ulica'), psc: fd.get('d_psc'), mesto: fd.get('d_mesto'), krajina: fd.get('d_krajina'), kontakt: fd.get('d_kontakt'), pozn: pr.pozn || '', pobocka: rovnaka ? pr.pobocka : '', pobockaId: rovnaka ? pr.pobockaId : '' };
       commit('Miesto vykládky uložené');
     });
     $('#zkForm').addEventListener('change', ev => {
-      if (ev.target.name === 'partner') { const p = F.najdiPartnera(ev.target.value); if (p) { F.priradPartnera(z, p); commit('Priradený partner ' + p.nazov); } else if (ev.target.value) toast('Partner sa nenašiel', 'err'); return; }
+      if (ev.target.name === 'partner') { const p = F.najdiPartnera(ev.target.value); if (p) { F.priradPartnera(z, p); const pb = F.najdiPobockuPodlaNazvu && F.najdiPobockuPodlaNazvu(ev.target.value, p); if (pb && pb.b.typ === 'predajna') F.zmenaPobockyZakazky(z, 'objPobocka', pb.b.id); commit('Priradený partner ' + F.partner(z.zakaznik.partnerId).nazov + (pb ? ' · pobočka ' + pb.b.nazov : '')); } else if (ev.target.value) toast('Partner sa nenašiel', 'err'); return; }
       const fd = new FormData(ev.currentTarget);
       ['nazov', 'typ', 'hladina', 'ico', 'dic', 'icdph', 'adresa', 'telefon', 'email'].forEach(k => z.zakaznik[k] = fd.get(k));
       z.terminDodania = fd.get('terminDodania'); z.poznamka = fd.get('poznamka'); z.montaz = !!fd.get('montaz'); z.zameranie = !!fd.get('zameranie');
@@ -248,7 +245,7 @@
     const v = F.vozidloPreKrajinu(d.krajina || 'SK'), xy = F.suradnice(d.mesto), t = z.trasa && F.trasa(z.trasa), hm = F.hmotnostZakazky(z);
     return `<section class="card"><div class="card-h"><h2>Miesto vykládky</h2><span class="muted small">hmotnosť ≈ ${F.kg(hm.brutto)} brutto${hm.chyba.length ? ' (neúplná)' : ''} · ${t ? `trasa <a href="#/expedicia">${t.id}</a> · ${F.fmtD(t.datum)}` : `pôjde autom: <b>${e(v ? v.nazov : '–')}</b>`}${xy ? '' : ' · <span class="warnc">mesto nie je na mape – poradie zastávky treba určiť ručne</span>'}</span></div>
       <form id="dodForm" class="kf kf4">
-        ${pob.length ? `<label class="w">Pobočka partnera<select name="pobocka"><option value="">– sídlo partnera –</option>${pob.map(b => `<option ${z.dodanie && z.dodanie.pobocka === b.nazov ? 'selected' : ''}>${e(b.nazov)}</option>`).join('')}</select></label>` : ''}
+        ${F.polePobockyZakazky ? F.polePobockyZakazky(z) : ''}
         <label>Názov / príjemca<input name="d_nazov" value="${e(d.nazov || '')}"></label><label>Ulica<input name="d_ulica" value="${e(d.ulica || '')}"></label>
         <label>PSČ<input name="d_psc" value="${e(d.psc || '')}"></label><label>Mesto<input name="d_mesto" value="${e(d.mesto || '')}"></label>
         <label>Krajina<select name="d_krajina">${opt(F.KRAJINY, d.krajina || 'SK')}</select></label><label>Kontakt pri vykládke<input name="d_kontakt" value="${e(d.kontakt || '')}"></label>

@@ -133,13 +133,15 @@
     const body = [dep, ...st.filter(s => s.xy).map(s => s.xy)];
     const W = o.w || 560, H = o.h || 260, pad = 34, padX = Math.min(80, W * 0.16);
     let la0 = Math.min(...body.map(b => b[0])), la1 = Math.max(...body.map(b => b[0])), lo0 = Math.min(...body.map(b => b[1])), lo1 = Math.max(...body.map(b => b[1]));
+    if (la1 - la0 < .8) { const c = (la0 + la1) / 2; la0 = c - .4; la1 = c + .4; }          // aby bolo vidieť okolie a hranice
+    if (lo1 - lo0 < 1.2) { const c = (lo0 + lo1) / 2; lo0 = c - .6; lo1 = c + .6; }
     const kx = Math.cos(rad((la0 + la1) / 2));
     let sx = (lo1 - lo0) * kx || 1, sy = (la1 - la0) || 1;
     const s = Math.min((W - 2 * padX) / sx, (H - 2 * pad) / sy, 260);
     const cx = (lo0 + lo1) / 2, cy = (la0 + la1) / 2;
     const P = b => [W / 2 + (b[1] - cx) * kx * s, H / 2 - (b[0] - cy) * s];
     const C = F.C || {};
-    let g = `<rect x="0" y="0" width="${W}" height="${H}" rx="8" fill="#F4F1EA"/>`;
+    let g = F.svgHranice ? F.svgHranice(P, W, H) : `<rect x="0" y="0" width="${W}" height="${H}" rx="8" fill="#F4F1EA"/>`;
     // body všetkých známych miest v okolí (orientačné)
     Object.entries(F.MESTA).forEach(([, b]) => { const [x, y] = P(b); if (x > 6 && x < W - 6 && y > 6 && y < H - 6) g += `<circle cx="${x}" cy="${y}" r="1.4" fill="#C9C1B3"/>`; });
     const pts = [dep, ...st.filter(s => s.xy).map(s => s.xy), dep].map(P);

@@ -605,7 +605,10 @@ F.importPartnerov = zoznam => {
   zoznam.forEach(x => {
     if (!x || !x.nazov) return;
     const ex = (x.id && P.find(p => p.id === x.id)) || (x.ico && P.find(p => p.ico === x.ico)) || (!x.id && P.find(p => F.partnerNorm(p.nazov) === F.partnerNorm(x.nazov)));
-    if (ex) { Object.assign(ex, x, { id: ex.id }); upd++; }
+    if (ex) {
+      if (Array.isArray(x.pobocky) && ex.pobocky) x = Object.assign({}, x, { pobocky: x.pobocky.map(b => { const o = ex.pobocky.find(y => F.partnerNorm(y.nazov) === F.partnerNorm(b.nazov)); return o ? Object.assign({}, o, b, { id: o.id, typ: b.typ || o.typ }) : b; }) });
+      Object.assign(ex, x, { id: ex.id }); upd++;
+    }
     else { P.push(Object.assign({ id: 'P' + String(P.length + 1).padStart(3, '0'), hladina: 'voc', krajina: 'SK', aliasy: [], stat: {} }, x)); nove++; }
   });
   return { nove, upd };
