@@ -139,6 +139,8 @@
       const kk = kusy.filter(k => k.p === p);
       return `<div class="komp-pos"><div class="komp-vis">${F.maKridlo(p) ? F.svgKridlo(p, { h: 110 }) : ''}${F.maZarubnu(p) ? F.svgZarubna(p, null, { h: 110 }) : ''}</div>
         <div class="komp-body"><h3>${p.poradie}. ${e(p.nazov || 'Pozícia')} <small>${e(F.popisPozicie(p))} · ${p.ks} ks</small></h3>
+        ${(() => { const pt = F.potreba({ polozky: [p] }), L = (pre, txt) => { const x = Object.keys(pt).filter(k => pre.includes(k.split('|')[0])); return x.length ? `<span><b>${txt}:</b> ${x.map(k => `${+pt[k].toFixed(2)}× ${e(F.kartaNazov(k).replace(/ – (horný|spodný) diel \(do (krídla|zárubne)\)/, ' $1 diel'))}`).join(', ')}</span>` : ''; };
+          const t = L(['ZH', 'ZM', 'MR', 'PR'], 'Do krídla') + L(['ZD', 'ZS', 'PP', 'RZ'], 'Do zárubne'); return t ? `<p class="komp-kov">${t}</p>` : ''; })()}
         <table class="doc-t slim"><tbody>${kk.map(k => { const s = F.skenKusu(k.id);
           return `<tr class="${s.kompletacia ? 'ok' : ''}"><td class="chk"><span class="box ${s.kompletacia ? 'on' : ''}"></span></td><td>${e(k.nazov)}${k.typ === 'dielec' ? ` <span class="muted">${k.dielec.dlzObl} mm</span>` : ''}</td><td class="r">${F.barcode(k.id, { h: 18, w: 1, fs: 9 })}</td></tr>`; }).join('')}</tbody></table></div></div>`;
     }).join('');

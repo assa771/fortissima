@@ -73,6 +73,7 @@ F.DEFAULT_NASTAVENIA = {
   bezPridavokSirka: 22, bezPridavokVyska: 1,        // bezfalcové krídlo
   polotovarVyska: { '197': '2055', '2055': '2055', '210': '210' }, // STN sa reže z HU
   hrubkaKridla: 40,
+  pocetZavesov: 3,          // závesov na 1 krídlo (falcové: horný diel do krídla, spodný do zárubne)
   sirkaKoduRamove: 290,          // rámové krídla nesú v kóde pevnú hodnotu namiesto šírky
   // zárubňa
   svetlostPridavok: 6,           // Š1 = nominál + 6 (napr. 80 → 806)
@@ -253,7 +254,9 @@ F.kartaNazov = kluc => {
     case 'OS': return `Ostenie ${c[1]} (${F.N().ostenieSirka[c[1]]} mm) ${F.FARBY[c[2]]?.nazov}`;
     case 'RZ': return `Rozšírenie ${c[1]} ${F.FARBY[c[2]]?.nazov}`;
     case 'ZM': return `Zámok – ${F.KOVANIE[c[1]] || c[1]}`;
-    case 'ZV': return `Sada závesov ${F.ZAVESY[c[1]] || c[1]} (3 ks)`;
+    case 'ZV': return `Sada závesov ${F.ZAVESY[c[1]] || c[1]} (3 ks) – pôvodná karta`;
+    case 'ZH': return `Záves ${F.ZAVESY[c[1]] || c[1]} – horný diel (do krídla)`;
+    case 'ZD': return `Záves ${F.ZAVESY[c[1]] || c[1]} – spodný diel (do zárubne)`;
     case 'ZS': return `Sada skrytých závesov ${F.ZAVESY[c[1]] || c[1]} – bezfalc`;
     case 'PP': return 'Protiplech';
     case 'MR': return `Vetracia ${F.MRIEZKY[c[1]] || c[1]}`;
@@ -262,7 +265,7 @@ F.kartaNazov = kluc => {
   }
   return kluc;
 };
-F.kartaSkupina = kluc => ({ KR: 'Krídla – polotovar', OB: 'Profily zárubní', OS: 'Profily zárubní', RZ: 'Rozšírenia', ZM: 'Kovanie', ZV: 'Kovanie', ZS: 'Kovanie', PP: 'Kovanie', MR: 'Kovanie', PR: 'Kovanie', AC: 'Príslušenstvo' }[kluc.split('|')[0]] || 'Ostatné');
+F.kartaSkupina = kluc => ({ KR: 'Krídla – polotovar', OB: 'Profily zárubní', OS: 'Profily zárubní', RZ: 'Rozšírenia', ZM: 'Kovanie', ZV: 'Kovanie', ZH: 'Kovanie', ZD: 'Kovanie', ZS: 'Kovanie', PP: 'Kovanie', MR: 'Kovanie', PR: 'Kovanie', AC: 'Príslušenstvo' }[kluc.split('|')[0]] || 'Ostatné');
 F.kartaJednotka = kluc => { const k = (F.load().karty || []).find(x => x.kluc === kluc); return (k && k.jednotka) || ({ OB: 'm', OS: 'm' }[kluc.split('|')[0]] || 'ks'); };
 
 /** Potreba materiálu pre zákazku: { kluc: množstvo } (profily v metroch) */
@@ -274,6 +277,8 @@ F.potreba = z => {
     if (F.maKridlo(p)) {
       add(F.kartaKluc.kridlo(p), ks);
       if (p.kovanie && p.kovanie !== 'bez') add('ZM|' + p.kovanie, ks);
+      // falcové krídlo: horné diely závesov idú do krídla
+      if (p.prevedenie !== 'bez') add('ZH|' + (p.zavesy || 'nikel'), ks * (F.N().pocetZavesov || 3));
       if (p.mriezka && p.mriezka !== 'bez') add('MR|' + p.mriezka, ks);
       if (p.prah) add('PR|', ks);
     }
@@ -286,7 +291,8 @@ F.potreba = z => {
       if (zr.r180) add('RZ|R180|' + fz, zr.r180 * ks);
       if (zr.r90) add('RZ|R90|' + fz, zr.r90 * ks);
       // bezfalcové dvere majú skryté závesy, falcové bežné
-      if (!zr.slepa) { add((p.prevedenie === 'bez' ? 'ZS|' : 'ZV|') + (p.zavesy || 'nikel'), ks); add('PP|', ks); }
+      // falcová zárubňa: spodné diely závesov; bezfalcová: sada skrytých závesov
+      if (!zr.slepa) { if (p.prevedenie === 'bez') add('ZS|' + (p.zavesy || 'nikel'), ks); else add('ZD|' + (p.zavesy || 'nikel'), ks * (F.N().pocetZavesov || 3)); add('PP|', ks); }
     }
   });
   (z.prislusenstvo || []).forEach(a => add('AC|' + a.nazov, +a.ks || 1));
@@ -518,7 +524,7 @@ F.ukazka = () => {
     karty.push({ kluc: `RZ|R90|${fa}`, stav: 14, min: 6, objednane: 0, prichod: '' }, { kluc: `RZ|R180|${fa}`, stav: 6, min: 4, objednane: 0, prichod: '' });
   });
   Object.keys(F.KOVANIE).filter(k => k !== 'bez').forEach(k => karty.push({ kluc: 'ZM|' + k, stav: /cierna/.test(k) ? 12 : 60, min: 15, objednane: 0, prichod: '' }));
-  karty.push({ kluc: 'ZV|nikel', stav: 90, min: 30 }, { kluc: 'ZV|cierna', stav: 18, min: 10, objednane: 30, prichod: F.addDays(F.today(), 4) }, { kluc: 'ZS|nikel', stav: 24, min: 8 }, { kluc: 'ZS|cierna', stav: 10, min: 4 }, { kluc: 'PP|', stav: 110, min: 30 },
+  karty.push({ kluc: 'ZH|nikel', stav: 270, min: 90 }, { kluc: 'ZD|nikel', stav: 240, min: 90 }, { kluc: 'ZH|cierna', stav: 54, min: 30, objednane: 90, prichod: F.addDays(F.today(), 4) }, { kluc: 'ZD|cierna', stav: 60, min: 30, objednane: 90, prichod: F.addDays(F.today(), 4) }, { kluc: 'ZS|nikel', stav: 24, min: 8 }, { kluc: 'ZS|cierna', stav: 10, min: 4 }, { kluc: 'PP|', stav: 110, min: 30 },
     { kluc: 'MR|biela', stav: 20, min: 5 }, { kluc: 'MR|hlinik', stav: 8, min: 5 }, { kluc: 'MR|cierna', stav: 0, min: 4, objednane: 10, prichod: F.addDays(F.today(), 5) }, { kluc: 'PR|', stav: 9, min: 4 });
   karty.forEach(k => { k.objednane = k.objednane || 0; k.prichod = k.prichod || ''; });
   d.karty = karty;

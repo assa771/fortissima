@@ -12,13 +12,13 @@
   /* ---------- číselníky pre filtre ---------- */
   F.DRUHY_SKLADU = { kridla: 'Krídla (dvere)', zarubne: 'Zárubne – obložky a ostenia', rozsirenia: 'Rozšírenia zárubní', kovanie: 'Kovanie', prislusenstvo: 'Príslušenstvo' };
   F.FARBY_KOV = { nikel: 'nikel', cierna: 'čierna', biela: 'biela', hlinik: 'hliník' };
-  F.PODTYPY = { oblozka: 'Obložka', ostenie: 'Ostenie', R90: 'Rozšírenie R90', R180: 'Rozšírenie R180', 'zamok-bb': 'Zámok BB (na kľúč)', 'zamok-pz': 'Zámok PZ (na vložku)', 'zamok-wc': 'Zámok WC', zavesy: 'Závesy (falcové dvere)', skryte: 'Skryté závesy (bezfalc)', protiplech: 'Protiplech', mriezka: 'Vetracia mriežka', prah: 'Padací prah', ine: 'Iné' };
+  F.PODTYPY = { oblozka: 'Obložka', ostenie: 'Ostenie', R90: 'Rozšírenie R90', R180: 'Rozšírenie R180', 'zamok-bb': 'Zámok BB (na kľúč)', 'zamok-pz': 'Zámok PZ (na vložku)', 'zamok-wc': 'Zámok WC', 'zaves-horny': 'Záves – horný diel (krídlo)', 'zaves-spodny': 'Záves – spodný diel (zárubňa)', zavesy: 'Sada závesov (pôvodná)', skryte: 'Skryté závesy (bezfalc)', protiplech: 'Protiplech', mriezka: 'Vetracia mriežka', prah: 'Padací prah', ine: 'Iné' };
   const farbaNazov = f => F.FARBY[f]?.nazov || F.FARBY_KOV[f] || f || '';
 
   /** Rozloží kľúč skladovej karty na parametre (pre filtre, nákres a rozmery) */
   F.kartaParam = kluc => {
     const c = kluc.split('|'), t = c[0];
-    const druh = { KR: 'kridla', OB: 'zarubne', OS: 'zarubne', RZ: 'rozsirenia', ZM: 'kovanie', ZV: 'kovanie', ZS: 'kovanie', PP: 'kovanie', MR: 'kovanie', PR: 'kovanie' }[t] || 'prislusenstvo';
+    const druh = { KR: 'kridla', OB: 'zarubne', OS: 'zarubne', RZ: 'rozsirenia', ZM: 'kovanie', ZV: 'kovanie', ZH: 'kovanie', ZD: 'kovanie', ZS: 'kovanie', PP: 'kovanie', MR: 'kovanie', PR: 'kovanie' }[t] || 'prislusenstvo';
     const o = { kluc, typ: t, druh, jednotka: F.kartaJednotka(kluc), farba: '', podtyp: 'ine' };
     if (t === 'AC') { const k = F.karta(kluc); if (k && k.druh && F.DRUHY_SKLADU[k.druh]) o.druh = k.druh; if (k && k.farba) o.farba = k.farba; }
     if (t === 'KR') Object.assign(o, { kolekcia: c[1], prevedenie: c[2], farba: c[3], sirka: c[4], vyska: c[5], podtyp: '' });
@@ -28,6 +28,8 @@
     if (t === 'ZM') Object.assign(o, { kovanie: c[1], farba: /cierna/.test(c[1]) ? 'cierna' : /nikel/.test(c[1]) ? 'nikel' : '', podtyp: 'zamok-' + c[1].split('-')[0] });
     if (t === 'ZV') Object.assign(o, { farba: c[1], podtyp: 'zavesy' });
     if (t === 'ZS') Object.assign(o, { farba: c[1], podtyp: 'skryte' });
+    if (t === 'ZH') Object.assign(o, { farba: c[1], podtyp: 'zaves-horny' });
+    if (t === 'ZD') Object.assign(o, { farba: c[1], podtyp: 'zaves-spodny' });
     if (t === 'PP') o.podtyp = 'protiplech';
     if (t === 'MR') Object.assign(o, { farba: c[1], podtyp: 'mriezka' });
     if (t === 'PR') o.podtyp = 'prah';
@@ -122,6 +124,16 @@
       case 'zavesy':
         g = [0, 1, 2].map(i => { const y = 8 + i * 38; return `<rect x="22" y="${y}" width="22" height="30" rx="3" fill="${f}" stroke="${s}" ${sw}/><rect x="56" y="${y}" width="22" height="30" rx="3" fill="${f}" stroke="${s}" ${sw}/><rect x="44" y="${y - 3}" width="12" height="36" rx="6" fill="${f}" stroke="${s}" ${sw}/>`; }).join('') + `<text x="50" y="119" text-anchor="middle" class="t-lab">3 ks</text>`;
         break;
+      case 'zaves-horny': case 'zaves-spodny': {
+        // valcový záves rozdelený na dva diely: horný (krídlo) s čapom, spodný (zárubňa) s puzdrom
+        const hor = o.podtyp === 'zaves-horny', dim = 'opacity=".25"';
+        g = `<rect x="30" y="${hor ? 16 : 62}" width="40" height="42" rx="20" ry="8" fill="${f}" stroke="${s}" ${sw}/>`;
+        g += hor ? `<rect x="46" y="58" width="8" height="18" fill="${s}"/><rect x="30" y="62" width="40" height="42" rx="20" ry="8" fill="none" stroke="${s}" stroke-dasharray="3 3" ${dim}/>`
+                 : `<rect x="30" y="16" width="40" height="42" rx="20" ry="8" fill="none" stroke="${s}" stroke-dasharray="3 3" ${dim}/><ellipse cx="50" cy="64" rx="5" ry="2.5" fill="#fff" stroke="${s}"/>`;
+        g += `<rect x="${hor ? 4 : 70}" y="${hor ? 22 : 68}" width="26" height="8" rx="2" fill="${f}" stroke="${s}" ${sw}/><rect x="${hor ? 4 : 70}" y="${hor ? 38 : 84}" width="26" height="8" rx="2" fill="${f}" stroke="${s}" ${sw}/>`;
+        g += `<text x="50" y="117" text-anchor="middle" class="t-lab">${hor ? 'horný diel → krídlo' : 'spodný diel → zárubňa'}</text>`;
+        break;
+      }
       case 'skryte':
         // skrytý (3D) záves: dve telesá zapustené v hrane + kĺbové rameno
         g = [0, 1].map(i => { const y = 14 + i * 56; return `<rect x="16" y="${y}" width="26" height="40" rx="5" fill="${f}" stroke="${s}" ${sw}/><rect x="58" y="${y}" width="26" height="40" rx="5" fill="${f}" stroke="${s}" ${sw}/>
@@ -204,6 +216,7 @@
       if (o.farba) R.push(['Farba / povrch', farbaNazov(o.farba)]);
       if (o.typ === 'ZM') R.push(['Popis', F.KOVANIE[o.kovanie] || o.kovanie]);
       if (o.typ === 'ZV') R.push(['Balenie', 'sada 3 ks na 1 krídlo'], ['Použitie', 'falcové dvere']);
+      if (o.typ === 'ZH' || o.typ === 'ZD') R.push(['Diel', o.typ === 'ZH' ? 'horný diel – s čapom, montuje sa do krídla' : 'spodný diel – s puzdrom, montuje sa do zárubne'], ['Použitie', 'falcové dvere'], ['Počet na 1 dvere', (F.N().pocetZavesov || 3) + ' ks (Nastavenia → Krídlo)'], ['Výdaj', o.typ === 'ZH' ? 'automaticky ku každému falcovému krídlu' : 'automaticky ku každej falcovej zárubni']);
       if (o.typ === 'ZS') R.push(['Balenie', 'sada na 1 krídlo'], ['Použitie', 'bezfalcové dvere – záves je skrytý v hrane krídla a zárubne'], ['Výdaj', 'automaticky pri bezfalcových dverách so zárubňou']);
     }
     return R;
@@ -417,7 +430,7 @@
     const far = Object.fromEntries(Object.entries(F.FARBY).map(([k, v]) => [k, v.nazov]));
     const kov = Object.fromEntries(Object.entries(F.KOVANIE).filter(([k]) => k !== 'bez'));
     const mr = Object.fromEntries(Object.entries(F.MRIEZKY).filter(([k]) => k !== 'bez'));
-    const DR = { KR: 'Krídlo – polotovar', OB: 'Obložka (profil zárubne)', OS: 'Ostenie (profil zárubne)', RZ: 'Rozšírenie zárubne R90/R180', ZM: 'Zámok', ZV: 'Sada závesov (falcové)', ZS: 'Sada skrytých závesov (bezfalc)', MR: 'Vetracia mriežka', PP: 'Protiplech', PR: 'Padací prah', AC: 'Iná položka (voľný názov)' };
+    const DR = { KR: 'Krídlo – polotovar', OB: 'Obložka (profil zárubne)', OS: 'Ostenie (profil zárubne)', RZ: 'Rozšírenie zárubne R90/R180', ZM: 'Zámok', ZH: 'Záves – horný diel (do krídla)', ZD: 'Záves – spodný diel (do zárubne)', ZS: 'Sada skrytých závesov (bezfalc)', MR: 'Vetracia mriežka', PP: 'Protiplech', PR: 'Padací prah', AC: 'Iná položka (voľný názov)' };
     F.ui.modal('Nová skladová karta', `<form id="nk" class="kf kf4">
       <label class="w">Druh položky<select name="t">${op(DR)}</select></label>
       <label data-t="KR">Kolekcia<select name="kol">${op(kol)}</select></label>
@@ -428,7 +441,7 @@
       <label data-t="RZ">Rozšírenie<select name="rz"><option>R90</option><option>R180</option></select></label>
       <label data-t="KR OB OS RZ">Farba (dekor)<select name="farba">${op(far)}</select></label>
       <label data-t="ZM">Zámok<select name="zm">${op(kov)}</select></label>
-      <label data-t="ZV ZS">Povrch závesov<select name="zv">${op(F.ZAVESY)}</select></label>
+      <label data-t="ZH ZD ZS">Povrch závesov<select name="zv">${op(F.ZAVESY)}</select></label>
       <label data-t="MR">Mriežka<select name="mr">${op(mr)}</select></label>
       <label data-t="AC" class="w">Názov položky<input name="naz" placeholder="napr. Kľučka Lucia R nikel"></label>
       <label data-t="AC">Zaradiť do<select name="druh">${op(F.DRUHY_SKLADU)}</select></label>
@@ -442,7 +455,7 @@
       <p class="w muted small" id="nkInfo"></p></form>`,
       [{ t: 'Založiť kartu', f: () => {
         const fd = Object.fromEntries(new FormData($('#nk'))), t = fd.t;
-        const kluc = { KR: `KR|${fd.kol}|${fd.prev}|${fd.farba}|${fd.sir}|${fd.vys}`, OB: 'OB|' + fd.farba, OS: `OS|${fd.zar}|${fd.farba}`, RZ: `RZ|${fd.rz}|${fd.farba}`, ZM: 'ZM|' + fd.zm, ZV: 'ZV|' + fd.zv, ZS: 'ZS|' + fd.zv, MR: 'MR|' + fd.mr, PP: 'PP|', PR: 'PR|', AC: 'AC|' + (fd.naz || '').trim().replace(/\|/g, '/') }[t];
+        const kluc = { KR: `KR|${fd.kol}|${fd.prev}|${fd.farba}|${fd.sir}|${fd.vys}`, OB: 'OB|' + fd.farba, OS: `OS|${fd.zar}|${fd.farba}`, RZ: `RZ|${fd.rz}|${fd.farba}`, ZM: 'ZM|' + fd.zm, ZH: 'ZH|' + fd.zv, ZD: 'ZD|' + fd.zv, ZS: 'ZS|' + fd.zv, MR: 'MR|' + fd.mr, PP: 'PP|', PR: 'PR|', AC: 'AC|' + (fd.naz || '').trim().replace(/\|/g, '/') }[t];
         if (t === 'AC' && !fd.naz.trim()) { F.ui.toast('Zadajte názov položky', 'err'); return false; }
         if (F.karta(kluc)) { F.ui.toast('Táto položka už má kartu – otváram ju', 'err'); F.ui.go('#/karta/' + encodeURIComponent(kluc)); return; }
         const k = F.zaistiKartu(kluc);
@@ -455,7 +468,7 @@
     const prepni = () => {
       const t = f.t.value;
       f.querySelectorAll('[data-t]').forEach(l => l.hidden = !l.dataset.t.split(' ').includes(t));
-      const kl = { KR: `KR|${f.kol.value}|${f.prev.value}|${f.farba.value}|${f.sir.value}|${f.vys.value}`, OB: 'OB|' + f.farba.value, OS: `OS|${f.zar.value}|${f.farba.value}`, RZ: `RZ|${f.rz.value}|${f.farba.value}`, ZM: 'ZM|' + f.zm.value, ZV: 'ZV|' + f.zv.value, ZS: 'ZS|' + f.zv.value, MR: 'MR|' + f.mr.value, PP: 'PP|', PR: 'PR|', AC: 'AC|' + f.naz.value.trim() }[t];
+      const kl = { KR: `KR|${f.kol.value}|${f.prev.value}|${f.farba.value}|${f.sir.value}|${f.vys.value}`, OB: 'OB|' + f.farba.value, OS: `OS|${f.zar.value}|${f.farba.value}`, RZ: `RZ|${f.rz.value}|${f.farba.value}`, ZM: 'ZM|' + f.zm.value, ZH: 'ZH|' + f.zv.value, ZD: 'ZD|' + f.zv.value, ZS: 'ZS|' + f.zv.value, MR: 'MR|' + f.mr.value, PP: 'PP|', PR: 'PR|', AC: 'AC|' + f.naz.value.trim() }[t];
       const ex = t !== 'AC' || f.naz.value.trim() ? F.karta(kl) : null;
       $('#nkInfo').innerHTML = ex ? `<span class="warnc">⚠ Karta „${e(F.kartaNazov(kl))}“ už existuje (stav ${ex.stav} ${F.kartaJednotka(kl)}).</span>` : (t === 'AC' ? 'Voľná položka – napr. kľučky, tesnenia, lepidlo, obalový materiál. Do zákaziek sa dostane ako príslušenstvo s rovnakým názvom.' : 'Položka z katalógu – systém ju bude automaticky rezervovať a vydávať podľa zákaziek.');
     };
