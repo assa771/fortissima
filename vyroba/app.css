@@ -403,7 +403,7 @@ td.ic svg{height:40px;width:auto}
 .f-row>label{display:flex;flex-direction:column;font-size:11px;color:var(--faint);gap:3px;text-transform:uppercase;letter-spacing:.04em}
 .f-row>label[hidden]{display:none}
 .f-row select,.f-row input[type=search]{font:inherit;font-size:13px;text-transform:none;letter-spacing:0;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--white);color:var(--ink);min-width:110px}
-.f-row .f-q input{min-width:220px}
+.f-row .f-q input{min-width:200px}
 .f-row.f-chk{margin-top:4px;align-items:center}.f-row.f-chk .chk-line{margin-top:6px;text-transform:none;letter-spacing:0;color:var(--soft);flex-direction:row}
 .f-row .grow{flex:1}
 th.sortable{cursor:pointer;user-select:none;white-space:nowrap} th.sortable:hover{color:var(--wood)} th.sortable.on{color:var(--ink)}
@@ -448,3 +448,39 @@ table.kvt td{vertical-align:top}
 @media print{.kpis.k6{grid-template-columns:repeat(6,1fr)} .grid-prog,.grid-stat{grid-template-columns:1.6fr 1fr} .card{break-inside:avoid}}
 .kf label[hidden],.kf p[hidden]{display:none}
 .kf p.w{grid-column:1/-1;margin:4px 0 0}
+
+/* ----- PARTNERI: kategórie, filtre, karta ----- */
+.pill i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.pill.on i{outline:1.5px solid var(--paper)}
+.kchip{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:999px;border:1px solid var(--c);color:var(--c);margin-left:6px;white-space:nowrap;vertical-align:1px}
+.stitok{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:3px;background:#E9E4D8;color:var(--soft);margin-left:4px;text-decoration:none;white-space:nowrap}
+a.stitok:hover{background:var(--brass);color:#fff}
+.akt{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.akt-aktivny{background:var(--ok)} .akt-spiaci{background:var(--brass)} .akt-neaktivny{background:var(--ox);opacity:.6} .akt-nikdy{background:transparent;border:1px solid var(--faint)}
+.card.tbl{padding:4px 8px}
+table.pz tr[data-href]{cursor:pointer} table.pz tr[data-href]:hover td{background:#FBF8F1}
+table.pz a.nm{color:inherit;text-decoration:none} table.pz a.nm:hover{text-decoration:underline}
+table.pz td.chk input,table.pz th.chk input{width:auto;margin:0}
+.bulk{position:sticky;top:8px;z-index:5;display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-color:var(--brass);background:#F5EDDF}
+.bulk[hidden]{display:none}
+.bulk label{display:flex;gap:6px;align-items:center;font-size:13px}
+.bulk select,.bulk input{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.p-tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 0}
+.p-tags .kchip{margin-left:0}
+h3.mt{margin:20px 0 8px;font-size:14px}
+.mbars{display:flex;gap:6px;align-items:flex-end;height:150px;padding-top:6px}
+.mbars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11px;color:var(--soft)}
+.mbars i{display:block;width:100%;max-width:30px;background:var(--wood);border-radius:3px 3px 0 0;min-height:1px}
+.mbars b{font:500 11px var(--mono);color:var(--ink);min-height:14px}
+.mbars span{margin-top:4px}
+.mix{margin-bottom:14px} .mix h4{margin:0 0 5px;font-size:12px;font-weight:500;color:var(--soft);text-transform:uppercase;letter-spacing:.05em}
+.mixbar{display:flex;height:14px;border-radius:4px;overflow:hidden;gap:1px}
+.mixlg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin-top:5px;color:var(--soft)}
+.mixlg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px}
+.mixlg b{color:var(--ink);font-weight:500}
+.pob-list{max-height:380px;overflow:auto}
+.zaz-f{display:grid;grid-template-columns:150px 1fr 140px auto;gap:8px;margin-bottom:12px}
+.zaz-f input,.zaz-f select{font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:#fff}
+ul.zaz{list-style:none;margin:0;padding:0} ul.zaz li{padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.zt{font:11.5px var(--mono);color:var(--faint);margin-right:6px}
+@media (max-width:900px){.zaz-f{grid-template-columns:1fr}}

@@ -559,83 +559,8 @@
   /* =====================================================================
      PARTNERI
      ===================================================================== */
-  function vPartneri(q) {
-    const d = D(), f = q.get('f') || '', hl = (q.get('q') || '');
-    const vSys = F.groupBy(d.zakazky.filter(z => z.zakaznik.partnerId), z => z.zakaznik.partnerId);
-    let list = d.partneri.slice();
-    if (f === 'obj') list = list.filter(p => p.stat && p.stat.zakazky);
-    if (f === 'bezico') list = list.filter(p => !p.ico);
-    if (f === 'hu') list = list.filter(p => p.krajina === 'HU');
-    if (f === 'zhoda') list = list.filter(p => /Možná zhoda/.test(p.poznamka || ''));
-    if (hl) { const n = F.partnerNorm(hl); list = list.filter(p => F.partnerNorm([p.nazov, ...(p.aliasy || []), p.mesto, p.ico].join(' ')).includes(n)); }
-    const zobraz = list.slice(0, 250);
-    const fl = (k, t, c) => `<a class="fchip ${f === k ? 'on' : ''}" href="#/partneri?f=${k}">${t} <i>${c}</i></a>`;
-    app().innerHTML = `<div class="v-head"><div><h1>Obchodní partneri</h1><p class="muted">${d.partneri.length} partnerov · VOC odberatelia a firmy z dodacích listov</p></div>
-      <div class="v-act"><label class="btn ghost file">Importovať (JSON / CSV)<input type="file" id="pimp" accept=".json,.csv" hidden></label><button class="btn ghost" data-act="pexp">Exportovať</button><button class="btn ghost" data-act="pweb" title="partneri.csv pre server webu">Prístupy pre web (${d.partneri.filter(p => p.web && p.web.hash).length})</button><button class="btn" data-act="pnew">+ Nový partner</button></div></div>
-      ${d.partneri.length ? `<div class="filters">${fl('', 'všetci', d.partneri.length)}${fl('obj', 's objednávkami 2024', d.partneri.filter(p => p.stat && p.stat.zakazky).length)}${fl('bezico', 'chýba IČO', d.partneri.filter(p => !p.ico).length)}${fl('hu', 'Maďarsko', d.partneri.filter(p => p.krajina === 'HU').length)}${fl('zhoda', 'na kontrolu', d.partneri.filter(p => /Možná zhoda/.test(p.poznamka || '')).length)}
-        <input type="search" id="pq" placeholder="názov, mesto, IČO…" value="${e(hl)}"></div>
-      <table class="t pt"><thead><tr><th>Partner</th><th>Mesto</th><th>IČO</th><th>IČ DPH</th><th>Hladina</th><th class="r">Zákazky 2024</th><th class="r">Obrat 2024 bez DPH</th><th>Posledná</th><th class="r">V systéme</th><th>Web</th></tr></thead><tbody>
-      ${zobraz.map(p => `<tr data-p="${p.id}"><td><b>${e(p.nazov)}</b>${p.aliasy && p.aliasy.length ? ` <span class="muted small">+${p.aliasy.length} názvov</span>` : ''}${p.poznamka ? `<br><small class="${/Možná/.test(p.poznamka) ? 'warnc' : 'muted'}">${e(p.poznamka)}</small>` : ''}</td>
-        <td>${e(p.mesto || '')}${p.krajina === 'HU' ? ' <span class="badge">HU</span>' : ''}</td><td class="mono">${e(p.ico || '')}${!p.ico ? '<span class="neg small">–</span>' : ''}</td><td class="mono small">${e(p.icdph || '')}</td>
-        <td><span class="badge b2b">${F.HLADINY[p.hladina] || p.hladina}</span></td><td class="r">${p.stat?.zakazky || ''}</td><td class="r">${p.stat?.obrat ? F.eur(p.stat.obrat) : ''}</td><td>${p.stat?.posledna ? F.fmtD(p.stat.posledna) : ''}</td><td class="r">${(vSys[p.id] || []).length || ''}</td><td>${p.web && p.web.hash ? `<span class="badge ${p.web.aktivny === false ? '' : 'web'}">${e(p.web.login)}</span>` : ''}</td></tr>`).join('')}
-      </tbody></table>${list.length > zobraz.length ? `<p class="muted">Zobrazených ${zobraz.length} z ${list.length} – spresnite hľadanie.</p>` : ''}` :
-      `<section class="card empty-db"><h2>Databáza partnerov je prázdna</h2><p>Importujte súbor <b>partneri.json</b> (pripravený z evidencie, dodacích listov a zoznamu zákazníkov) alebo CSV so stĺpcami <span class="mono">nazov; ico; dic; icdph; ulica; psc; mesto; telefon; email; hladina</span>.</p><p class="muted">Databáza sa uloží len v tomto prehliadači – nie je súčasťou verejného webu.</p></section>`}`;
-    const pq = $('#pq'); pq && pq.addEventListener('change', ev => go('#/partneri?' + new URLSearchParams({ f, q: ev.target.value })));
-    $('#pimp').addEventListener('change', ev => {
-      const fl2 = ev.target.files[0]; if (!fl2) return;
-      fl2.text().then(t => { try { const data = /\.csv$/i.test(fl2.name) ? F.partneriZCsv(t) : JSON.parse(t); const r = F.importPartnerov(Array.isArray(data) ? data : data.partneri || []); commit(`Import: ${r.nove} nových, ${r.upd} aktualizovaných`); } catch (er) { toast('Súbor sa nepodarilo načítať', 'err'); } });
-    });
-    let noveHeslo = null;
-    const edit = p => {
-      noveHeslo = null;
-      const nov = !p; p = p || { nazov: '', hladina: 'voc', krajina: 'SK', aliasy: [], stat: {} };
-      const fld = (k, l, w) => `<label class="${w ? 'w' : ''}">${l}<input name="${k}" value="${e(p[k] || '')}"></label>`;
-      const zak = d.zakazky.filter(z => z.zakaznik.partnerId === p.id);
-      modal(nov ? 'Nový partner' : e(p.nazov), `<form id="pf" class="kf">${fld('nazov', 'Obchodné meno', 1)}${fld('ulica', 'Ulica', 1)}${fld('psc', 'PSČ')}${fld('mesto', 'Mesto')}${fld('ico', 'IČO')}${fld('dic', 'DIČ')}${fld('icdph', 'IČ DPH')}
-        <label>Krajina<select name="krajina">${opt({ SK: 'Slovensko', CZ: 'Česko', HU: 'Maďarsko', AT: 'Rakúsko' }, p.krajina)}</select></label>${fld('telefon', 'Telefón')}${fld('email', 'E-mail')}
-        <label>Cenová hladina<select name="hladina">${opt(F.HLADINY, p.hladina)}</select></label><label>Úhrada<select name="uhrada">${opt({ '': '–', 'faktúra': 'faktúra', 'hotovosť': 'hotovosť', 'záloha': 'záloha' }, p.uhrada || '')}</select></label>
-        <label class="chk w"><input type="checkbox" name="predajna" ${p.predajna ? 'checked' : ''}> má predajňu (cenník „s predajňou“)</label>
-        <label class="w">Iné názvy (oddeľte bodkočiarkou)<input name="aliasy" value="${e((p.aliasy || []).join('; '))}"></label>
-        <label class="w">Pobočky / miesta vykládky – jedna na riadok: názov; ulica; PSČ; mesto; krajina<textarea name="pobocky" rows="${Math.min(10, Math.max(2, (p.pobocky || []).length + 1))}" class="mono small">${e((p.pobocky || []).map(b => [b.nazov, b.ulica, b.psc, b.mesto, b.krajina].join('; ')).join('\n'))}</textarea></label>
-        <label class="w">Poznámka<textarea name="poznamka" rows="2">${e(p.poznamka || '')}</textarea></label>
-        <fieldset class="w web-acc"><legend>Prístup do kalkulačky na webe</legend>
-          <label>Prihlasovacie meno<input name="web_login" value="${e(p.web?.login || F.loginZNazvu(p.nazov))}"></label>
-          <label class="chk"><input type="checkbox" name="web_aktivny" ${p.web?.aktivny === false ? '' : 'checked'}> prístup povolený</label>
-          <div class="w web-pw">${p.web?.hash ? `heslo nastavené ${p.web.vytvorene ? F.fmtD(p.web.vytvorene) : ''}` : 'zatiaľ bez prístupu'} <button type="button" class="btn sm ghost" id="genPw">${p.web?.hash ? 'Nové heslo' : 'Vytvoriť prístup'}</button><output id="pwOut"></output></div>
-        </fieldset></form>
-        ${!nov ? `<div class="pstat"><div><span>Zákazky 2024</span><b>${p.stat?.zakazky || 0}</b></div><div><span>Obrat 2024</span><b>${F.eur(p.stat?.obrat || 0)}</b></div><div><span>Dvere / zárubne</span><b>${p.stat?.dvere || 0} / ${p.stat?.zarubne || 0}</b></div><div><span>Zdroje</span><b class="small">${e((p.zdroje || []).join(', '))}</b></div></div>
-        ${zak.length ? `<p>Zákazky v systéme: ${zak.map(z => `<a href="#/zakazka/${z.id}">${z.id}</a>`).join(', ')}</p>` : ''}<p><a class="btn sm" href="#/nova?partner=${p.id}">+ Nová zákazka pre partnera</a></p>` : ''}`,
-        [{ t: 'Uložiť', f: () => {
-          const fd = new FormData($('#pf'));
-          if (!fd.get('nazov').trim()) return false;
-          ['nazov', 'ulica', 'psc', 'mesto', 'ico', 'dic', 'icdph', 'krajina', 'telefon', 'email', 'hladina', 'uhrada', 'poznamka'].forEach(k => p[k] = fd.get(k).trim());
-          p.predajna = !!fd.get('predajna'); p.aliasy = fd.get('aliasy').split(';').map(s => s.trim()).filter(Boolean);
-          p.pobocky = fd.get('pobocky').split('\n').map(l => l.split(';').map(s => s.trim())).filter(c => c[0]).map(([nazov, ulica, psc, mesto, krajina]) => ({ nazov, ulica: ulica || '', psc: psc || '', mesto: mesto || '', krajina: (krajina || p.krajina || 'SK').toUpperCase() }));
-          const wl = (fd.get('web_login') || '').trim();
-          if (p.web || noveHeslo) {
-            if (wl && d.partneri.some(x => x !== p && x.web && x.web.login && x.web.login.toLowerCase() === wl.toLowerCase())) { toast('Login „' + wl + '“ už používa iný partner', 'err'); return false; }
-            p.web = Object.assign(p.web || {}, { login: wl, aktivny: !!fd.get('web_aktivny') }, noveHeslo || {});
-          }
-          if (nov) F.importPartnerov([p]);
-          // aktualizovať otvorené zákazky partnera
-          d.zakazky.filter(z => z.zakaznik.partnerId === p.id && F.stavIdx(z.stav) < F.stavIdx('expedovana')).forEach(z => F.priradPartnera(z, p));
-          commit('Partner uložený');
-        } }, ...(!nov ? [{ t: 'Zmazať', cls: 'ghost neg', f: () => { if (!confirm('Zmazať partnera ' + p.nazov + '?')) return false; d.partneri = d.partneri.filter(x => x !== p); commit('Zmazané'); } }] : [])]);
-      const gb = $('#genPw');
-      gb && gb.addEventListener('click', () => {
-        const pw = F.noveHeslo(); noveHeslo = { hash: F.hashHesla(pw), vytvorene: new Date().toISOString() };
-        $('#pwOut').innerHTML = `<div class="pw-box">Heslo: <b class="mono">${pw}</b> <button type="button" class="lnk" id="cpPw">kopírovať</button><br><small>Heslo sa zobrazí len teraz – pošlite ho partnerovi. Po uložení exportujte „Prístupy pre web“ a nahrajte na server.</small></div>`;
-        $('#cpPw').onclick = () => { navigator.clipboard && navigator.clipboard.writeText(pw); toast('Skopírované', 'ok'); };
-      });
-    };
-    app().onclick = ev => {
-      const tr = ev.target.closest('tr[data-p]'); if (tr && !ev.target.closest('a')) return edit(F.partner(tr.dataset.p));
-      const b = ev.target.closest('[data-act]'); if (!b) return;
-      if (b.dataset.act === 'pnew') edit(null);
-      if (b.dataset.act === 'pweb') { const n = d.partneri.filter(p => p.web && p.web.hash).length; if (!n) { toast('Žiadny partner zatiaľ nemá prístup – nastavte ho v karte partnera', 'err'); return; } F.stiahni('partneri.csv', F.webPristupyCsv(), 'text/csv;charset=utf-8'); toast(`Exportovaných ${n} prístupov – nahrajte súbor na server do priečinka _cennik`, 'ok'); }
-      if (b.dataset.act === 'pexp') F.stiahni('partneri-' + F.today() + '.json', JSON.stringify(d.partneri, null, 1), 'application/json');
-    };
-  }
+  // zoznam partnerov a karta partnera sú v js/partneri.js
+  const vPartneri = q => F.vPartneri(q);
 
   /* ---------- samostatné dokumenty (zákazka / trasa) ---------- */
   function vDoc(typ, id) {
@@ -653,9 +578,9 @@
      ===================================================================== */
   function route() {
     const h = location.hash.slice(1) || '/prehlad', [path, qs] = h.split('?'), q = new URLSearchParams(qs || ''), c = path.split('/').filter(Boolean);
-    document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', ('#/' + c[0]).startsWith(a.getAttribute('href')) || (c[0] === 'zakazka' && a.getAttribute('href') === '#/zakazky') || (c[0] === 'davka' && a.getAttribute('href') === '#/davky') || (c[0] === 'karta' && a.getAttribute('href') === '#/sklad')));
+    document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', ('#/' + c[0]).startsWith(a.getAttribute('href')) || (c[0] === 'zakazka' && a.getAttribute('href') === '#/zakazky') || (c[0] === 'davka' && a.getAttribute('href') === '#/davky') || (c[0] === 'karta' && a.getAttribute('href') === '#/sklad') || (c[0] === 'partner' && a.getAttribute('href') === '#/partneri')));
     app().onclick = null; app().onchange = null; $('#modal').hidden = true;
-    const v = { prehlad: vPrehlad, zakazky: () => vZakazky(q), zakazka: () => vZakazka(c[1]), nova: vNova, davky: () => vDavky(q), davka: () => vDavka(c[1], c[2]), sklad: () => vSklad(q), karta: () => F.vKarta(decodeURIComponent(c[1] || ''), q), expedicia: vExpedicia, partneri: () => vPartneri(q), sken: vSken, nastavenia: vNastavenia, doc: () => vDoc(c[1], c[2]) }[c[0]] || vPrehlad;
+    const v = { prehlad: vPrehlad, zakazky: () => vZakazky(q), zakazka: () => vZakazka(c[1]), nova: vNova, davky: () => vDavky(q), davka: () => vDavka(c[1], c[2]), sklad: () => vSklad(q), karta: () => F.vKarta(decodeURIComponent(c[1] || ''), q), expedicia: vExpedicia, partneri: () => vPartneri(q), partner: () => F.vPartner(c[1], q), sken: vSken, nastavenia: vNastavenia, doc: () => vDoc(c[1], c[2]) }[c[0]] || vPrehlad;
     v();
     if (q.get('nova') === '1') { const el = document.querySelector('.plan'); el && el.scrollIntoView(); }
     window.scrollTo(0, 0);
