@@ -350,3 +350,9 @@ svg.bc{display:block;max-width:100%;height:auto}
   .cnc-row.is-done,.part.is-done{opacity:1}
 }
 .v-nakladka{max-width:100%;height:auto}
+.pp input{font-weight:500}
+.pstat{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 8px}
+.pstat div{background:var(--paper);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column}
+.pstat span{font-size:11px;color:var(--faint)} .pstat b{font:500 16px var(--serif)}
+.t.pt td{vertical-align:top}
+.empty-db{max-width:720px}

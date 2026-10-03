@@ -77,6 +77,10 @@
     return () => citajPoziciu(f, base);
   }
 
+  /* ---------- výber partnera ---------- */
+  const partnerPicker = (val) => `<label class="w pp">Partner z databázy<input name="partner" list="partneriDL" value="${e(val || '')}" placeholder="${D().partneri.length ? 'začnite písať názov alebo IČO…' : 'databáza partnerov je prázdna – importujte ju v časti Partneri'}" autocomplete="off"></label>
+    <datalist id="partneriDL">${D().partneri.map(p => `<option value="${e(p.nazov)}">${e([p.mesto, p.ico && 'IČO ' + p.ico].filter(Boolean).join(' · '))}</option>`).join('')}</datalist>`;
+
   /* ---------- modálne okno ---------- */
   function modal(titul, html, akcie) {
     const m = $('#modal');
@@ -158,10 +162,12 @@
       ${F.pipeline(z)}
       <div class="grid3">
         <section class="card"><h2>Zákazník</h2><form id="zkForm" class="kf">
+          ${partnerPicker(zk.partnerId ? (F.partner(zk.partnerId) || {}).nazov : '')}
           <label>Názov / meno<input name="nazov" value="${e(zk.nazov)}"></label>
           <label>Typ<select name="typ"><option value="retail" ${zk.typ !== 'b2b' ? 'selected' : ''}>retail (Košice a okolie)</option><option value="b2b" ${zk.typ === 'b2b' ? 'selected' : ''}>B2B partner</option></select></label>
           <label>Cenová hladina<select name="hladina">${opt({ moc: 'MOC', voc: 'VOC', 'voc-10': 'VOC −10 %', 'voc+5': 'VOC +5 %' }, zk.hladina)}</select></label>
           <label>IČO<input name="ico" value="${e(zk.ico || '')}"></label>
+          <label>DIČ<input name="dic" value="${e(zk.dic || '')}"></label><label>IČ DPH<input name="icdph" value="${e(zk.icdph || '')}"></label>
           <label class="w">Adresa<input name="adresa" value="${e(zk.adresa || '')}"></label>
           <label>Telefón<input name="telefon" value="${e(zk.telefon || '')}"></label>
           <label>E-mail<input name="email" value="${e(zk.email || '')}"></label>
@@ -193,8 +199,9 @@
 
     const save = () => F.save();
     $('#zkForm').addEventListener('change', ev => {
+      if (ev.target.name === 'partner') { const p = F.najdiPartnera(ev.target.value); if (p) { F.priradPartnera(z, p); commit('Priradený partner ' + p.nazov); } else if (ev.target.value) toast('Partner sa nenašiel', 'err'); return; }
       const fd = new FormData(ev.currentTarget);
-      ['nazov', 'typ', 'hladina', 'ico', 'adresa', 'telefon', 'email'].forEach(k => z.zakaznik[k] = fd.get(k));
+      ['nazov', 'typ', 'hladina', 'ico', 'dic', 'icdph', 'adresa', 'telefon', 'email'].forEach(k => z.zakaznik[k] = fd.get(k));
       z.terminDodania = fd.get('terminDodania'); z.poznamka = fd.get('poznamka'); z.montaz = !!fd.get('montaz'); z.zameranie = !!fd.get('zameranie');
       save(); toast('Uložené', 'ok');
     });
@@ -250,8 +257,9 @@
         <section class="card src-card"><h2>Ručne</h2><p>Zadajte pozície priamo – s okamžitým náhľadom krídla, zárubne a CNC kódov.</p><button class="btn ghost" data-act="rucne">Pridať pozíciu</button></section>
       </div>
       <section class="card"><h2>Zákazník</h2><form id="zkNew" class="kf">
+        ${partnerPicker('')}
         <label>Názov / meno<input name="nazov" required></label><label>Typ<select name="typ"><option value="retail">retail (Košice a okolie)</option><option value="b2b">B2B partner</option></select></label>
-        <label>Hladina<select name="hladina">${opt({ moc: 'MOC', voc: 'VOC', 'voc-10': 'VOC −10 %', 'voc+5': 'VOC +5 %' }, 'moc')}</select></label><label>IČO<input name="ico"></label>
+        <label>Hladina<select name="hladina">${opt({ moc: 'MOC', voc: 'VOC', 'voc-10': 'VOC −10 %', 'voc+5': 'VOC +5 %' }, 'moc')}</select></label><label>IČO<input name="ico"></label><label>DIČ<input name="dic"></label><label>IČ DPH<input name="icdph"></label><input type="hidden" name="partnerId">
         <label class="w">Adresa<input name="adresa"></label><label>Telefón<input name="telefon"></label><label>E-mail<input name="email"></label>
         <label class="chk"><input type="checkbox" name="montaz"> montáž</label><label class="chk"><input type="checkbox" name="zameranie"> zameranie</label></form></section>
       <section class="card"><div class="card-h"><h2>Pozície <span id="pocet" class="muted"></span></h2><button class="btn" data-act="vytvorit">Vytvoriť zákazku</button></div><div id="nPoz" class="pozicie"></div></section>`;
@@ -263,10 +271,13 @@
     const nacitaj = pon => {
       ponuka = pon; polozky = F.normPolozky(pon);
       const f = $('#zkNew');
-      if (pon.hladina && pon.hladina.partner) { f.nazov.value = pon.hladina.partner; f.typ.value = 'b2b'; f.hladina.value = pon.hladina.kod; }
+      if (pon.hladina && pon.hladina.partner) { const pp = F.najdiPartnera(pon.hladina.partner); if (pp) vyplnPartnera(pp); else { f.nazov.value = pon.hladina.partner; f.typ.value = 'b2b'; f.hladina.value = pon.hladina.kod; } }
       if (pon.montaz) f.montaz.checked = f.zameranie.checked = true;
       render(); toast(`Načítaných ${polozky.length} pozícií`, 'ok');
     };
+    const vyplnPartnera = p => { const f = $('#zkNew'), t = { zakaznik: {} }; F.priradPartnera(t, p); for (const k in t.zakaznik) if (f[k]) f[k].value = t.zakaznik[k]; f.partner.value = p.nazov; };
+    $('#zkNew').addEventListener('change', ev => { if (ev.target.name !== 'partner') return; const p = F.najdiPartnera(ev.target.value); if (p) { vyplnPartnera(p); toast('Údaje partnera doplnené', 'ok'); } });
+    const pq = new URLSearchParams(location.hash.split('?')[1] || '').get('partner'); if (pq && F.partner(pq)) vyplnPartnera(F.partner(pq));
     render();
     $('#file').addEventListener('change', ev => {
       const fl = ev.target.files[0]; if (!fl) return;
@@ -287,7 +298,7 @@
         if (!f.nazov.value.trim()) { f.nazov.focus(); toast('Vyplňte zákazníka', 'err'); return; }
         if (!polozky.length) { toast('Pridajte aspoň jednu pozíciu', 'err'); return; }
         const fd = new FormData(f);
-        const z = F.zPonuky(Object.assign({}, ponuka || {}, { polozky }), { nazov: fd.get('nazov'), typ: fd.get('typ'), hladina: fd.get('hladina'), ico: fd.get('ico'), adresa: fd.get('adresa'), telefon: fd.get('telefon'), email: fd.get('email') });
+        const z = F.zPonuky(Object.assign({}, ponuka || {}, { polozky }), { partnerId: fd.get('partnerId') || '', nazov: fd.get('nazov'), typ: fd.get('typ'), hladina: fd.get('hladina'), ico: fd.get('ico'), dic: fd.get('dic'), icdph: fd.get('icdph'), adresa: fd.get('adresa'), telefon: fd.get('telefon'), email: fd.get('email') });
         z.polozky = polozky.map((p, j) => Object.assign(p, { poradie: j + 1 }));
         z.montaz = !!fd.get('montaz'); z.zameranie = !!fd.get('zameranie');
         D().zakazky.push(z); F.save(); toast('Zákazka ' + z.id + ' vytvorená', 'ok'); go('#/zakazka/' + z.id);
@@ -501,6 +512,66 @@
     };
   }
 
+  /* =====================================================================
+     PARTNERI
+     ===================================================================== */
+  function vPartneri(q) {
+    const d = D(), f = q.get('f') || '', hl = (q.get('q') || '');
+    const vSys = F.groupBy(d.zakazky.filter(z => z.zakaznik.partnerId), z => z.zakaznik.partnerId);
+    let list = d.partneri.slice();
+    if (f === 'obj') list = list.filter(p => p.stat && p.stat.zakazky);
+    if (f === 'bezico') list = list.filter(p => !p.ico);
+    if (f === 'hu') list = list.filter(p => p.krajina === 'HU');
+    if (f === 'zhoda') list = list.filter(p => /Možná zhoda/.test(p.poznamka || ''));
+    if (hl) { const n = F.partnerNorm(hl); list = list.filter(p => F.partnerNorm([p.nazov, ...(p.aliasy || []), p.mesto, p.ico].join(' ')).includes(n)); }
+    const zobraz = list.slice(0, 250);
+    const fl = (k, t, c) => `<a class="fchip ${f === k ? 'on' : ''}" href="#/partneri?f=${k}">${t} <i>${c}</i></a>`;
+    app().innerHTML = `<div class="v-head"><div><h1>Obchodní partneri</h1><p class="muted">${d.partneri.length} partnerov · VOC odberatelia a firmy z dodacích listov</p></div>
+      <div class="v-act"><label class="btn ghost file">Importovať (JSON / CSV)<input type="file" id="pimp" accept=".json,.csv" hidden></label><button class="btn ghost" data-act="pexp">Exportovať</button><button class="btn" data-act="pnew">+ Nový partner</button></div></div>
+      ${d.partneri.length ? `<div class="filters">${fl('', 'všetci', d.partneri.length)}${fl('obj', 's objednávkami 2024', d.partneri.filter(p => p.stat && p.stat.zakazky).length)}${fl('bezico', 'chýba IČO', d.partneri.filter(p => !p.ico).length)}${fl('hu', 'Maďarsko', d.partneri.filter(p => p.krajina === 'HU').length)}${fl('zhoda', 'na kontrolu', d.partneri.filter(p => /Možná zhoda/.test(p.poznamka || '')).length)}
+        <input type="search" id="pq" placeholder="názov, mesto, IČO…" value="${e(hl)}"></div>
+      <table class="t pt"><thead><tr><th>Partner</th><th>Mesto</th><th>IČO</th><th>IČ DPH</th><th>Hladina</th><th class="r">Zákazky 2024</th><th class="r">Obrat 2024 bez DPH</th><th>Posledná</th><th class="r">V systéme</th></tr></thead><tbody>
+      ${zobraz.map(p => `<tr data-p="${p.id}"><td><b>${e(p.nazov)}</b>${p.aliasy && p.aliasy.length ? ` <span class="muted small">+${p.aliasy.length} názvov</span>` : ''}${p.poznamka ? `<br><small class="${/Možná/.test(p.poznamka) ? 'warnc' : 'muted'}">${e(p.poznamka)}</small>` : ''}</td>
+        <td>${e(p.mesto || '')}${p.krajina === 'HU' ? ' <span class="badge">HU</span>' : ''}</td><td class="mono">${e(p.ico || '')}${!p.ico ? '<span class="neg small">–</span>' : ''}</td><td class="mono small">${e(p.icdph || '')}</td>
+        <td><span class="badge b2b">${F.HLADINY[p.hladina] || p.hladina}</span></td><td class="r">${p.stat?.zakazky || ''}</td><td class="r">${p.stat?.obrat ? F.eur(p.stat.obrat) : ''}</td><td>${p.stat?.posledna ? F.fmtD(p.stat.posledna) : ''}</td><td class="r">${(vSys[p.id] || []).length || ''}</td></tr>`).join('')}
+      </tbody></table>${list.length > zobraz.length ? `<p class="muted">Zobrazených ${zobraz.length} z ${list.length} – spresnite hľadanie.</p>` : ''}` :
+      `<section class="card empty-db"><h2>Databáza partnerov je prázdna</h2><p>Importujte súbor <b>partneri.json</b> (pripravený z evidencie, dodacích listov a zoznamu zákazníkov) alebo CSV so stĺpcami <span class="mono">nazov; ico; dic; icdph; ulica; psc; mesto; telefon; email; hladina</span>.</p><p class="muted">Databáza sa uloží len v tomto prehliadači – nie je súčasťou verejného webu.</p></section>`}`;
+    const pq = $('#pq'); pq && pq.addEventListener('change', ev => go('#/partneri?' + new URLSearchParams({ f, q: ev.target.value })));
+    $('#pimp').addEventListener('change', ev => {
+      const fl2 = ev.target.files[0]; if (!fl2) return;
+      fl2.text().then(t => { try { const data = /\.csv$/i.test(fl2.name) ? F.partneriZCsv(t) : JSON.parse(t); const r = F.importPartnerov(Array.isArray(data) ? data : data.partneri || []); commit(`Import: ${r.nove} nových, ${r.upd} aktualizovaných`); } catch (er) { toast('Súbor sa nepodarilo načítať', 'err'); } });
+    });
+    const edit = p => {
+      const nov = !p; p = p || { nazov: '', hladina: 'voc', krajina: 'SK', aliasy: [], stat: {} };
+      const fld = (k, l, w) => `<label class="${w ? 'w' : ''}">${l}<input name="${k}" value="${e(p[k] || '')}"></label>`;
+      const zak = d.zakazky.filter(z => z.zakaznik.partnerId === p.id);
+      modal(nov ? 'Nový partner' : e(p.nazov), `<form id="pf" class="kf">${fld('nazov', 'Obchodné meno', 1)}${fld('ulica', 'Ulica', 1)}${fld('psc', 'PSČ')}${fld('mesto', 'Mesto')}${fld('ico', 'IČO')}${fld('dic', 'DIČ')}${fld('icdph', 'IČ DPH')}
+        <label>Krajina<select name="krajina">${opt({ SK: 'Slovensko', CZ: 'Česko', HU: 'Maďarsko', AT: 'Rakúsko' }, p.krajina)}</select></label>${fld('telefon', 'Telefón')}${fld('email', 'E-mail')}
+        <label>Cenová hladina<select name="hladina">${opt(F.HLADINY, p.hladina)}</select></label><label>Úhrada<select name="uhrada">${opt({ '': '–', 'faktúra': 'faktúra', 'hotovosť': 'hotovosť', 'záloha': 'záloha' }, p.uhrada || '')}</select></label>
+        <label class="chk w"><input type="checkbox" name="predajna" ${p.predajna ? 'checked' : ''}> má predajňu (cenník „s predajňou“)</label>
+        <label class="w">Iné názvy (oddeľte bodkočiarkou)<input name="aliasy" value="${e((p.aliasy || []).join('; '))}"></label>
+        <label class="w">Poznámka<textarea name="poznamka" rows="2">${e(p.poznamka || '')}</textarea></label></form>
+        ${!nov ? `<div class="pstat"><div><span>Zákazky 2024</span><b>${p.stat?.zakazky || 0}</b></div><div><span>Obrat 2024</span><b>${F.eur(p.stat?.obrat || 0)}</b></div><div><span>Dvere / zárubne</span><b>${p.stat?.dvere || 0} / ${p.stat?.zarubne || 0}</b></div><div><span>Zdroje</span><b class="small">${e((p.zdroje || []).join(', '))}</b></div></div>
+        ${zak.length ? `<p>Zákazky v systéme: ${zak.map(z => `<a href="#/zakazka/${z.id}">${z.id}</a>`).join(', ')}</p>` : ''}<p><a class="btn sm" href="#/nova?partner=${p.id}">+ Nová zákazka pre partnera</a></p>` : ''}`,
+        [{ t: 'Uložiť', f: () => {
+          const fd = new FormData($('#pf'));
+          if (!fd.get('nazov').trim()) return false;
+          ['nazov', 'ulica', 'psc', 'mesto', 'ico', 'dic', 'icdph', 'krajina', 'telefon', 'email', 'hladina', 'uhrada', 'poznamka'].forEach(k => p[k] = fd.get(k).trim());
+          p.predajna = !!fd.get('predajna'); p.aliasy = fd.get('aliasy').split(';').map(s => s.trim()).filter(Boolean);
+          if (nov) F.importPartnerov([p]);
+          // aktualizovať otvorené zákazky partnera
+          d.zakazky.filter(z => z.zakaznik.partnerId === p.id && F.stavIdx(z.stav) < F.stavIdx('expedovana')).forEach(z => F.priradPartnera(z, p));
+          commit('Partner uložený');
+        } }, ...(!nov ? [{ t: 'Zmazať', cls: 'ghost neg', f: () => { if (!confirm('Zmazať partnera ' + p.nazov + '?')) return false; d.partneri = d.partneri.filter(x => x !== p); commit('Zmazané'); } }] : [])]);
+    };
+    app().onclick = ev => {
+      const tr = ev.target.closest('tr[data-p]'); if (tr && !ev.target.closest('a')) return edit(F.partner(tr.dataset.p));
+      const b = ev.target.closest('[data-act]'); if (!b) return;
+      if (b.dataset.act === 'pnew') edit(null);
+      if (b.dataset.act === 'pexp') F.stiahni('partneri-' + F.today() + '.json', JSON.stringify(d.partneri, null, 1), 'application/json');
+    };
+  }
+
   /* ---------- samostatné dokumenty (zákazka / trasa) ---------- */
   function vDoc(typ, id) {
     let html = '', back = '#/prehlad';
@@ -519,7 +590,7 @@
     const h = location.hash.slice(1) || '/prehlad', [path, qs] = h.split('?'), q = new URLSearchParams(qs || ''), c = path.split('/').filter(Boolean);
     document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', ('#/' + c[0]).startsWith(a.getAttribute('href')) || (c[0] === 'zakazka' && a.getAttribute('href') === '#/zakazky') || (c[0] === 'davka' && a.getAttribute('href') === '#/davky')));
     app().onclick = null; app().onchange = null;
-    const v = { prehlad: vPrehlad, zakazky: () => vZakazky(q), zakazka: () => vZakazka(c[1]), nova: vNova, davky: () => vDavky(q), davka: () => vDavka(c[1], c[2]), sklad: () => vSklad(q), expedicia: vExpedicia, sken: vSken, nastavenia: vNastavenia, doc: () => vDoc(c[1], c[2]) }[c[0]] || vPrehlad;
+    const v = { prehlad: vPrehlad, zakazky: () => vZakazky(q), zakazka: () => vZakazka(c[1]), nova: vNova, davky: () => vDavky(q), davka: () => vDavka(c[1], c[2]), sklad: () => vSklad(q), expedicia: vExpedicia, partneri: () => vPartneri(q), sken: vSken, nastavenia: vNastavenia, doc: () => vDoc(c[1], c[2]) }[c[0]] || vPrehlad;
     v();
     if (q.get('nova') === '1') { const el = document.querySelector('.plan'); el && el.scrollIntoView(); }
     window.scrollTo(0, 0);

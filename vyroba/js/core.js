@@ -98,14 +98,14 @@ F.load = () => {
   try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { d = null; }
   mem = d || F.prazdne();
   mem.nastavenia = F.merge(JSON.parse(JSON.stringify(F.DEFAULT_NASTAVENIA)), mem.nastavenia || {});
-  ['zakazky', 'davky', 'trasy', 'pohyby', 'skeny', 'karty'].forEach(k => { if (!Array.isArray(mem[k])) mem[k] = []; });
+  ['zakazky', 'davky', 'trasy', 'pohyby', 'skeny', 'karty', 'partneri'].forEach(k => { if (!Array.isArray(mem[k])) mem[k] = []; });
   return mem;
 };
 F.save = () => { try { localStorage.setItem(KEY, JSON.stringify(mem)); } catch (e) { console.warn('Úložisko nedostupné', e); } };
-F.prazdne = () => ({ verzia: 1, zakazky: [], davky: [], trasy: [], karty: [], pohyby: [], skeny: [], citac: { zakazka: 0, davka: 0, trasa: 0 }, nastavenia: {} });
+F.prazdne = () => ({ verzia: 1, zakazky: [], davky: [], trasy: [], karty: [], pohyby: [], skeny: [], partneri: [], citac: { zakazka: 0, davka: 0, trasa: 0 }, nastavenia: {} });
 F.merge = (a, b) => { for (const k in b) { if (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && a[k] && typeof a[k] === 'object') F.merge(a[k], b[k]); else a[k] = b[k]; } return a; };
 F.N = () => F.load().nastavenia;
-F.reset = () => { mem = F.prazdne(); mem.nastavenia = JSON.parse(JSON.stringify(F.DEFAULT_NASTAVENIA)); F.save(); };
+F.reset = (ponechatPartnerov) => { const pp = ponechatPartnerov && mem ? mem.partneri : []; mem = F.prazdne(); mem.partneri = pp || []; mem.nastavenia = JSON.parse(JSON.stringify(F.DEFAULT_NASTAVENIA)); F.save(); };
 
 F.noveCisloZakazky = () => { const d = F.load(); d.citac.zakazka = (d.citac.zakazka || 0) + 1; return 'FP-' + String(new Date().getFullYear()).slice(2) + '-' + F.pad(d.citac.zakazka, 4); };
 F.noveCisloDavky = () => { const d = F.load(); d.citac.davka = (d.citac.davka || 0) + 1; return 'VL-' + F.pad(d.citac.davka, 3); };
@@ -478,9 +478,9 @@ F.kodPolozky = p => F.jeSlepa(p) ? `${F.zarubnaPreStenu(+p.stena).typ}-S-${F.FAR
 F.csvMRP = zakazky => {
   const n = F.N(), q = v => { const t = String(v == null ? '' : v); return /[;"\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
   const d2 = v => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',');
-  const cols = ['cislo_zakazky', 'datum_dodania', 'odberatel', 'ico', 'adresa', 'kod_polozky', 'nazov', 'mnozstvo', 'mj', 'cena_bez_dph', 'sadzba_dph', 'spolu_bez_dph'];
+  const cols = ['cislo_zakazky', 'datum_dodania', 'odberatel', 'ico', 'dic', 'ic_dph', 'adresa', 'kod_polozky', 'nazov', 'mnozstvo', 'mj', 'cena_bez_dph', 'sadzba_dph', 'spolu_bez_dph'];
   const rows = [cols.join(';')];
-  zakazky.forEach(z => F.riadkyFaktury(z).forEach(r => rows.push([z.id, z.datumy?.expedovana || F.today(), z.zakaznik.nazov, z.zakaznik.ico, z.zakaznik.adresa, r.kod, r.nazov, r.mn, 'ks', d2(r.cena), n.dphSadzba, d2(r.cena * r.mn)].map(q).join(';'))));
+  zakazky.forEach(z => F.riadkyFaktury(z).forEach(r => rows.push([z.id, z.datumy?.expedovana || F.today(), z.zakaznik.nazov, z.zakaznik.ico, z.zakaznik.dic || '', z.zakaznik.icdph || '', z.zakaznik.adresa, r.kod, r.nazov, r.mn, 'ks', d2(r.cena), n.dphSadzba, d2(r.cena * r.mn)].map(q).join(';'))));
   return '﻿' + rows.join('\r\n');
 };
 F.stiahni = (meno, text, typ) => {
@@ -493,7 +493,7 @@ F.stiahni = (meno, text, typ) => {
    UKÁŽKOVÉ DÁTA (fiktívne)
    ===================================================================== */
 F.ukazka = () => {
-  F.reset();
+  F.reset(true);
   const d = F.load();
   // sklad
   const karty = [];
@@ -558,4 +558,39 @@ F.ukazka = () => {
   d.trasy.push({ id: F.noveCisloTrasy(), datum: F.nextWorkDay(F.addDays(F.today(), 2)), vozidlo: 'Iveco Daily KE-123AB', vodic: 'Marek', zastavky: [hot.id], stav: 'planovana' });
   hot.trasa = d.trasy[0].id;
   F.save();
+};
+
+/* =====================================================================
+   PARTNERI (B2B odberatelia) – databáza sa importuje zo súboru, nie je súčasťou webu
+   ===================================================================== */
+F.HLADINY = { moc: 'MOC', voc: 'VOC', 'voc-10': 'VOC −10 %', 'voc+5': 'VOC +5 %' };
+F.partner = id => F.load().partneri.find(p => p.id === id);
+F.adresaPartnera = p => [p.ulica, [p.psc, p.mesto].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+F.partnerNorm = s => String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+F.najdiPartnera = text => {
+  const n = F.partnerNorm(text); if (!n) return null;
+  const P = F.load().partneri;
+  return P.find(p => p.id === text) || P.find(p => F.partnerNorm(p.nazov) === n) || P.find(p => (p.aliasy || []).some(a => F.partnerNorm(a) === n)) || P.find(p => p.ico && p.ico === String(text).trim()) || null;
+};
+/** Vyplní údaje zákazníka zákazky z partnera */
+F.priradPartnera = (z, p) => {
+  Object.assign(z.zakaznik, { partnerId: p.id, nazov: p.nazov, typ: 'b2b', hladina: p.hladina || 'voc', ico: p.ico || '', dic: p.dic || '', icdph: p.icdph || '',
+    adresa: F.adresaPartnera(p), telefon: p.telefon || z.zakaznik.telefon || '', email: p.email || z.zakaznik.email || '' });
+};
+/** Import: zlúči podľa id, IČO alebo názvu; vráti počty */
+F.importPartnerov = zoznam => {
+  const P = F.load().partneri; let nove = 0, upd = 0;
+  zoznam.forEach(x => {
+    if (!x || !x.nazov) return;
+    const ex = (x.id && P.find(p => p.id === x.id)) || (x.ico && P.find(p => p.ico === x.ico)) || (!x.id && P.find(p => F.partnerNorm(p.nazov) === F.partnerNorm(x.nazov)));
+    if (ex) { Object.assign(ex, x, { id: ex.id }); upd++; }
+    else { P.push(Object.assign({ id: 'P' + String(P.length + 1).padStart(3, '0'), hladina: 'voc', krajina: 'SK', aliasy: [], stat: {} }, x)); nove++; }
+  });
+  return { nove, upd };
+};
+F.partneriZCsv = text => {
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(Boolean), sep = lines[0].includes(';') ? ';' : ',';
+  const head = lines.shift().split(sep).map(h => F.partnerNorm(h));
+  const map = { nazov: ['nazov', 'firma', 'odberatel', 'meno'], ico: ['ico'], dic: ['dic'], icdph: ['icdph'], ulica: ['ulica', 'adresa'], psc: ['psc'], mesto: ['mesto', 'obec'], telefon: ['telefon', 'tel'], email: ['email', 'mail'], hladina: ['hladina'] };
+  return lines.map(l => { const c = l.split(sep), o = {}; for (const k in map) { const i = head.findIndex(h => map[k].includes(h)); if (i >= 0) o[k] = (c[i] || '').replace(/^"|"$/g, '').trim(); } return o; });
 };

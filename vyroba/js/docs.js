@@ -153,7 +153,7 @@
     const acc = (z.prislusenstvo || []).map(a => `<tr><td></td><td></td><td>${e(a.nazov)}</td><td class="r big">${a.ks}</td></tr>`).join('');
     return `<section class="sheet">${hlav('Dodací list', 'DL-' + z.id, `k zákazke ${z.id}${z.ponuka ? ' · ponuka ' + e(z.ponuka) : ''}`, tr ? `<div class="stop">zastávka <b>${stop}</b> · ${e(tr.id)}</div>` : '')}
       <div class="parties"><div><span>Dodávateľ</span><b>${e(n.firma.nazov)}</b><br>${e(n.firma.adresa)}<br>IČO ${e(n.firma.ico)} · IČ DPH ${e(n.firma.icdph)}</div>
-        <div><span>Odberateľ</span><b>${e(z.zakaznik.nazov)}</b><br>${e(z.zakaznik.adresa || '')}<br>${z.zakaznik.ico ? 'IČO ' + e(z.zakaznik.ico) + ' · ' : ''}${e(z.zakaznik.telefon || '')}</div>
+        <div><span>Odberateľ</span><b>${e(z.zakaznik.nazov)}</b><br>${e(z.zakaznik.adresa || '')}<br>${z.zakaznik.ico ? 'IČO ' + e(z.zakaznik.ico) : ''}${z.zakaznik.icdph ? ' · IČ DPH ' + e(z.zakaznik.icdph) : z.zakaznik.dic ? ' · DIČ ' + e(z.zakaznik.dic) : ''}<br>${e(z.zakaznik.telefon || '')}</div>
         <div><span>Dodanie</span><b>${tr ? F.fmtD(tr.datum) : '–'}</b><br>${tr ? e(tr.vozidlo || '') : ''}<br>${z.montaz ? 's montážou' : 'bez montáže'}</div></div>
       <table class="doc-t"><thead><tr><th>#</th><th></th><th>Položka</th><th class="r">Ks</th></tr></thead><tbody>${rows}${acc}</tbody></table>
       <p class="muted">Počet balíkov / kusov na nakládku: <b>${kusy.length}</b> (krídla ${kusy.filter(k => k.typ === 'kridlo').length}, dielce zárubní ${kusy.filter(k => k.typ === 'dielec').length}, rozšírenia ${kusy.filter(k => k.typ === 'rozsirenie').length})</p>
