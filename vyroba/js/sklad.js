@@ -561,6 +561,7 @@
         <section class="card nakres" id="nkDrop"><div class="card-h"><h2>Nákres</h2><div class="no-print nk-act">
           <label class="btn sm ghost file">Nahrať obrázok<input type="file" id="nkFile" accept="image/*" hidden></label>
           ${k.nakres && k.nakres.src ? '<button class="btn sm ghost" data-act="nk-ilu">Vrátiť ilustračný</button>' : ''}${k.nakres && k.nakres.skryty ? '<button class="btn sm ghost" data-act="nk-ilu">Zobraziť ilustračný</button>' : '<button class="btn sm ghost" data-act="nk-skry">Skryť nákres</button>'}
+          <button class="btn sm" data-act="nk-kresli">${k.nakres && k.nakres.tvary ? '✎ Upraviť nákres' : '✎ Nakresliť'}</button>
           <button class="btn sm ghost" data-act="nk-z">Prevziať z inej karty</button></div></div>
           ${F.kartaNakres(o)}<p class="muted small no-print nk-tip">Obrázok (foto, výkres, PNG/JPG/SVG) môžete aj pretiahnuť sem alebo vložiť zo schránky (Ctrl+V).</p></section>
       </div>
@@ -626,6 +627,11 @@
       const b = ev.target.closest('[data-act]'); if (!b) return; ev.stopPropagation();
       if (b.dataset.act === 'nk-ilu') ulozNakres(null, 'Ilustračný nákres');
       if (b.dataset.act === 'nk-skry') ulozNakres({ skryty: true }, 'Nákres skrytý');
+      if (b.dataset.act === 'nk-kresli') {
+        const m = F.ilustracnyNakres(o).match(/<svg[\s\S]*?<\/svg>/), podklad = m ? m[0].replace(/^<svg ([^>]*)>/, '<svg xmlns="http://www.w3.org/2000/svg" $1><style>.t-lab,.t-ax,.dim text{font:8px monospace;fill:#666}.t-bar{font:8px monospace}</style>') : '';
+        F.editorNakresu({ tvary: k.nakres && k.nakres.tvary, podklad, titul: 'Nákres – ' + F.kartaNazov(kluc) },
+          (tvary, svg) => ulozNakres({ src: F.svgDataUrl(svg), tvary, nazov: 'nakreslený (vektor)', datum: F.today() }, 'Nákres uložený'));
+      }
       if (b.dataset.act === 'nk-z') {
         const s = D().karty.filter(x => x.nakres && x.nakres.src && x.kluc !== kluc);
         if (!s.length) return F.ui.toast('Žiadna iná karta zatiaľ nemá vlastný nákres', 'err');

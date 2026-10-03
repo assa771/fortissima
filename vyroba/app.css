@@ -531,3 +531,19 @@ table.trt tr[data-href]{cursor:pointer} table.trt tr[data-href]:hover td{backgro
 .nk-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
 .nk-opt{display:flex;flex-direction:column;gap:6px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:var(--r);background:#fff;cursor:pointer;font:inherit;font-size:12px}
 .nk-opt:hover{border-color:var(--brass)} .nk-opt img{height:90px;max-width:100%;object-fit:contain}
+/* editor nákresu */
+.kr-wrap{position:fixed;inset:0;background:rgba(31,27,22,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.kr-box{background:var(--white);border-radius:10px;width:min(1180px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.kr-box header,.kr-box footer{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.kr-box footer{border-top:1px solid var(--line);border-bottom:0;justify-content:flex-end} .kr-box footer span{margin-right:auto}
+.kr-box header h2{margin:0;font-size:18px} .kr-box header .x{margin-left:auto}
+.kr-main{display:grid;grid-template-columns:200px 1fr;gap:16px;padding:16px 18px;min-height:0;overflow:auto}
+.kr-tools{display:flex;flex-direction:column;gap:10px;font-size:12.5px}
+.kr-tools label{display:flex;flex-direction:column;gap:3px;color:var(--soft)} .kr-tools label.chk-line{flex-direction:row;margin:0}
+.kr-tools select{font:inherit;padding:5px 6px;border:1px solid var(--line);border-radius:6px}
+.kr-grp{display:flex;flex-wrap:wrap;gap:5px}
+.kr-n{font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--line);background:var(--paper);border-radius:6px;cursor:pointer;flex:1 1 44%}
+.kr-n.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.kr-plocha{border:1px solid var(--line);border-radius:8px;background:#fff;display:flex}
+.kr-plocha svg{width:100%;height:auto;max-height:calc(100vh - 220px);cursor:crosshair;touch-action:none;user-select:none}
+@media (max-width:800px){.kr-main{grid-template-columns:1fr}}
