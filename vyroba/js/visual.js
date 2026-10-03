@@ -20,53 +20,76 @@
   const dimH = (x1, x2, y, txt, col = C.wood) => `<g class="dim"><line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${col}" stroke-width=".7"/><line x1="${x1}" y1="${y - 3}" x2="${x1}" y2="${y + 3}" stroke="${col}" stroke-width=".7"/><line x1="${x2}" y1="${y - 3}" x2="${x2}" y2="${y + 3}" stroke="${col}" stroke-width=".7"/><text x="${(x1 + x2) / 2}" y="${y - 3}" text-anchor="middle" fill="${col}">${txt}</text></g>`;
   const dimV = (x, y1, y2, txt, col = C.wood) => `<g class="dim"><line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${col}" stroke-width=".7"/><line x1="${x - 3}" y1="${y1}" x2="${x + 3}" y2="${y1}" stroke="${col}" stroke-width=".7"/><line x1="${x - 3}" y1="${y2}" x2="${x + 3}" y2="${y2}" stroke="${col}" stroke-width=".7"/><text x="${x - 4}" y="${(y1 + y2) / 2}" text-anchor="middle" fill="${col}" transform="rotate(-90 ${x - 4} ${(y1 + y2) / 2})">${txt}</text></g>`;
 
-  /* ---------- krídlo (pohľad zo strany otvárania) ---------- */
+  /* ---------- krídlo – kreslené rovnako ako na webe Fortissima (rozmery v mm) ---------- */
+  const FW = {
+    biela:     { leaf: '#F4F3F0', edge: '#C9C5BE', frame: '#EFEEEA', line: 'rgba(60,52,44,.16)' },
+    kasmirova: { leaf: '#D9CDBD', edge: '#ADA090', frame: '#D3C6B5', line: 'rgba(60,45,30,.22)' },
+  };
+  F.FW = FW;
   F.svgKridlo = (p, o = {}) => {
-    const k = F.kridlo(p), H = o.h || 170, s = H / k.polotovarH;
-    const w = k.w * s, h = k.h * s, hp = k.polotovarH * s, mx = 26, my = 16;
-    const W = w + mx + 14, HH = hp + my + 14;
-    const fill = F.FARBY[p.farba]?.hex || '#eee';
-    const lave = p.smer !== 'prave';
-    const hx = lave ? mx : mx + w;                 // strana závesov
-    const lx = lave ? mx + w - 9 : mx + 9;         // strana zámku
-    let g = '';
-    // polotovar (prerušovane) a prirezanie (šrafované)
-    if (k.prirez > 0) {
-      g += `<rect x="${mx}" y="${my + h}" width="${w}" height="${hp - h}" fill="url(#hatch)" stroke="${C.ox}" stroke-dasharray="2 2" stroke-width=".7"/>`;
-      g += `<text x="${mx + w / 2}" y="${my + h + (hp - h) / 2 + 3}" text-anchor="middle" class="t-ox">−${k.prirez}</text>`;
+    const k = F.kridlo(p), L = FW[p.farba] || FW.biela;
+    const lw = k.w, lh = k.h, sk = k.sk, falc = k.falc;
+    const prir = k.prirez, hp = lh + Math.max(0, prir);
+    const M = o.dim === false ? 30 : 150;                       // okraj na kóty
+    const lx = M, ly = M * .8;
+    const W = lw + M + 40, H = hp + M * .8 + 40;
+    const hingeLeft = p.smer !== 'prave', lockX = hingeLeft ? lx + lw : lx, dir = hingeLeft ? -1 : 1;
+    const kov = String(p.kovanie || ''), kc = /cierna/.test(kov) ? '#2B2826' : '#B8BBBF', kcs = /cierna/.test(kov) ? '#111' : '#8E9297';
+    const g = [];
+    // odrezok z polotovaru (STN z HU, skrátenie)
+    if (prir > 0) {
+      g.push(`<rect x="${lx}" y="${ly + lh}" width="${lw}" height="${prir}" fill="url(#hatchK)" stroke="${C.ox}" stroke-width="5" stroke-dasharray="22 16"/>`);
+      if (prir > 40) g.push(`<text x="${lx + lw / 2}" y="${ly + lh + prir / 2 + 18}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="50" fill="${C.ox}">−${prir}</text>`);
     }
-    g += `<rect x="${mx}" y="${my}" width="${w}" height="${h}" fill="${fill}" stroke="${C.ink}" stroke-width="1"/>`;
-    if (k.falc) g += `<rect x="${mx + 3}" y="${my + 3}" width="${w - 6}" height="${h - 3}" fill="none" stroke="${C.faint}" stroke-width=".5" stroke-dasharray="3 2"/>`;
-    // rámové krídla – vlysy
-    if (p.kolekcia === 'vertikal') {
-      const st = 120 * s, tr = 120 * s, br = 145 * s;
-      g += `<rect x="${mx + st}" y="${my + tr}" width="${w - 2 * st}" height="${h - tr - br}" fill="none" stroke="${C.soft}" stroke-width=".6"/>`;
-      for (let i = 1; i < 4; i++) { const x = mx + st + (w - 2 * st) * i / 4; g += `<line x1="${x}" y1="${my + tr}" x2="${x}" y2="${my + h - br}" stroke="${C.soft}" stroke-width=".5"/>`; }
-    } else if (p.kolekcia === 'prestige') {
-      const st = 120 * s, tr = 120 * s, br = 145 * s, mid = 110 * s, ih = (h - tr - br - 2 * mid) / 3;
-      for (let i = 0; i < 3; i++) g += `<rect x="${mx + st}" y="${my + tr + i * (ih + mid)}" width="${w - 2 * st}" height="${ih}" fill="none" stroke="${C.soft}" stroke-width=".6"/>`;
+    g.push(`<rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" fill="${L.leaf}" stroke="${L.edge}" stroke-width="5"/>`);
+    // rámová konštrukcia: vlysy 145 mm, spodný vlys 340 (205,5/210) alebo 255 (STN), skrátenie ide zo spodného vlysu
+    const st = 145, tr = 145, br = (p.vyska === '197' ? 255 : 340) - sk;
+    const px = lx + st, pw = lw - 2 * st, py = ly + tr, ph = lh - tr - br;
+    const glass = '#C7CFD8', gEdge = '#9EA8B3';
+    if (p.kolekcia !== 'minimal' && pw > 120) {
+      g.push(`<g fill="none" stroke="${L.line}" stroke-width="4"><line x1="${px}" y1="${ly + 4}" x2="${px}" y2="${ly + lh - 4}"/><line x1="${px + pw}" y1="${ly + 4}" x2="${px + pw}" y2="${ly + lh - 4}"/><line x1="${px}" y1="${py}" x2="${px + pw}" y2="${py}"/><line x1="${px}" y1="${py + ph}" x2="${px + pw}" y2="${py + ph}"/></g>`);
+      if (p.kolekcia === 'vertikal') {
+        const gw = 150, gx = hingeLeft ? px + pw - gw : px;
+        g.push(`<rect x="${gx}" y="${py}" width="${gw}" height="${ph}" fill="${glass}" stroke="${gEdge}" stroke-width="3"/><rect x="${gx + 18}" y="${py + 20}" width="34" height="${ph - 40}" fill="#fff" opacity=".25"/>`);
+      } else if (p.kolekcia === 'prestige') {
+        for (let i = 1; i <= 4; i++) g.push(`<rect x="${px}" y="${py + ph * i / 5 - 10}" width="${pw}" height="20" fill="${glass}" stroke="${gEdge}" stroke-width="2"/>`);
+      }
     }
-    // závesy
-    [250, k.h / 2 + 100, k.h - 250].forEach(d => { const y = my + h - d * s; g += `<rect x="${hx - (lave ? 3 : 0)}" y="${y - 6}" width="3" height="12" fill="${p.zavesy === 'cierna' ? C.ink : '#9A9A9A'}"/>`; });
-    // zámok (1000 mm od spodu krídla)
-    if (p.kovanie && p.kovanie !== 'bez') {
-      const y = my + h - 1000 * s, cz = /cierna/.test(p.kovanie) ? C.ink : '#9A9A9A';
-      g += `<circle cx="${lx}" cy="${y}" r="3" fill="none" stroke="${cz}" stroke-width="1.2"/><line x1="${lx}" y1="${y}" x2="${lx + (lave ? -11 : 11)}" y2="${y}" stroke="${cz}" stroke-width="1.6" stroke-linecap="round"/>`;
-      if (/^wc/.test(p.kovanie)) g += `<circle cx="${lx}" cy="${y + 9}" r="1.8" fill="${cz}"/>`; else g += `<rect x="${lx - 1}" y="${y + 7}" width="2" height="4" fill="${cz}"/>`;
+    // závesy (len falcové – bezfalcové majú skryté)
+    if (falc) {
+      const hx = hingeLeft ? lx - 6 : lx + lw - 10, cz = p.zavesy === 'cierna';
+      [ly + 200, ly + lh / 2 - 60, ly + lh - 320].forEach(hy => g.push(`<rect x="${hx}" y="${hy}" width="16" height="110" rx="7" fill="${cz ? '#2B2826' : '#B8BBBF'}" stroke="${cz ? '#111' : '#8E9297'}" stroke-width="2"/>`));
     }
-    // mriežka
+    // vetracia mriežka v strede spodného vlysu
     if (p.mriezka && p.mriezka !== 'bez') {
-      const mw = Math.min(400 * s, w * 0.6), y = my + h - (k.ramove ? 72 : 120) * s - 30 * s;
-      const cm = { biela: '#fff', hlinik: '#B8B8B8', cierna: C.ink }[p.mriezka];
-      g += `<rect x="${mx + (w - mw) / 2}" y="${y}" width="${mw}" height="${60 * s}" fill="${cm}" stroke="${C.soft}" stroke-width=".5"/>`;
-      for (let i = 1; i < 6; i++) g += `<line x1="${mx + (w - mw) / 2 + 3}" y1="${y + 60 * s * i / 6}" x2="${mx + (w + mw) / 2 - 3}" y2="${y + 60 * s * i / 6}" stroke="${C.soft}" stroke-width=".3"/>`;
+      const MC = { biela: ['#F7F6F2', '#BDB8B0', '#D6D2CB'], hlinik: ['#C9CCD0', '#8E9297', '#9DA1A6'], cierna: ['#2E2B29', '#111', '#4A4643'] }[p.mriezka] || ['#C9CCD0', '#8E9297', '#9DA1A6'];
+      const gw = Math.min(460, lw - 160), gh = 100, gx = lx + (lw - gw) / 2, gy = ly + lh - br / 2 - gh / 2;
+      g.push(`<rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" rx="6" fill="${MC[0]}" stroke="${MC[1]}" stroke-width="3"/>`);
+      for (let i = 1; i <= 5; i++) g.push(`<rect x="${gx + 22}" y="${gy + i * gh / 6 - 4}" width="${gw - 44}" height="8" rx="3" fill="${MC[2]}"/>`);
     }
-    // prah
-    if (p.prah) g += `<rect x="${mx + 6}" y="${my + h - 5}" width="${w - 12}" height="4" fill="${C.brass}"/>`;
-    // šípka otvárania
-    g += `<path d="M${hx} ${my + 6} L${lx} ${my + h / 2} L${hx} ${my + h - 6}" fill="none" stroke="${C.faint}" stroke-width=".5" stroke-dasharray="3 3"/>`;
-    if (o.dim !== false) { g += dimH(mx, mx + w, my - 5, k.w); g += dimV(mx - 9, my, my + h, k.h); }
-    return `<svg class="v-kridlo" viewBox="0 0 ${W} ${HH}" width="${W}" height="${HH}" role="img" aria-label="Krídlo ${k.w} × ${k.h}"><defs><pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4" stroke="${C.ox}" stroke-width=".8" opacity=".55"/></pattern></defs>${g}</svg>`;
+    if (p.prah) g.push(`<rect x="${lx + 40}" y="${ly + lh - 34}" width="${lw - 80}" height="22" rx="4" fill="#A9ADB2" stroke="#7E8287" stroke-width="2"/>`);
+    // kľučka a zámok (os kľučky 1050 mm od podlahy ≈ 1042 od spodu krídla)
+    const hy = ly + lh - 1042, rx = lockX + dir * 70;
+    g.push(`<rect x="${rx - 26}" y="${hy - 26}" width="52" height="52" rx="6" fill="${kc}" stroke="${kcs}" stroke-width="2"/><rect x="${Math.min(rx, rx + dir * 150)}" y="${hy - 9}" width="150" height="18" rx="9" fill="${kc}" stroke="${kcs}" stroke-width="2"/>`);
+    const typZ = (kov.match(/^(bb|pz|wc)/) || [])[1];
+    if (typZ) {
+      const ky = hy + 110, R0 = 34, sym = /cierna/.test(kov) ? '#EDE9E2' : '#26221F';
+      g.push(`<rect x="${rx - R0 - 4}" y="${ky - R0 - 4}" width="${2 * R0 + 8}" height="${2 * R0 + 8}" rx="10" fill="#fff" opacity=".85"/><rect x="${rx - R0}" y="${ky - R0}" width="${2 * R0}" height="${2 * R0}" rx="8" fill="${kc}" stroke="${kcs}" stroke-width="3"/>`);
+      if (typZ === 'bb') g.push(`<circle cx="${rx}" cy="${ky - 10}" r="10" fill="${sym}"/><polygon points="${rx - 5},${ky - 4} ${rx + 5},${ky - 4} ${rx + 11},${ky + 22} ${rx - 11},${ky + 22}" fill="${sym}"/>`);
+      else if (typZ === 'pz') g.push(`<path d="M${rx - 8} ${ky - 4}A13 13 0 1 1 ${rx + 8} ${ky - 4}V${ky + 22}Q${rx} ${ky + 27} ${rx - 8} ${ky + 22}Z" fill="${sym}"/><rect x="${rx - 2.5}" y="${ky - 20}" width="5" height="22" rx="2" fill="${kc}"/>`);
+      else g.push(`<circle cx="${rx}" cy="${ky}" r="19" fill="${sym}"/><rect x="${rx - 15}" y="${ky - 4}" width="30" height="8" rx="4" fill="${kc}"/><circle cx="${rx + dir * -28}" cy="${ky + 24}" r="6" fill="#C2342F"/>`);
+      const ty = ky + R0 + 18;
+      g.push(`<rect x="${rx - 44}" y="${ty}" width="88" height="46" rx="23" fill="#7A1F2B"/><text x="${rx}" y="${ty + 33}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="32" font-weight="700" fill="#fff">${typZ.toUpperCase()}</text>`);
+    }
+    // kóty v mm
+    if (o.dim !== false) {
+      const col = C.wood, t = 'font-family="JetBrains Mono, monospace" font-size="60" fill="' + col + '"';
+      g.push(`<g stroke="${col}" stroke-width="4"><line x1="${lx}" y1="${ly - 45}" x2="${lx + lw}" y2="${ly - 45}"/><line x1="${lx}" y1="${ly - 70}" x2="${lx}" y2="${ly - 20}"/><line x1="${lx + lw}" y1="${ly - 70}" x2="${lx + lw}" y2="${ly - 20}"/>
+        <line x1="${lx - 70}" y1="${ly}" x2="${lx - 70}" y2="${ly + lh}"/><line x1="${lx - 95}" y1="${ly}" x2="${lx - 45}" y2="${ly}"/><line x1="${lx - 95}" y1="${ly + lh}" x2="${lx - 45}" y2="${ly + lh}"/></g>
+        <text x="${lx + lw / 2}" y="${ly - 62}" text-anchor="middle" ${t}>${lw}</text><text x="${lx - 85}" y="${ly + lh / 2}" text-anchor="middle" ${t} transform="rotate(-90 ${lx - 85} ${ly + lh / 2})">${lh}</text>`);
+    }
+    const hpx = o.h || 170, wpx = Math.round(hpx * W / H);
+    return `<svg class="v-kridlo" viewBox="0 0 ${W} ${H}" width="${wpx}" height="${hpx}" role="img" aria-label="Krídlo ${lw} × ${lh}"><defs><pattern id="hatchK" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="40" stroke="${C.ox}" stroke-width="8" opacity=".45"/></pattern></defs>${g.join('')}</svg>`;
   };
 
   /* ---------- zárubňa – čelný pohľad, zvýraznený dielec ---------- */
@@ -74,20 +97,20 @@
     zr = zr || F.zarubna(p);
     const H = o.h || 170, s = H / zr.oblH, W0 = zr.oblW * s, ob = zr.ob * s, mx = 24, my = 16, W = W0 + mx + 12, HH = H + my + 10;
     const hl = o.hl || '', lave = p.smer !== 'prave';
-    const fill = F.FARBY[p.farba_zarubne]?.hex || '#eee';
+    const fill = (FW[p.farba_zarubne] || FW.biela).frame, edge = (FW[p.farba_zarubne] || FW.biela).edge;
     const col = id => id === hl ? C.brass : fill;
     const x0 = mx, y0 = my, x1 = mx + W0, y1 = my + H;
     // ľavá a pravá stojka podľa smeru
     const idL = zr.slepa ? 'ZL' : (lave ? 'ZZ' : 'ZR'), idP = zr.slepa ? 'ZP' : (lave ? 'ZR' : 'ZZ');
     let g = '';
     if (zr.tupo) {
-      g += `<rect x="${x0}" y="${y0}" width="${ob}" height="${H}" fill="${col(idL)}" stroke="${C.ink}" stroke-width=".8"/>`;
-      g += `<rect x="${x1 - ob}" y="${y0}" width="${ob}" height="${H}" fill="${col(idP)}" stroke="${C.ink}" stroke-width=".8"/>`;
-      g += `<rect x="${x0 + ob}" y="${y0}" width="${W0 - 2 * ob}" height="${ob}" fill="${col('ZH')}" stroke="${C.ink}" stroke-width=".8"/>`;
+      g += `<rect x="${x0}" y="${y0}" width="${ob}" height="${H}" fill="${col(idL)}" stroke="${edge}" stroke-width="1"/>`;
+      g += `<rect x="${x1 - ob}" y="${y0}" width="${ob}" height="${H}" fill="${col(idP)}" stroke="${edge}" stroke-width="1"/>`;
+      g += `<rect x="${x0 + ob}" y="${y0}" width="${W0 - 2 * ob}" height="${ob}" fill="${col('ZH')}" stroke="${edge}" stroke-width="1"/>`;
     } else {
-      g += `<polygon points="${x0},${y0} ${x0 + ob},${y0 + ob} ${x0 + ob},${y1} ${x0},${y1}" fill="${col(idL)}" stroke="${C.ink}" stroke-width=".8"/>`;
-      g += `<polygon points="${x1},${y0} ${x1 - ob},${y0 + ob} ${x1 - ob},${y1} ${x1},${y1}" fill="${col(idP)}" stroke="${C.ink}" stroke-width=".8"/>`;
-      g += `<polygon points="${x0},${y0} ${x1},${y0} ${x1 - ob},${y0 + ob} ${x0 + ob},${y0 + ob}" fill="${col('ZH')}" stroke="${C.ink}" stroke-width=".8"/>`;
+      g += `<polygon points="${x0},${y0} ${x0 + ob},${y0 + ob} ${x0 + ob},${y1} ${x0},${y1}" fill="${col(idL)}" stroke="${edge}" stroke-width="1"/>`;
+      g += `<polygon points="${x1},${y0} ${x1 - ob},${y0 + ob} ${x1 - ob},${y1} ${x1},${y1}" fill="${col(idP)}" stroke="${edge}" stroke-width="1"/>`;
+      g += `<polygon points="${x0},${y0} ${x1},${y0} ${x1 - ob},${y0 + ob} ${x0 + ob},${y0 + ob}" fill="${col('ZH')}" stroke="${edge}" stroke-width="1"/>`;
     }
     // otvor
     g += `<rect x="${x0 + ob}" y="${y0 + ob}" width="${W0 - 2 * ob}" height="${H - ob}" fill="none" stroke="${C.line}" stroke-dasharray="2 2" stroke-width=".5"/>`;
