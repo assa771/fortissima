@@ -9,6 +9,7 @@
   const toast = (msg, typ) => { const t = $('#toast'); t.textContent = msg; t.className = 'toast show ' + (typ || ''); clearTimeout(toastT); toastT = setTimeout(() => t.className = 'toast', 2600); };
   const go = h => { location.hash = h; };
   const commit = (msg) => { F.save(); if (msg) toast(msg, 'ok'); route(); };
+  F.ui = { toast, go, commit, modal: (...a) => modal(...a) };
 
   /* ---------- formulár pozície (spoločný pre novú zákazku aj úpravu) ---------- */
   const opt = (obj, val) => Object.entries(obj).map(([k, v]) => `<option value="${k}" ${String(k) === String(val) ? 'selected' : ''}>${e(typeof v === 'object' ? v.nazov || v.txt : v)}</option>`).join('');
@@ -127,7 +128,7 @@
       </div>
       <div class="grid2">
         <section class="card"><h2>Čaká na zaradenie do dávky</h2>${caka.length ? `<table class="t"><tbody>${caka.map(z => { const t = F.terminExpedicie(z); return `<tr><td><a href="#/zakazka/${z.id}">${z.id}</a></td><td>${e(z.zakaznik.nazov)}</td><td>${F.pocty(z).kr} kr.</td><td>${t.dost.ok ? '<span class="ok">materiál OK</span>' : `<span class="neg">chýba do ${F.fmtD(t.dost.materialOd)}</span>`}</td><td class="r">exp. ${F.fmtD(t.expedicia)}</td></tr>`; }).join('')}</tbody></table><a class="btn sm" href="#/davky?nova=1">Naplánovať dávku</a>` : '<p class="muted">Nič nečaká.</p>'}</section>
-        <section class="card"><h2>Sklad – treba objednať</h2>${podMin.length ? `<table class="t"><tbody>${podMin.map(k => `<tr><td>${e(F.kartaNazov(k.kluc))}</td><td class="r neg">${+(k.stav - (rez[k.kluc] || 0)).toFixed(1)} ${F.kartaJednotka(k.kluc)}</td><td class="r muted">min ${k.min}</td><td class="r">${k.objednane ? `obj. ${k.objednane} · ${F.fmtD(k.prichod)}` : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Všetko nad minimom.</p>'}</section>
+        <section class="card"><h2>Sklad – treba objednať</h2>${podMin.length ? `<table class="t"><tbody>${podMin.map(k => `<tr data-href="#/karta/${encodeURIComponent(k.kluc)}"><td>${e(F.kartaNazov(k.kluc))}</td><td class="r neg">${+(k.stav - (rez[k.kluc] || 0)).toFixed(1)} ${F.kartaJednotka(k.kluc)}</td><td class="r muted">min ${k.min}</td><td class="r">${k.objednane ? `obj. ${k.objednane} · ${F.fmtD(k.prichod)}` : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Všetko nad minimom.</p>'}</section>
       </div>`;
   }
 
@@ -406,46 +407,8 @@
   /* =====================================================================
      SKLAD
      ===================================================================== */
-  function vSklad(q) {
-    const d = D(), rez = F.rezervacie(), lenMin = q.get('min') === '1', tab = q.get('tab') || 'karty';
-    // doplniť karty, ktoré vyžadujú zákazky
-    d.zakazky.forEach(z => Object.keys(F.potreba(z)).forEach(k => F.zaistiKartu(k)));
-    let karty = d.karty.slice().sort((a, b) => a.kluc.localeCompare(b.kluc));
-    if (lenMin) karty = karty.filter(k => k.stav - (rez[k.kluc] || 0) < k.min);
-    const skup = F.groupBy(karty, k => F.kartaSkupina(k.kluc));
-    app().innerHTML = `<div class="v-head"><div><h1>Sklad</h1><p class="muted">polotovary, profily a kovanie · rezervované = potvrdené zákazky ešte nevydané</p></div>
-      <div class="v-act"><a class="btn ghost ${lenMin ? 'on' : ''}" href="#/sklad${lenMin ? '' : '?min=1'}">${lenMin ? 'Zobraziť všetko' : 'Len pod minimom'}</a><a class="btn ghost" href="#/sklad?tab=pohyby">Pohyby</a><a class="btn ghost" href="#/sklad?tab=dodavky">Dodávky (${(d.dodavky || []).length})</a><label class="btn ghost file">Príjem dodávky (packing list)<input type="file" id="dodFile" accept=".json" hidden></label><button class="btn" data-act="prijem">+ Príjem</button></div></div>
-      ${tab === 'dodavky' ? `<section class="card"><h2>Prijaté dodávky</h2>${(d.dodavky || []).map(x => `<details class="dod"><summary><b>${e(x.cislo)}</b> · ${e(x.dodavatel)} · ${F.fmtD(x.datum)} · ${F.sum(x.polozky, y => +y.ks)} ks · brutto ${F.kg(F.sum(x.polozky, y => +y.brutto || 0))} <span class="muted small">prijaté ${F.fmtD(x.prijate)}</span></summary>${F.nahladDodavky(x)}</details>`).join('') || '<p class="muted">Zatiaľ žiadne dodávky.</p>'}</section>` :
-      tab === 'pohyby' ? `<section class="card"><h2>Pohyby</h2><table class="t"><thead><tr><th>Čas</th><th>Položka</th><th class="r">Množstvo</th><th>Typ</th><th>Doklad</th></tr></thead><tbody>${d.pohyby.slice(0, 300).map(p => `<tr><td>${F.fmtD(p.t)} ${p.t.slice(11, 16)}</td><td>${e(F.kartaNazov(p.kluc))}</td><td class="r ${p.mnozstvo < 0 ? 'neg' : 'ok'}">${p.mnozstvo > 0 ? '+' : ''}${+p.mnozstvo.toFixed(2)}</td><td>${e(p.typ)}</td><td>${e(p.doklad || '')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Žiadne pohyby.</td></tr>'}</tbody></table></section>` :
-      Object.keys(skup).map(s => `<section class="card"><h2>${s}</h2><table class="t sklad"><thead><tr><th>Položka</th><th class="r">Na sklade</th><th class="r">Rezerv.</th><th class="r">Voľné</th><th class="r">Min.</th><th class="r">Objednané</th><th>Príchod</th><th></th></tr></thead><tbody>
-        ${skup[s].map(k => { const r = +(rez[k.kluc] || 0).toFixed(2), vol = +(k.stav - r).toFixed(2), j = F.kartaJednotka(k.kluc); return `<tr class="${vol < k.min ? 'warn' : ''}" data-k="${e(k.kluc)}">
-          <td>${e(F.kartaNazov(k.kluc))}</td><td class="r"><b>${+k.stav.toFixed(2)}</b> ${j}</td><td class="r muted">${r || ''}</td><td class="r ${vol < 0 ? 'neg' : vol < k.min ? 'warnc' : ''}">${vol}</td>
-          <td class="r"><input class="num" data-f="min" value="${k.min}"></td><td class="r"><input class="num" data-f="objednane" value="${k.objednane || 0}"></td><td><input type="date" data-f="prichod" value="${k.prichod || ''}"></td>
-          <td class="r"><button class="lnk" data-act="inv">inventúra</button>${k.objednane ? ' <button class="lnk" data-act="naskladnit">naskladniť</button>' : ''}</td></tr>`; }).join('')}</tbody></table></section>`).join('')}`;
-    $('#dodFile').addEventListener('change', ev => {
-      const fl = ev.target.files[0]; if (!fl) return;
-      fl.text().then(t => {
-        let dod; try { dod = JSON.parse(t); if (dod.format !== 'fortissima-dodavka' || !Array.isArray(dod.polozky)) throw 0; } catch (er) { return toast('Súbor nie je dodávka vo formáte fortissima-dodavka', 'err'); }
-        modal('Príjem dodávky ' + e(dod.cislo), F.nahladDodavky(dod) + `<label class="chk-line"><input type="checkbox" id="dodHm" checked> prevziať hmotnosti krídel z tejto dodávky do plánovania rozvozu</label>`,
-          [{ t: 'Prijať na sklad', f: () => { try { F.prijmiDodavku(dod, { hmotnosti: $('#dodHm').checked }); commit(`Prijaté: ${F.sum(dod.polozky, x => +x.ks)} ks`); } catch (er) { toast(er.message, 'err'); return false; } } }]);
-      });
-    });
-    app().onchange = ev => {
-      const tr = ev.target.closest('[data-k]'), f = ev.target.dataset.f; if (!tr || !f) return;
-      const k = F.karta(tr.dataset.k); k[f] = f === 'prichod' ? ev.target.value : F.num(ev.target.value); F.save(); toast('Uložené', 'ok');
-    };
-    app().onclick = ev => {
-      const b = ev.target.closest('[data-act]'); if (!b) return;
-      const a = b.dataset.act, tr = b.closest('[data-k]'), k = tr && F.karta(tr.dataset.k);
-      if (a === 'inv') { const v = prompt('Inventúra – skutočný stav:\n' + F.kartaNazov(k.kluc), k.stav); if (v == null) return; F.pohyb(k.kluc, F.num(v) - k.stav, 'inventúra', 'INV ' + F.today()); commit('Inventúra zapísaná'); }
-      if (a === 'naskladnit') { F.pohyb(k.kluc, k.objednane, 'príjem', 'objednávka ' + (k.prichod || '')); k.objednane = 0; k.prichod = ''; commit('Naskladnené'); }
-      if (a === 'prijem') {
-        const kl = D().karty.slice().sort((x, y) => x.kluc.localeCompare(y.kluc));
-        modal('Príjem na sklad', `<form id="pr" class="kf"><label class="w">Položka<select name="k">${kl.map(x => `<option value="${e(x.kluc)}">${e(F.kartaNazov(x.kluc))}</option>`).join('')}</select></label><label>Množstvo<input name="m" type="number" step="0.01" required></label><label>Doklad<input name="d" placeholder="DL dodávateľa"></label></form>`,
-          [{ t: 'Prijať', f: () => { const fd = new FormData($('#pr')); const m = F.num(fd.get('m')); if (!m) return false; F.pohyb(fd.get('k'), m, 'príjem', fd.get('d')); commit('Prijaté'); } }]);
-      }
-    };
-  }
+  // zoznam skladu a skladová karta sú v js/sklad.js
+  const vSklad = q => F.vSklad(q);
 
   /* =====================================================================
      EXPEDÍCIA – trasy, nakládka, dodacie listy, export pre MRP
@@ -690,9 +653,9 @@
      ===================================================================== */
   function route() {
     const h = location.hash.slice(1) || '/prehlad', [path, qs] = h.split('?'), q = new URLSearchParams(qs || ''), c = path.split('/').filter(Boolean);
-    document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', ('#/' + c[0]).startsWith(a.getAttribute('href')) || (c[0] === 'zakazka' && a.getAttribute('href') === '#/zakazky') || (c[0] === 'davka' && a.getAttribute('href') === '#/davky')));
+    document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', ('#/' + c[0]).startsWith(a.getAttribute('href')) || (c[0] === 'zakazka' && a.getAttribute('href') === '#/zakazky') || (c[0] === 'davka' && a.getAttribute('href') === '#/davky') || (c[0] === 'karta' && a.getAttribute('href') === '#/sklad')));
     app().onclick = null; app().onchange = null;
-    const v = { prehlad: vPrehlad, zakazky: () => vZakazky(q), zakazka: () => vZakazka(c[1]), nova: vNova, davky: () => vDavky(q), davka: () => vDavka(c[1], c[2]), sklad: () => vSklad(q), expedicia: vExpedicia, partneri: () => vPartneri(q), sken: vSken, nastavenia: vNastavenia, doc: () => vDoc(c[1], c[2]) }[c[0]] || vPrehlad;
+    const v = { prehlad: vPrehlad, zakazky: () => vZakazky(q), zakazka: () => vZakazka(c[1]), nova: vNova, davky: () => vDavky(q), davka: () => vDavka(c[1], c[2]), sklad: () => vSklad(q), karta: () => F.vKarta(decodeURIComponent(c[1] || ''), q), expedicia: vExpedicia, partneri: () => vPartneri(q), sken: vSken, nastavenia: vNastavenia, doc: () => vDoc(c[1], c[2]) }[c[0]] || vPrehlad;
     v();
     if (q.get('nova') === '1') { const el = document.querySelector('.plan'); el && el.scrollIntoView(); }
     window.scrollTo(0, 0);
