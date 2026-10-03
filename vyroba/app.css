@@ -384,3 +384,11 @@ svg.bc{display:block;max-width:100%;height:auto}
 .nak-top svg{max-width:100%;height:auto}
 .doc-t tr.sub td{border-top:0}
 @media (max-width:1100px){.tr-body{grid-template-columns:1fr}.kf4{grid-template-columns:1fr 1fr}}
+.dod-h{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:10px}
+.dod-sum{display:flex;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px}
+.dod-sum span{background:var(--paper);padding:3px 8px;border-radius:4px}
+details.dod{border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin-bottom:8px}
+details.dod summary{cursor:pointer}
+.chk-line{display:flex;gap:6px;align-items:center;margin-top:12px;font-size:13px} .chk-line input{width:auto}
+.t input.num.hm{width:96px}
+td.ic svg{height:40px;width:auto}

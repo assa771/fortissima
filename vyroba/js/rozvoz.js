@@ -184,11 +184,12 @@
     const rows = st.map((s, i) => s.zakazky.map((z, j) => {
       const c = F.pocty(z), kusy = F.kusy(z), nal = kusy.filter(k => F.skenKusu(k.id).nakladka).length;
       return `<tr class="${j ? 'sub' : 'stop-first'}">${j ? '<td></td><td></td><td></td>' : `<td class="big" rowspan="1">${i + 1}.</td><td class="big">${st.length - i}.</td><td><b>${e(s.dodanie.nazov)}</b><br><span class="muted">${e(F.dodanieText(s.dodanie))}${s.dodanie.kontakt ? ' · ' + e(s.dodanie.kontakt) : ''}</span></td>`}
-        <td>${e(z.id)}<br><span class="muted small">${e(z.zakaznik.nazov)}</span></td><td class="r">${c.kr}</td><td class="r">${c.zar}</td><td class="r">${kusy.length}</td><td class="r">${nal}/${kusy.length}</td><td class="chk"><span class="box"></span></td></tr>`;
+        <td>${e(z.id)}<br><span class="muted small">${e(z.zakaznik.nazov)}</span></td><td class="r">${c.kr}</td><td class="r">${c.zar}</td><td class="r">${kusy.length}</td><td class="r">${F.hmotnostZakazky ? F.kg(F.hmotnostZakazky(z).brutto) : ''}</td><td class="r">${nal}/${kusy.length}</td><td class="chk"><span class="box"></span></td></tr>`;
     }).join('')).join('');
     return `<section class="sheet">${(F.docHlav || (() => ''))('Nákladkový list', tr.id, `${F.fmtD(tr.datum)} · ${e(tr.vozidlo || (v ? v.nazov : ''))} · vodič ${e(tr.vodic || '–')} · ${st.length} zastávok · ≈ ${dl.km} km`)}
       <div class="nak-top">${F.svgNakladka(st)}${F.svgMapaTrasy(tr, { w: 300, h: 150 })}</div>
       <p class="muted">Nakladá sa v opačnom poradí ako sa vykladá: posledná zastávka ide do auta prvá (ku kabíne). Krídla ${zap.kr} · zárubne ${zap.zar}${v && v.kapacita ? ` · kapacita auta ${v.kapacita} krídel` : ''}.</p>
-      <table class="doc-t"><thead><tr><th>Vykl.</th><th>Nakl.</th><th>Miesto vykládky</th><th>Zákazka</th><th class="r">Krídla</th><th class="r">Zárubne</th><th class="r">Kusov</th><th class="r">Naložené</th><th class="chk">✓</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+      <table class="doc-t"><thead><tr><th>Vykl.</th><th>Nakl.</th><th>Miesto vykládky</th><th>Zákazka</th><th class="r">Krídla</th><th class="r">Zárubne</th><th class="r">Kusov</th><th class="r">Brutto</th><th class="r">Naložené</th><th class="chk">✓</th></tr></thead><tbody>${rows}</tbody></table>
+      ${F.hmotnostTrasy ? (() => { const h = F.hmotnostTrasy(tr); return `<p><b>Spolu brutto ${F.kg(h.brutto)}</b> · netto ${F.kg(h.net)}${v && v.nosnost ? ` · nosnosť auta ${F.kg(v.nosnost)}` : ''}${h.chyba.length ? ` <span class="muted">(bez: ${e(h.chyba.join(', '))})</span>` : ''}</p>`; })() : ''}</section>`;
   };
 })();

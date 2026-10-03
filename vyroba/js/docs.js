@@ -158,7 +158,7 @@
         <div><span>Miesto vykládky</span><b>${e(dod.nazov || '')}</b><br>${e(F.dodanieText(dod))}<br>${dod.kontakt ? e(dod.kontakt) + ' · ' : ''}${tr ? F.fmtD(tr.datum) : 'termín –'}${z.montaz ? ' · s montážou' : ''}</div></div>
       ${z.objednal ? `<p class="muted">Objednávka cez web: ${e(z.objednal.partner)}${z.objednal.login ? ' (' + e(z.objednal.login) + ')' : ''}${z.objednal.cas ? ', ' + F.fmtD(z.objednal.cas) : ''}${z.ponuka ? ', ponuka ' + e(z.ponuka) : ''}</p>` : ''}
       <table class="doc-t"><thead><tr><th>#</th><th></th><th>Položka</th><th class="r">Ks</th></tr></thead><tbody>${rows}${acc}</tbody></table>
-      <p class="muted">Počet balíkov / kusov na nakládku: <b>${kusy.length}</b> (krídla ${kusy.filter(k => k.typ === 'kridlo').length}, dielce zárubní ${kusy.filter(k => k.typ === 'dielec').length}, rozšírenia ${kusy.filter(k => k.typ === 'rozsirenie').length})</p>
+      <p class="muted">Hmotnosť ≈ <b>${F.hmotnostZakazky ? F.kg(F.hmotnostZakazky(z).brutto) : '–'}</b> brutto · Počet balíkov / kusov na nakládku: <b>${kusy.length}</b> (krídla ${kusy.filter(k => k.typ === 'kridlo').length}, dielce zárubní ${kusy.filter(k => k.typ === 'dielec').length}, rozšírenia ${kusy.filter(k => k.typ === 'rozsirenie').length})</p>
       <footer class="doc-f"><span>Odovzdal: ____________________</span><span>Prevzal (meno, podpis, dátum): ______________________________</span></footer></section>`;
   };
 

@@ -244,8 +244,8 @@
   }
   function dodanieKarta(z) {
     const d = F.dodanie(z), p = z.zakaznik.partnerId && F.partner(z.zakaznik.partnerId), pob = (p && p.pobocky) || [];
-    const v = F.vozidloPreKrajinu(d.krajina || 'SK'), xy = F.suradnice(d.mesto), t = z.trasa && F.trasa(z.trasa);
-    return `<section class="card"><div class="card-h"><h2>Miesto vykládky</h2><span class="muted small">${t ? `trasa <a href="#/expedicia">${t.id}</a> · ${F.fmtD(t.datum)}` : `pôjde autom: <b>${e(v ? v.nazov : '–')}</b>`}${xy ? '' : ' · <span class="warnc">mesto nie je na mape – poradie zastávky treba určiť ručne</span>'}</span></div>
+    const v = F.vozidloPreKrajinu(d.krajina || 'SK'), xy = F.suradnice(d.mesto), t = z.trasa && F.trasa(z.trasa), hm = F.hmotnostZakazky(z);
+    return `<section class="card"><div class="card-h"><h2>Miesto vykládky</h2><span class="muted small">hmotnosť ≈ ${F.kg(hm.brutto)} brutto${hm.chyba.length ? ' (neúplná)' : ''} · ${t ? `trasa <a href="#/expedicia">${t.id}</a> · ${F.fmtD(t.datum)}` : `pôjde autom: <b>${e(v ? v.nazov : '–')}</b>`}${xy ? '' : ' · <span class="warnc">mesto nie je na mape – poradie zastávky treba určiť ručne</span>'}</span></div>
       <form id="dodForm" class="kf kf4">
         ${pob.length ? `<label class="w">Pobočka partnera<select name="pobocka"><option value="">– sídlo partnera –</option>${pob.map(b => `<option ${z.dodanie && z.dodanie.pobocka === b.nazov ? 'selected' : ''}>${e(b.nazov)}</option>`).join('')}</select></label>` : ''}
         <label>Názov / príjemca<input name="d_nazov" value="${e(d.nazov || '')}"></label><label>Ulica<input name="d_ulica" value="${e(d.ulica || '')}"></label>
@@ -414,13 +414,22 @@
     if (lenMin) karty = karty.filter(k => k.stav - (rez[k.kluc] || 0) < k.min);
     const skup = F.groupBy(karty, k => F.kartaSkupina(k.kluc));
     app().innerHTML = `<div class="v-head"><div><h1>Sklad</h1><p class="muted">polotovary, profily a kovanie · rezervované = potvrdené zákazky ešte nevydané</p></div>
-      <div class="v-act"><a class="btn ghost ${lenMin ? 'on' : ''}" href="#/sklad${lenMin ? '' : '?min=1'}">${lenMin ? 'Zobraziť všetko' : 'Len pod minimom'}</a><a class="btn ghost" href="#/sklad?tab=pohyby">Pohyby</a><button class="btn" data-act="prijem">+ Príjem</button></div></div>
-      ${tab === 'pohyby' ? `<section class="card"><h2>Pohyby</h2><table class="t"><thead><tr><th>Čas</th><th>Položka</th><th class="r">Množstvo</th><th>Typ</th><th>Doklad</th></tr></thead><tbody>${d.pohyby.slice(0, 300).map(p => `<tr><td>${F.fmtD(p.t)} ${p.t.slice(11, 16)}</td><td>${e(F.kartaNazov(p.kluc))}</td><td class="r ${p.mnozstvo < 0 ? 'neg' : 'ok'}">${p.mnozstvo > 0 ? '+' : ''}${+p.mnozstvo.toFixed(2)}</td><td>${e(p.typ)}</td><td>${e(p.doklad || '')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Žiadne pohyby.</td></tr>'}</tbody></table></section>` :
+      <div class="v-act"><a class="btn ghost ${lenMin ? 'on' : ''}" href="#/sklad${lenMin ? '' : '?min=1'}">${lenMin ? 'Zobraziť všetko' : 'Len pod minimom'}</a><a class="btn ghost" href="#/sklad?tab=pohyby">Pohyby</a><a class="btn ghost" href="#/sklad?tab=dodavky">Dodávky (${(d.dodavky || []).length})</a><label class="btn ghost file">Príjem dodávky (packing list)<input type="file" id="dodFile" accept=".json" hidden></label><button class="btn" data-act="prijem">+ Príjem</button></div></div>
+      ${tab === 'dodavky' ? `<section class="card"><h2>Prijaté dodávky</h2>${(d.dodavky || []).map(x => `<details class="dod"><summary><b>${e(x.cislo)}</b> · ${e(x.dodavatel)} · ${F.fmtD(x.datum)} · ${F.sum(x.polozky, y => +y.ks)} ks · brutto ${F.kg(F.sum(x.polozky, y => +y.brutto || 0))} <span class="muted small">prijaté ${F.fmtD(x.prijate)}</span></summary>${F.nahladDodavky(x)}</details>`).join('') || '<p class="muted">Zatiaľ žiadne dodávky.</p>'}</section>` :
+      tab === 'pohyby' ? `<section class="card"><h2>Pohyby</h2><table class="t"><thead><tr><th>Čas</th><th>Položka</th><th class="r">Množstvo</th><th>Typ</th><th>Doklad</th></tr></thead><tbody>${d.pohyby.slice(0, 300).map(p => `<tr><td>${F.fmtD(p.t)} ${p.t.slice(11, 16)}</td><td>${e(F.kartaNazov(p.kluc))}</td><td class="r ${p.mnozstvo < 0 ? 'neg' : 'ok'}">${p.mnozstvo > 0 ? '+' : ''}${+p.mnozstvo.toFixed(2)}</td><td>${e(p.typ)}</td><td>${e(p.doklad || '')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Žiadne pohyby.</td></tr>'}</tbody></table></section>` :
       Object.keys(skup).map(s => `<section class="card"><h2>${s}</h2><table class="t sklad"><thead><tr><th>Položka</th><th class="r">Na sklade</th><th class="r">Rezerv.</th><th class="r">Voľné</th><th class="r">Min.</th><th class="r">Objednané</th><th>Príchod</th><th></th></tr></thead><tbody>
         ${skup[s].map(k => { const r = +(rez[k.kluc] || 0).toFixed(2), vol = +(k.stav - r).toFixed(2), j = F.kartaJednotka(k.kluc); return `<tr class="${vol < k.min ? 'warn' : ''}" data-k="${e(k.kluc)}">
           <td>${e(F.kartaNazov(k.kluc))}</td><td class="r"><b>${+k.stav.toFixed(2)}</b> ${j}</td><td class="r muted">${r || ''}</td><td class="r ${vol < 0 ? 'neg' : vol < k.min ? 'warnc' : ''}">${vol}</td>
           <td class="r"><input class="num" data-f="min" value="${k.min}"></td><td class="r"><input class="num" data-f="objednane" value="${k.objednane || 0}"></td><td><input type="date" data-f="prichod" value="${k.prichod || ''}"></td>
           <td class="r"><button class="lnk" data-act="inv">inventúra</button>${k.objednane ? ' <button class="lnk" data-act="naskladnit">naskladniť</button>' : ''}</td></tr>`; }).join('')}</tbody></table></section>`).join('')}`;
+    $('#dodFile').addEventListener('change', ev => {
+      const fl = ev.target.files[0]; if (!fl) return;
+      fl.text().then(t => {
+        let dod; try { dod = JSON.parse(t); if (dod.format !== 'fortissima-dodavka' || !Array.isArray(dod.polozky)) throw 0; } catch (er) { return toast('Súbor nie je dodávka vo formáte fortissima-dodavka', 'err'); }
+        modal('Príjem dodávky ' + e(dod.cislo), F.nahladDodavky(dod) + `<label class="chk-line"><input type="checkbox" id="dodHm" checked> prevziať hmotnosti krídel z tejto dodávky do plánovania rozvozu</label>`,
+          [{ t: 'Prijať na sklad', f: () => { try { F.prijmiDodavku(dod, { hmotnosti: $('#dodHm').checked }); commit(`Prijaté: ${F.sum(dod.polozky, x => +x.ks)} ks`); } catch (er) { toast(er.message, 'err'); return false; } } }]);
+      });
+    });
     app().onchange = ev => {
       const tr = ev.target.closest('[data-k]'), f = ev.target.dataset.f; if (!tr || !f) return;
       const k = F.karta(tr.dataset.k); k[f] = f === 'prichod' ? ev.target.value : F.num(ev.target.value); F.save(); toast('Uložené', 'ok');
@@ -486,10 +495,11 @@
         <div class="btns"><a class="btn sm ghost" href="#/doc/nakladka/${t.id}">Nákladkový list</a><a class="btn sm ghost" href="#/doc/dl-trasa/${t.id}">Dodacie listy</a><button class="btn sm ghost" data-act="mrp" data-t="${t.id}">CSV pre MRP</button>
           ${hotovo ? '' : `<button class="btn sm ghost" data-act="opt" data-t="${t.id}">Optimalizovať poradie</button><button class="btn sm" data-act="exp" data-t="${t.id}">Expedovať</button><button class="lnk neg" data-act="tdel" data-t="${t.id}">zrušiť</button>`}</div></div>
       ${v && v.kapacita ? `<div class="meter sm cap-auto"><div><i style="width:${kap}%" class="${zap.kr > v.kapacita ? 'over' : ''}"></i></div><span>${zap.kr} / ${v.kapacita} krídel · ${zap.zar} zárubní</span></div>` : ''}
+      ${(() => { const h = F.hmotnostTrasy(t), nos = v && v.nosnost; return `<div class="meter sm cap-auto"><div><i style="width:${nos ? Math.min(100, 100 * h.brutto / nos) : 0}%" class="${nos && h.brutto > nos ? 'over' : ''}"></i></div><span>brutto ${F.kg(h.brutto)}${nos ? ' / ' + F.kg(nos) : ''} · netto ${F.kg(h.net)}</span></div>${h.chyba.length ? `<p class="warnc small">Hmotnosť je neúplná – chýba: ${e(h.chyba.join(', '))} (Nastavenia → Hmotnosti)</p>` : ''}`; })()}
       ${mimo.length ? `<p class="warnc small">⚠ ${mimo.length} zastávok je mimo okruhu tohto auta (${(v.krajiny || []).join(', ')}).</p>` : ''}
       <div class="tr-body"><div class="tr-map">${st.length ? F.svgMapaTrasy(t) : '<p class="muted">Bez zastávok.</p>'}</div>
         <ol class="stops">${st.map((s, i) => `<li><span class="stop-n">${i + 1}</span><div class="stop-b"><b>${e(s.dodanie.nazov)}</b> <span class="muted">${e(F.dodanieText(s.dodanie))}</span>${s.xy ? '' : ' <span class="warnc small">bez mapy</span>'}
-          ${s.zakazky.map(z => `<div class="stop-z"><a href="#/zakazka/${z.id}">${z.id}</a> ${e(z.zakaznik.nazov !== s.dodanie.nazov ? z.zakaznik.nazov : '')} · ${F.pocty(z).kr} kr. ${F.chip(z.stav)}${hotovo ? '' : ` <button class="lnk neg" data-act="rm" data-t="${t.id}" data-z="${z.id}">odobrať</button>`}</div>`).join('')}</div>
+          ${s.zakazky.map(z => `<div class="stop-z"><a href="#/zakazka/${z.id}">${z.id}</a> ${e(z.zakaznik.nazov !== s.dodanie.nazov ? z.zakaznik.nazov : '')} · ${F.pocty(z).kr} kr. · ${F.kg(F.hmotnostZakazky(z).brutto)} ${F.chip(z.stav)}${hotovo ? '' : ` <button class="lnk neg" data-act="rm" data-t="${t.id}" data-z="${z.id}">odobrať</button>`}</div>`).join('')}</div>
           ${hotovo ? '' : `<span class="ord"><button class="lnk" data-act="up" data-t="${t.id}" data-i="${i}" title="skôr">↑</button><button class="lnk" data-act="down" data-t="${t.id}" data-i="${i}" title="neskôr">↓</button></span>`}</li>`).join('')}</ol></div>
       ${st.length ? F.svgNakladka(st) : ''}</section>`;
   }
@@ -544,10 +554,13 @@
         <section class="card"><h2>Zárubňa</h2><div class="kf">${num('svetlostPridavok', 'Š1 = nominál +')}${num('falcPresah', 'Presah falcu')}${num('ostenieHrubka', 'Hrúbka ostenia')}${num('oblozkaSirka', 'Šírka obložky')}${num('hlbkaKorekcia', 'Hĺbka v kóde = ostenie +')}${tab('ostenieSirka', 'Šírka ostenia podľa typu ⚠ overiť')}</div></section>
         <section class="card"><h2>Kódovacie tabuľky CNC</h2><div class="kf">${tab('kodZamok', 'Zámok → číslica')}${tab('kodMriezka', 'Mriežka → číslica ⚠ overiť')}${tab('kodVyrez', 'Výrez podľa kolekcie')}${tab('kodKonstrukcia', 'Konštrukcia F / M / R')}</div></section>
         <section class="card"><h2>Rozvoz – vozidlá a okruhy</h2><div class="kf"><label>Odkiaľ autá vyrážajú (mesto)<input data-depo value="${e(n.depo || 'Košice')}"></label></div>
-          <table class="t slim voz"><thead><tr><th>Vozidlo</th><th>ŠPZ</th><th>Krajiny okruhu</th><th class="r">Kapacita krídel</th><th></th></tr></thead><tbody>
-          ${F.vozidla().map((v, i) => `<tr data-v="${i}"><td><input data-vf="nazov" value="${e(v.nazov)}"></td><td><input data-vf="spz" value="${e(v.spz || '')}"></td><td>${Object.keys(F.KRAJINY).map(k => `<label class="kr"><input type="checkbox" data-vk="${k}" ${(v.krajiny || []).includes(k) ? 'checked' : ''}>${k}</label>`).join('')}</td><td class="r"><input class="num" data-vf="kapacita" value="${v.kapacita || ''}"></td><td><button class="lnk neg" data-act="vdel" data-i="${i}">×</button></td></tr>`).join('')}
+          <table class="t slim voz"><thead><tr><th>Vozidlo</th><th>ŠPZ</th><th>Krajiny okruhu</th><th class="r">Kapacita krídel</th><th class="r">Nosnosť kg</th><th></th></tr></thead><tbody>
+          ${F.vozidla().map((v, i) => `<tr data-v="${i}"><td><input data-vf="nazov" value="${e(v.nazov)}"></td><td><input data-vf="spz" value="${e(v.spz || '')}"></td><td>${Object.keys(F.KRAJINY).map(k => `<label class="kr"><input type="checkbox" data-vk="${k}" ${(v.krajiny || []).includes(k) ? 'checked' : ''}>${k}</label>`).join('')}</td><td class="r"><input class="num" data-vf="kapacita" value="${v.kapacita || ''}"></td><td class="r"><input class="num" data-vf="nosnost" value="${v.nosnost || ''}"></td><td><button class="lnk neg" data-act="vdel" data-i="${i}">×</button></td></tr>`).join('')}
           </tbody></table><button class="btn sm ghost" data-act="vadd">+ Vozidlo</button>
           <p class="muted small">Zákazka ide autom podľa krajiny miesta vykládky. Ak krajinu pokrýva viac áut, použije sa prvé.</p></section>
+        <section class="card"><h2>Hmotnosti pre plánovanie rozvozu</h2><p class="muted small">Zdroj: ${e(F.hmotnostiTab().zdroj || '–')}. Krídla: [netto, brutto] kg na 1 ks pri výške 2070 – pri inej výške sa prepočíta. Chýbajúce šírky sa dopočítajú zo susedných.</p>
+          <table class="t slim"><thead><tr><th>Kolekcia</th>${F.SIRKY.map(s => `<th class="r">${s}</th>`).join('')}</tr></thead><tbody>${Object.keys(F.KOLEKCIE).map(k => `<tr><td>${F.KOLEKCIE[k].model} ${F.KOLEKCIE[k].nazov}</td>${F.SIRKY.map(s => { const v = (F.hmotnostiTab().kridla[k] || {})[s]; return `<td class="r"><input class="num hm" data-hk="${k}" data-hs="${s}" value="${v ? v.join(' / ') : ''}" placeholder="netto / brutto"></td>`; }).join('')}</tr>`).join('')}</tbody></table>
+          <div class="kf">${F.ZARUBNE.map(z => `<label>Zárubňa ${z} (kg/ks)<input data-hz="${z}" value="${F.hmotnostiTab().zarubne[z] || ''}" placeholder="doplniť"></label>`).join('')}${['R90', 'R180'].map(r => `<label>Rozšírenie ${r} (kg/ks)<input data-hr="${r}" value="${F.hmotnostiTab().rozsirenia[r] || ''}" placeholder="doplniť"></label>`).join('')}</div></section>
         <section class="card"><h2>Firma</h2><div class="kf">${Object.keys(n.firma).map(k => `<label>${k}<input data-firma="${k}" value="${e(n.firma[k])}"></label>`).join('')}</div></section>
         <section class="card"><h2>Dáta</h2><p>Dáta sa ukladajú <b>len v tomto prehliadači</b>. Pre zdieľanie medzi počítačmi exportujte zálohu alebo nasaďte serverové úložisko.</p>
           <div class="btns"><button class="btn ghost" data-act="exp">Exportovať zálohu (JSON)</button><label class="btn ghost file">Importovať zálohu<input type="file" id="imp" accept=".json" hidden></label><button class="btn ghost" data-act="demo">Načítať ukážkové dáta</button><button class="btn ghost neg" data-act="clear">Vymazať všetko</button><button class="btn ghost" data-act="def">Obnoviť predvolené pravidlá</button></div></section>
@@ -559,8 +572,11 @@
         if (t.dataset.json) n[t.dataset.json] = JSON.parse(t.value);
         if (t.dataset.firma) n.firma[t.dataset.firma] = t.value;
         if (t.dataset.depo != null) n.depo = t.value;
+        if (t.dataset.hk) { const m = t.value.split('/').map(F.num).filter(x => x > 0), tb = F.hmotnostiTab().kridla[t.dataset.hk] = F.hmotnostiTab().kridla[t.dataset.hk] || {}; if (m.length) tb[t.dataset.hs] = [m[0], m[1] || m[0]]; else delete tb[t.dataset.hs]; }
+        if (t.dataset.hz) F.hmotnostiTab().zarubne[t.dataset.hz] = F.num(t.value) || null;
+        if (t.dataset.hr) F.hmotnostiTab().rozsirenia[t.dataset.hr] = F.num(t.value) || null;
         const vr = t.closest('tr[data-v]');
-        if (vr) { const v = F.vozidla()[+vr.dataset.v]; if (t.dataset.vf) v[t.dataset.vf] = t.dataset.vf === 'kapacita' ? F.num(t.value) : t.value; if (t.dataset.vk) v.krajiny = [...vr.querySelectorAll('[data-vk]:checked')].map(x => x.dataset.vk); }
+        if (vr) { const v = F.vozidla()[+vr.dataset.v]; if (t.dataset.vf) v[t.dataset.vf] = ['kapacita', 'nosnost'].includes(t.dataset.vf) ? F.num(t.value) : t.value; if (t.dataset.vk) v.krajiny = [...vr.querySelectorAll('[data-vk]:checked')].map(x => x.dataset.vk); }
         F.save(); toast('Uložené', 'ok');
       } catch (er) { toast('Neplatný zápis tabuľky', 'err'); }
     };
