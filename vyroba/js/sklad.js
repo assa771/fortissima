@@ -46,6 +46,24 @@
     return null;
   };
 
+  /** Karty, ktoré sa líšia len farbou / povrchom (napr. záves nikel ↔ čierny, krídlo biela ↔ kašmír) */
+  F.variantyKarty = kluc => {
+    const o = F.kartaParam(kluc), bez = x => { const p = F.kartaParam(x.kluc); return [p.typ, p.podtyp, p.kolekcia, p.prevedenie, p.sirka, p.vyska, p.zarubna].join('|'); };
+    const vz = bez({ kluc }); return D().karty.filter(x => F.kartaParam(x.kluc).typ === o.typ && bez(x) === vz);
+  };
+  /** Zmenší obrázok na max. 900 px (JPEG/PNG v dátovom URL), SVG nechá ako je */
+  F.zmensiObrazok = file => new Promise((ok, chyba) => {
+    const r = new FileReader();
+    r.onerror = chyba;
+    if (file.type === 'image/svg+xml') { r.onload = () => (r.result.length < 400000 ? ok(r.result) : chyba()); return r.readAsDataURL(file); }
+    r.onload = () => { const img = new Image(); img.onerror = chyba; img.onload = () => {
+      const M = 900, sc = Math.min(1, M / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+      const g = c.getContext('2d'); const png = file.type === 'image/png' && c.width * c.height < 360000;
+      if (!png) { g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); }
+      g.drawImage(img, 0, 0, c.width, c.height); ok(png ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', .85)); }; img.src = r.result; };
+    r.readAsDataURL(file);
+  });
+
   /* ---------- údaje z pohybov ---------- */
   const zakazkaZDokladu = dok => { const m = String(dok || '').match(/\/\s*(\S+)\s*$/); return m ? m[1] : ''; };
   const davkaZDokladu = dok => { const m = String(dok || '').match(/^(\S+)\s*\//); return m ? m[1] : ''; };
@@ -170,7 +188,9 @@
     return svg(Math.round(W * sc), Math.round(HH * sc), g, 'v-ikon', `0 0 ${W} ${HH}`);
   };
   /** Malá ikona do zoznamu */
+  const vlastnyNakres = o => { const k = F.karta(o.kluc); return k && k.nakres && k.nakres.src ? k.nakres : null; };
   F.kartaIkona = (o, h = 34) => {
+    const vl = vlastnyNakres(o); if (vl) return `<img class="ik-img" src="${vl.src}" alt="" style="height:${h}px">`;
     if (o.typ === 'KR') return F.svgKridlo(F.kartaPozicia(o), { h, dim: false });
     if (o.typ === 'OB' || o.typ === 'OS') { const p = F.kartaPozicia(o); return F.svgProfil(F.zarubna(p), { w: h * 1.6 }).replace(/<text[^>]*>[^<]*<\/text>|<g class="dim">.*?<\/g>/g, ''); }
     if (o.typ === 'RZ') return F.svgRozsirenie(o, h);
@@ -178,6 +198,12 @@
   };
   /** Veľký nákres na skladovej karte */
   F.kartaNakres = o => {
+    const k = F.karta(o.kluc) || {}, vl = vlastnyNakres(o);
+    if (vl) return `<div class="nk-row"><figure><img class="nk-img" src="${vl.src}" alt="${e(F.kartaNazov(o.kluc))}"><figcaption>vlastný nákres${vl.nazov ? ' · ' + e(vl.nazov) : ''} · ${F.fmtD(vl.datum)}</figcaption></figure></div>`;
+    if (k.nakres && k.nakres.skryty) return '<p class="muted nk-off">Nákres je pri tejto položke skrytý.</p>';
+    return F.ilustracnyNakres(o);
+  };
+  F.ilustracnyNakres = o => {
     const p = F.kartaPozicia(o);
     if (o.typ === 'KR') return `<div class="nk-row"><figure>${F.svgKridlo(p, { h: 400 })}<figcaption>polotovar krídla – bez orientácie, zámku a závesov (frézuje sa na CNC)</figcaption></figure></div>`;
     if (o.typ === 'OB' || o.typ === 'OS') {
@@ -532,7 +558,11 @@
             <label class="w">Poznámka<input name="poznamka" value="${e(k.poznamka || '')}"></label>
           </form>
         </section>
-        <section class="card nakres"><h2>Nákres</h2>${F.kartaNakres(o)}</section>
+        <section class="card nakres" id="nkDrop"><div class="card-h"><h2>Nákres</h2><div class="no-print nk-act">
+          <label class="btn sm ghost file">Nahrať obrázok<input type="file" id="nkFile" accept="image/*" hidden></label>
+          ${k.nakres && k.nakres.src ? '<button class="btn sm ghost" data-act="nk-ilu">Vrátiť ilustračný</button>' : ''}${k.nakres && k.nakres.skryty ? '<button class="btn sm ghost" data-act="nk-ilu">Zobraziť ilustračný</button>' : '<button class="btn sm ghost" data-act="nk-skry">Skryť nákres</button>'}
+          <button class="btn sm ghost" data-act="nk-z">Prevziať z inej karty</button></div></div>
+          ${F.kartaNakres(o)}<p class="muted small no-print nk-tip">Obrázok (foto, výkres, PNG/JPG/SVG) môžete aj pretiahnuť sem alebo vložiť zo schránky (Ctrl+V).</p></section>
       </div>
 
       <section class="card"><div class="card-h"><h2>Prognóza</h2><span class="muted small">priemer za ${mes} mes. ${pg.efDni < mes * 30 ? `(história len ${Math.round(pg.efDni)} dní)` : ''} · dodacia lehota ${pg.lehota} dní · objednáva sa na ${pg.kryt} dní</span></div>
@@ -570,6 +600,39 @@
       </div>
 
       <section class="card"><h2>Pohyby na karte <small class="muted">${pohyby.length}</small></h2>${pohyby.length ? `<table class="t slim"><thead><tr><th>Čas</th><th>Typ</th><th>Doklad</th><th class="r">Množstvo</th><th class="r">Stav po pohybe</th></tr></thead><tbody>${(() => { let s = k.stav; return pohyby.slice(0, 60).map(p => { const r = `<tr><td>${F.fmtD(p.t)} <small class="muted">${p.t.slice(11, 16)}</small></td><td>${e(p.typ)}</td><td>${e(p.doklad || '')}</td><td class="r ${p.mnozstvo < 0 ? 'neg' : 'ok'}">${p.mnozstvo > 0 ? '+' : ''}${fmt(p.mnozstvo)}</td><td class="r mono">${fmt(s)}</td></tr>`; s = r2(s - p.mnozstvo); return r; }).join(''); })()}</tbody></table>` : '<p class="muted">Bez pohybov.</p>'}</section>`;
+
+    /* --- vlastný nákres: nahranie, pretiahnutie, vloženie zo schránky --- */
+    const prekresli = () => { const y = window.scrollY; F.vKarta(kluc, q); window.scrollTo(0, y); };
+    const ulozNakres = (nk, txt) => {
+      const varianty = F.variantyKarty(kluc);
+      const zapis = ciele => { const zaloha = ciele.map(c => [c, c.nakres]); ciele.forEach(c => { if (nk) c.nakres = nk; else delete c.nakres; });
+        if (!F.save()) { zaloha.forEach(([c, v]) => { if (v) c.nakres = v; else delete c.nakres; }); F.ui.toast('Obrázok je príliš veľký – úložisko prehliadača je plné', 'err'); return; }
+        F.ui.toast(txt + (ciele.length > 1 ? ` (${ciele.length} kariet)` : ''), 'ok'); prekresli(); };
+      if (varianty.length < 2) return zapis([k]);
+      F.ui.modal('Použiť pre ďalšie varianty?', `<p>Rovnaký nákres môže platiť aj pre ostatné varianty tejto položky (${varianty.length} kariet):</p><ul class="small">${varianty.map(x => `<li>${e(F.kartaNazov(x.kluc))}</li>`).join('')}</ul>`,
+        [{ t: 'Len táto karta', cls: 'ghost', f: () => zapis([k]) }, { t: `Všetky varianty (${varianty.length})`, f: () => zapis(varianty) }]);
+    };
+    const nacitajObrazok = file => {
+      if (!file || !/^image\//.test(file.type)) return F.ui.toast('Vyberte obrázok (PNG, JPG, SVG…)', 'err');
+      F.zmensiObrazok(file).then(src => ulozNakres({ src, nazov: file.name || 'obrázok zo schránky', datum: F.today() }, 'Nákres uložený')).catch(() => F.ui.toast('Obrázok sa nepodarilo načítať', 'err'));
+    };
+    $('#nkFile').addEventListener('change', ev => nacitajObrazok(ev.target.files[0]));
+    const drop = $('#nkDrop');
+    drop.addEventListener('dragover', ev => { ev.preventDefault(); drop.classList.add('drag'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+    drop.addEventListener('drop', ev => { ev.preventDefault(); drop.classList.remove('drag'); nacitajObrazok(ev.dataTransfer.files[0]); });
+    document.onpaste = ev => { if (!location.hash.startsWith('#/karta/') || ev.target.closest('input,textarea')) return; const it = [...(ev.clipboardData || {}).items || []].find(i => i.type.startsWith('image/')); if (it) { ev.preventDefault(); nacitajObrazok(it.getAsFile()); } };
+    drop.addEventListener('click', ev => {
+      const b = ev.target.closest('[data-act]'); if (!b) return; ev.stopPropagation();
+      if (b.dataset.act === 'nk-ilu') ulozNakres(null, 'Ilustračný nákres');
+      if (b.dataset.act === 'nk-skry') ulozNakres({ skryty: true }, 'Nákres skrytý');
+      if (b.dataset.act === 'nk-z') {
+        const s = D().karty.filter(x => x.nakres && x.nakres.src && x.kluc !== kluc);
+        if (!s.length) return F.ui.toast('Žiadna iná karta zatiaľ nemá vlastný nákres', 'err');
+        F.ui.modal('Prevziať nákres z inej karty', `<div class="nk-pick">${s.map(x => `<button type="button" class="nk-opt" data-k="${e(x.kluc)}"><img src="${x.nakres.src}" alt=""><span>${e(F.kartaNazov(x.kluc))}</span></button>`).join('')}</div>`, []);
+        $('#modal').querySelectorAll('.nk-opt').forEach(btn => btn.addEventListener('click', () => { const z = F.karta(btn.dataset.k); $('#modal').hidden = true; ulozNakres(Object.assign({}, z.nakres, { datum: F.today() }), 'Nákres prevzatý'); }));
+      }
+    });
 
     $('#kartaF').addEventListener('change', ev => {
       const f = ev.target.name, txt = ['prichod', 'dodavatel', 'umiestnenie', 'poznamka'];

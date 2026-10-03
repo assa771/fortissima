@@ -103,7 +103,7 @@ F.load = () => {
   ['zakazky', 'davky', 'trasy', 'pohyby', 'skeny', 'karty', 'partneri'].forEach(k => { if (!Array.isArray(mem[k])) mem[k] = []; });
   return mem;
 };
-F.save = () => { try { localStorage.setItem(KEY, JSON.stringify(mem)); } catch (e) { console.warn('Úložisko nedostupné', e); } };
+F.save = () => { try { localStorage.setItem(KEY, JSON.stringify(mem)); return true; } catch (e) { console.warn('Úložisko nedostupné', e); return false; } };
 F.prazdne = () => ({ verzia: 1, zakazky: [], davky: [], trasy: [], karty: [], pohyby: [], skeny: [], partneri: [], citac: { zakazka: 0, davka: 0, trasa: 0 }, nastavenia: {} });
 F.merge = (a, b) => { for (const k in b) { if (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && a[k] && typeof a[k] === 'object') F.merge(a[k], b[k]); else a[k] = b[k]; } return a; };
 F.N = () => F.load().nastavenia;

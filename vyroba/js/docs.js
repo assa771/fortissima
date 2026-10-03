@@ -33,7 +33,7 @@
         const karta = F.karta(k) || { stav: 0 }, j = F.kartaJednotka(k);
         let mn = `${+sum[k].toFixed(2)} ${j}`;
         if (plan[k]) mn = `<b>${plan[k].tyce.length} tyčí</b><small>${+sum[k].toFixed(1)} m · ${F.N().dlzkaTyce} mm</small>`;
-        const ikon = vzor[k] ? F.svgKridlo(vzor[k], { h: 44, dim: false }) : '';
+        const vl = (F.karta(k) || {}).nakres, ikon = vl && vl.src ? `<img src="${vl.src}" alt="" style="height:44px;max-width:70px;object-fit:contain">` : vzor[k] ? F.svgKridlo(vzor[k], { h: 44, dim: false }) : (F.kartaIkona && F.kartaParam ? F.kartaIkona(F.kartaParam(k), 40) : '');
         const nedost = karta.stav < sum[k] && !v.vydane;
         body += `<tr class="${nedost ? 'warn' : ''}"><td class="ic">${ikon}</td><td>${e(F.kartaNazov(k))}${k.startsWith('KR|') && vzor[k] && F.kridlo(vzor[k]).prirez > 0 ? `<small>polotovar ${F.kridlo(vzor[k]).polotovarH} mm – reže sa na STN</small>` : ''}</td>
           <td class="r big">${mn}</td><td class="mini-list">${podla[k].map(([id, q]) => `${id} <i>${+q.toFixed(2)}</i>`).join('<br>')}</td>
